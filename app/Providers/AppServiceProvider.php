@@ -3,10 +3,14 @@
 namespace App\Providers;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Symfony\Component\Console\Output\ConsoleOutput;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +28,24 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->snapshotSchemaAfterMigrations();
+    }
+
+    /**
+     * Keep db/scheduler_schema.sql in step with the migrations during local
+     * development.
+     */
+    protected function snapshotSchemaAfterMigrations(): void
+    {
+        if (! $this->app->environment('local')) {
+            return;
+        }
+
+        Event::listen(MigrationsEnded::class, function (MigrationsEnded $event): void {
+            if (! ($event->options['pretend'] ?? false)) {
+                Artisan::call('db:snapshot', outputBuffer: new ConsoleOutput);
+            }
+        });
     }
 
     /**
