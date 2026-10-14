@@ -8,6 +8,8 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use InvalidArgumentException;
+use stdClass;
 
 #[Signature('db:snapshot
     {--sql=db/scheduler_schema.sql : SQL output file, relative to the project root}
@@ -31,13 +33,14 @@ class SnapshotSchema extends Command
         $database = $connection->getDatabaseName();
         $migrationsTable = config('database.migrations.table', 'migrations');
 
-        $tables = $connection->table('information_schema.TABLES')
+        $tables = array_values($connection->table('information_schema.TABLES')
             ->where('TABLE_SCHEMA', $database)
             ->where('TABLE_TYPE', 'BASE TABLE')
             ->where('TABLE_NAME', '!=', $migrationsTable)
             ->orderBy('TABLE_NAME')
-            ->pluck('TABLE_NAME')
-            ->all();
+            ->get(['TABLE_NAME'])
+            ->map(fn (stdClass $row): string => $row->TABLE_NAME)
+            ->all());
 
         $references = $connection->table('information_schema.KEY_COLUMN_USAGE')
             ->where('TABLE_SCHEMA', $database)
@@ -58,10 +61,21 @@ class SnapshotSchema extends Command
             $sql .= "\n{$statement};\n";
         }
 
-        $this->write($this->option('sql'), $sql);
-        $this->write($this->option('dbml'), (new DbmlSchema($connection))->build($tables, $createStatements));
+        $this->write($this->pathOption('sql'), $sql);
+        $this->write($this->pathOption('dbml'), (new DbmlSchema($connection))->build($tables, $createStatements));
 
         return self::SUCCESS;
+    }
+
+    protected function pathOption(string $name): string
+    {
+        $path = $this->option($name);
+
+        if (! is_string($path) || $path === '') {
+            throw new InvalidArgumentException("The --{$name} option must be a file path.");
+        }
+
+        return $path;
     }
 
     /**
@@ -88,7 +102,7 @@ class SnapshotSchema extends Command
      * alphabetically among tables that are ready, so output is stable.
      *
      * @param  list<string>  $tables
-     * @param  iterable<object{TABLE_NAME: string, REFERENCED_TABLE_NAME: string}>  $references
+     * @param  iterable<stdClass>  $references
      * @return list<string>
      */
     protected function orderByDependencies(array $tables, iterable $references): array

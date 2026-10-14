@@ -3,15 +3,20 @@ services:
     image: mariadb:11.4
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: ${DB_DATABASE:-scheduler}
-      MARIADB_USER: ${DB_USERNAME:-scheduler}
-      MARIADB_PASSWORD: ${DB_PASSWORD:-secret}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+      # Read by database/provisioning/provision.sh on first start.
+      DB_DATABASE: ${DB_DATABASE:-scheduler}
+      DB_USERNAME: ${DB_USERNAME:-scheduler_app}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      DB_MIGRATE_USERNAME: ${DB_MIGRATE_USERNAME:-scheduler_migrate}
+      DB_MIGRATE_PASSWORD: ${DB_MIGRATE_PASSWORD:-migrate-secret}
+      DB_TEST_DATABASE: scheduler_test
     ports:
       - "${DB_PORT:-3306}:3306"
     volumes:
       - mariadb-data:/var/lib/mysql
-      - ./docker/mariadb/create-test-database.sql:/docker-entrypoint-initdb.d/create-test-database.sql:ro
+      - ./database/provisioning:/provisioning:ro
+      - ./docker/mariadb/initdb.sh:/docker-entrypoint-initdb.d/initdb.sh:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s

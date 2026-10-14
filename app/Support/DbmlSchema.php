@@ -4,6 +4,7 @@ namespace App\Support;
 
 use Illuminate\Database\Connection;
 use Illuminate\Support\Collection;
+use stdClass;
 
 /**
  * Describes a MariaDB schema in DBML (https://dbml.dbdiagram.io).
@@ -55,16 +56,16 @@ class DbmlSchema
             [$periodNames, $overlapKeys] = $this->periods($createStatements[$table] ?? '');
 
             $tableChecks = $checks->get($table, collect())
-                ->reject(fn (object $check) => in_array($check->CONSTRAINT_NAME, $periodNames, true));
+                ->reject(fn (stdClass $check) => in_array($check->CONSTRAINT_NAME, $periodNames, true));
 
-            $jsonColumns = $tableChecks
-                ->filter(fn (object $check) => $check->LEVEL === 'Column'
+            $jsonColumns = array_values($tableChecks
+                ->filter(fn (stdClass $check) => $check->LEVEL === 'Column'
                     && $check->CHECK_CLAUSE === "json_valid(`{$check->CONSTRAINT_NAME}`)")
-                ->pluck('CONSTRAINT_NAME')
-                ->all();
+                ->map(fn (stdClass $check): string => $check->CONSTRAINT_NAME)
+                ->all());
 
             $tableIndexes = $indexes->get($table, collect())
-                ->reject(fn (Collection $parts, string $name) => isset($overlapKeys[$name]));
+                ->reject(fn (Collection $parts) => isset($overlapKeys[$parts->first()->INDEX_NAME]));
 
             $primary = $tableIndexes->get('PRIMARY', collect())->pluck('COLUMN_NAME')->all();
 
@@ -91,7 +92,7 @@ class DbmlSchema
             }
 
             $note = $this->tableNote($overlapKeys, $tableChecks->reject(
-                fn (object $check) => in_array($check->CONSTRAINT_NAME, $jsonColumns, true)
+                fn (stdClass $check) => in_array($check->CONSTRAINT_NAME, $jsonColumns, true)
             ));
 
             if ($note !== null) {
@@ -146,7 +147,7 @@ class DbmlSchema
      * @param  list<string>  $jsonColumns
      * @param  array<string, list<string>>  $enums
      */
-    protected function columnType(string $table, object $column, array $jsonColumns, array &$enums): string
+    protected function columnType(string $table, stdClass $column, array $jsonColumns, array &$enums): string
     {
         if (in_array($column->COLUMN_NAME, $jsonColumns, true)) {
             return 'json';
@@ -168,7 +169,7 @@ class DbmlSchema
     /**
      * @param  list<string>  $primary
      */
-    protected function columnSettings(object $column, array $primary): string
+    protected function columnSettings(stdClass $column, array $primary): string
     {
         $settings = [];
 
@@ -211,7 +212,7 @@ class DbmlSchema
     }
 
     /**
-     * @param  Collection<string, Collection<int, object>>  $indexes
+     * @param  Collection<string, Collection<int, stdClass>>  $indexes
      * @param  list<string>  $primary
      * @return list<string>
      */
@@ -219,7 +220,8 @@ class DbmlSchema
     {
         $lines = [];
 
-        foreach ($indexes as $name => $parts) {
+        foreach ($indexes as $parts) {
+            $name = $parts->first()->INDEX_NAME;
             $columns = $parts->pluck('COLUMN_NAME')->map(fn (string $column) => $this->identifier($column))->all();
             $target = count($columns) === 1 ? $columns[0] : '('.implode(', ', $columns).')';
 
@@ -242,7 +244,7 @@ class DbmlSchema
 
     /**
      * @param  array<string, array{columns: list<string>, period: string}>  $overlapKeys
-     * @param  Collection<int, object>  $checks
+     * @param  Collection<int, stdClass>  $checks
      */
     protected function tableNote(array $overlapKeys, Collection $checks): ?string
     {
@@ -283,9 +285,10 @@ class DbmlSchema
 
         $lines = [];
 
-        foreach ($foreignKeys as $table => $constraints) {
-            foreach ($constraints as $name => $parts) {
+        foreach ($foreignKeys as $constraints) {
+            foreach ($constraints as $parts) {
                 $first = $parts->first();
+                $table = $first->TABLE_NAME;
                 $columns = $parts->pluck('COLUMN_NAME')->all();
 
                 // A foreign key that is also unique is one-to-one.
@@ -299,7 +302,7 @@ class DbmlSchema
 
                 $lines[] = sprintf(
                     'Ref %s: %s.%s %s %s.%s [%s]',
-                    $this->identifier($name),
+                    $this->identifier($first->CONSTRAINT_NAME),
                     $this->identifier($table),
                     $this->columnList($columns),
                     $relation,
