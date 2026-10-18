@@ -9,20 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * A course taught to a section in its term. teacher_id is the default
-     * teacher copied onto new meetings; the meeting's own teacher_id is the
+     * A subject taught to a section in its term. teacher_id is the default
+     * teacher copied onto new schedules; the schedule's own teacher_id is the
      * one that counts.
      */
     public function up(): void
     {
-        Schema::create('course_offerings', function (Blueprint $table) {
+        Schema::create('subject_offerings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('section_id')->constrained()->restrictOnDelete();
-            $table->foreignId('course_id')->constrained()->restrictOnDelete();
+            $table->foreignId('subject_id')->constrained()->restrictOnDelete();
             $table->foreignId('teacher_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
 
-            $table->unique(['section_id', 'course_id']);
+            $table->unique(['section_id', 'subject_id']);
         });
     }
 
@@ -31,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('course_offerings');
+        Schema::dropIfExists('subject_offerings');
     }
 };

@@ -16,6 +16,7 @@ Enum terms_semester {
 
 Enum users_role {
   "admin"
+  "registrar"
   "dean"
   "teacher"
   "learner"
@@ -52,7 +53,7 @@ Enum enrollments_status {
   "dropped"
 }
 
-Enum offering_meetings_mode {
+Enum schedules_mode {
   "onsite"
   "online"
 }
@@ -73,6 +74,11 @@ Enum attendance_audits_new_status {
   "present"
   "late"
   "absent"
+}
+
+Enum term_registrations_status {
+  "registered"
+  "withdrawn"
 }
 
 Table cache {
@@ -105,21 +111,6 @@ Table colleges {
   indexes {
     code [unique, name: 'colleges_code_unique']
     name [unique, name: 'colleges_name_unique']
-  }
-}
-
-Table courses {
-  id "bigint(20) unsigned" [pk, increment, not null]
-  college_id "bigint(20) unsigned" [not null]
-  code varchar(20) [not null]
-  title varchar(150) [not null]
-  lecture_units decimal(3,1) [not null, default: 0.0]
-  laboratory_units decimal(3,1) [not null, default: 0.0]
-  created_at timestamp [null]
-  updated_at timestamp [null]
-
-  indexes {
-    (college_id, code) [unique, name: 'courses_college_id_code_unique']
   }
 }
 
@@ -205,7 +196,7 @@ Table rooms {
   code varchar(30) [not null]
   building varchar(100) [null]
   floor tinyint(4) [null]
-  capacity "smallint(5) unsigned" [not null]
+  capacity "smallint(5) unsigned" [null]
   room_type rooms_room_type [not null, default: 'lecture']
   is_active tinyint(1) [not null, default: 1]
   created_at timestamp [null]
@@ -227,6 +218,21 @@ Table sessions {
   indexes {
     last_activity [name: 'sessions_last_activity_index']
     user_id [name: 'sessions_user_id_index']
+  }
+}
+
+Table subjects {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  college_id "bigint(20) unsigned" [not null]
+  code varchar(20) [not null]
+  title varchar(150) [not null]
+  lecture_units decimal(3,1) [not null, default: 0.0]
+  laboratory_units decimal(3,1) [not null, default: 0.0]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (college_id, code) [unique, name: 'subjects_college_id_code_unique']
   }
 }
 
@@ -272,6 +278,7 @@ Table sections {
   program_id "bigint(20) unsigned" [not null]
   year_level "tinyint(3) unsigned" [not null]
   name varchar(30) [not null]
+  capacity "smallint(5) unsigned" [null]
   created_at timestamp [null]
   updated_at timestamp [null]
 
@@ -415,38 +422,38 @@ Table teachers {
   }
 }
 
-Table course_offerings {
+Table subject_offerings {
   id "bigint(20) unsigned" [pk, increment, not null]
   section_id "bigint(20) unsigned" [not null]
-  course_id "bigint(20) unsigned" [not null]
+  subject_id "bigint(20) unsigned" [not null]
   teacher_id "bigint(20) unsigned" [null]
   created_at timestamp [null]
   updated_at timestamp [null]
 
   indexes {
-    course_id [name: 'course_offerings_course_id_foreign']
-    (section_id, course_id) [unique, name: 'course_offerings_section_id_course_id_unique']
-    teacher_id [name: 'course_offerings_teacher_id_foreign']
+    (section_id, subject_id) [unique, name: 'subject_offerings_section_id_subject_id_unique']
+    subject_id [name: 'subject_offerings_subject_id_foreign']
+    teacher_id [name: 'subject_offerings_teacher_id_foreign']
   }
 }
 
-Table offering_groups {
+Table batches {
   id "bigint(20) unsigned" [pk, increment, not null]
-  course_offering_id "bigint(20) unsigned" [not null]
+  subject_offering_id "bigint(20) unsigned" [not null]
   name varchar(30) [not null]
   created_at timestamp [null]
   updated_at timestamp [null]
 
   indexes {
-    (course_offering_id, name) [unique, name: 'offering_groups_course_offering_id_name_unique']
+    (subject_offering_id, name) [unique, name: 'batches_subject_offering_id_name_unique']
   }
 }
 
 Table enrollments {
   id "bigint(20) unsigned" [pk, increment, not null]
   learner_id "bigint(20) unsigned" [not null]
-  course_offering_id "bigint(20) unsigned" [not null]
-  offering_group_id "bigint(20) unsigned" [null]
+  subject_offering_id "bigint(20) unsigned" [not null]
+  batch_id "bigint(20) unsigned" [null]
   status enrollments_status [not null, default: 'enrolled']
   warning_level "tinyint(3) unsigned" [not null, default: 0]
   flagged_for_drop_at timestamp [null]
@@ -456,46 +463,46 @@ Table enrollments {
   updated_at timestamp [null]
 
   indexes {
-    (course_offering_id, status) [name: 'enrollments_course_offering_id_status_index']
+    batch_id [name: 'enrollments_batch_id_foreign']
     drop_confirmed_by [name: 'enrollments_drop_confirmed_by_foreign']
-    (learner_id, course_offering_id) [unique, name: 'enrollments_learner_id_course_offering_id_unique']
-    offering_group_id [name: 'enrollments_offering_group_id_foreign']
+    (learner_id, subject_offering_id) [unique, name: 'enrollments_learner_id_subject_offering_id_unique']
+    (subject_offering_id, status) [name: 'enrollments_subject_offering_id_status_index']
   }
 }
 
-Table offering_meetings {
+Table schedules {
   id "bigint(20) unsigned" [pk, increment, not null]
-  course_offering_id "bigint(20) unsigned" [not null]
-  offering_group_id "bigint(20) unsigned" [null]
+  subject_offering_id "bigint(20) unsigned" [not null]
+  batch_id "bigint(20) unsigned" [null]
   term_id "bigint(20) unsigned" [not null]
   teacher_id "bigint(20) unsigned" [not null]
   room_id "bigint(20) unsigned" [null]
-  mode offering_meetings_mode [not null, default: 'onsite']
+  mode schedules_mode [not null, default: 'onsite']
   starts_at datetime [not null]
   ends_at datetime [not null]
   created_at timestamp [null]
   updated_at timestamp [null]
 
   indexes {
-    course_offering_id [name: 'offering_meetings_course_offering_id_foreign']
-    offering_group_id [name: 'offering_meetings_offering_group_id_foreign']
-    room_id [name: 'offering_meetings_room_id_foreign']
-    teacher_id [name: 'offering_meetings_teacher_id_foreign']
+    batch_id [name: 'schedules_batch_id_foreign']
+    room_id [name: 'schedules_room_id_foreign']
+    subject_offering_id [name: 'schedules_subject_offering_id_foreign']
+    teacher_id [name: 'schedules_teacher_id_foreign']
   }
 
   Note: '''
-  uq_offering_meetings_teacher_slot: no two rows with the same (term_id, teacher_id) may overlap in period `slot` (MariaDB UNIQUE ... WITHOUT OVERLAPS)
-  uq_offering_meetings_room_slot: no two rows with the same (term_id, room_id) may overlap in period `slot` (MariaDB UNIQUE ... WITHOUT OVERLAPS)
-  CHECK chk_offering_meetings_reference_week: `starts_at` >= '2001-01-01 00:00:00' and `ends_at` < '2001-01-08 00:00:00'
-  CHECK chk_offering_meetings_room: `room_id` is not null or `mode` = 'online'
-  CHECK chk_offering_meetings_same_day: cast(`starts_at` as date) = cast(`ends_at` as date)
+  uq_schedules_teacher_slot: no two rows with the same (term_id, teacher_id) may overlap in period `slot` (MariaDB UNIQUE ... WITHOUT OVERLAPS)
+  uq_schedules_room_slot: no two rows with the same (term_id, room_id) may overlap in period `slot` (MariaDB UNIQUE ... WITHOUT OVERLAPS)
+  CHECK chk_schedules_reference_week: `starts_at` >= '2001-01-01 00:00:00' and `ends_at` < '2001-01-08 00:00:00'
+  CHECK chk_schedules_room: `room_id` is not null or `mode` = 'online'
+  CHECK chk_schedules_same_day: cast(`starts_at` as date) = cast(`ends_at` as date)
   '''
 }
 
 Table attendance_records {
   id "bigint(20) unsigned" [pk, increment, not null]
   enrollment_id "bigint(20) unsigned" [not null]
-  offering_meeting_id "bigint(20) unsigned" [not null]
+  schedule_id "bigint(20) unsigned" [not null]
   class_date date [not null]
   status attendance_records_status [not null]
   absence_excuse_id "bigint(20) unsigned" [null]
@@ -505,9 +512,9 @@ Table attendance_records {
 
   indexes {
     absence_excuse_id [name: 'attendance_records_absence_excuse_id_foreign']
-    (offering_meeting_id, class_date) [name: 'attendance_records_offering_meeting_id_class_date_index']
     recorded_by [name: 'attendance_records_recorded_by_foreign']
-    (enrollment_id, offering_meeting_id, class_date) [unique, name: 'uq_attendance_records_meeting_date']
+    (schedule_id, class_date) [name: 'attendance_records_schedule_id_class_date_index']
+    (enrollment_id, schedule_id, class_date) [unique, name: 'uq_attendance_records_schedule_date']
   }
 
   Note: '''
@@ -531,6 +538,26 @@ Table attendance_audits {
   }
 }
 
+Table term_registrations {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  learner_id "bigint(20) unsigned" [not null]
+  term_id "bigint(20) unsigned" [not null]
+  year_level "tinyint(3) unsigned" [not null]
+  section_id "bigint(20) unsigned" [null]
+  is_irregular tinyint(1) [not null, default: 0]
+  status term_registrations_status [not null, default: 'registered']
+  registered_by "bigint(20) unsigned" [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (learner_id, term_id) [unique, name: 'term_registrations_learner_id_term_id_unique']
+    registered_by [name: 'term_registrations_registered_by_foreign']
+    section_id [name: 'term_registrations_section_id_foreign']
+    (term_id, section_id) [name: 'term_registrations_term_id_section_id_index']
+  }
+}
+
 Ref absence_excuses_learner_id_foreign: absence_excuses.learner_id > learners.id [delete: restrict]
 Ref absence_excuses_reviewed_by_foreign: absence_excuses.reviewed_by > users.id [delete: set null]
 Ref absence_excuses_submitted_by_foreign: absence_excuses.submitted_by > users.id [delete: set null]
@@ -541,29 +568,33 @@ Ref attendance_audits_changed_by_foreign: attendance_audits.changed_by > users.i
 Ref attendance_policies_term_id_foreign: attendance_policies.term_id - terms.id [delete: cascade]
 Ref attendance_records_absence_excuse_id_foreign: attendance_records.absence_excuse_id > absence_excuses.id [delete: restrict]
 Ref attendance_records_enrollment_id_foreign: attendance_records.enrollment_id > enrollments.id [delete: restrict]
-Ref attendance_records_offering_meeting_id_foreign: attendance_records.offering_meeting_id > offering_meetings.id [delete: restrict]
 Ref attendance_records_recorded_by_foreign: attendance_records.recorded_by > users.id [delete: set null]
+Ref attendance_records_schedule_id_foreign: attendance_records.schedule_id > schedules.id [delete: restrict]
+Ref batches_subject_offering_id_foreign: batches.subject_offering_id > subject_offerings.id [delete: cascade]
 Ref calendar_events_college_id_foreign: calendar_events.college_id > colleges.id [delete: cascade]
 Ref calendar_events_created_by_foreign: calendar_events.created_by > users.id [delete: set null]
-Ref courses_college_id_foreign: courses.college_id > colleges.id [delete: restrict]
-Ref course_offerings_course_id_foreign: course_offerings.course_id > courses.id [delete: restrict]
-Ref course_offerings_section_id_foreign: course_offerings.section_id > sections.id [delete: restrict]
-Ref course_offerings_teacher_id_foreign: course_offerings.teacher_id > teachers.id [delete: set null]
-Ref enrollments_course_offering_id_foreign: enrollments.course_offering_id > course_offerings.id [delete: restrict]
+Ref enrollments_batch_id_foreign: enrollments.batch_id > batches.id [delete: set null]
 Ref enrollments_drop_confirmed_by_foreign: enrollments.drop_confirmed_by > users.id [delete: set null]
 Ref enrollments_learner_id_foreign: enrollments.learner_id > learners.id [delete: restrict]
-Ref enrollments_offering_group_id_foreign: enrollments.offering_group_id > offering_groups.id [delete: set null]
+Ref enrollments_subject_offering_id_foreign: enrollments.subject_offering_id > subject_offerings.id [delete: restrict]
 Ref learners_program_id_foreign: learners.program_id > programs.id [delete: restrict]
 Ref learners_user_id_foreign: learners.user_id - users.id [delete: cascade]
-Ref offering_groups_course_offering_id_foreign: offering_groups.course_offering_id > course_offerings.id [delete: cascade]
-Ref offering_meetings_course_offering_id_foreign: offering_meetings.course_offering_id > course_offerings.id [delete: cascade]
-Ref offering_meetings_offering_group_id_foreign: offering_meetings.offering_group_id > offering_groups.id [delete: cascade]
-Ref offering_meetings_room_id_foreign: offering_meetings.room_id > rooms.id [delete: restrict]
-Ref offering_meetings_teacher_id_foreign: offering_meetings.teacher_id > teachers.id [delete: restrict]
-Ref offering_meetings_term_id_foreign: offering_meetings.term_id > terms.id [delete: restrict]
 Ref passkeys_user_id_foreign: passkeys.user_id > users.id [delete: cascade]
 Ref programs_college_id_foreign: programs.college_id > colleges.id [delete: restrict]
+Ref schedules_batch_id_foreign: schedules.batch_id > batches.id [delete: cascade]
+Ref schedules_room_id_foreign: schedules.room_id > rooms.id [delete: restrict]
+Ref schedules_subject_offering_id_foreign: schedules.subject_offering_id > subject_offerings.id [delete: cascade]
+Ref schedules_teacher_id_foreign: schedules.teacher_id > teachers.id [delete: restrict]
+Ref schedules_term_id_foreign: schedules.term_id > terms.id [delete: restrict]
 Ref sections_program_id_foreign: sections.program_id > programs.id [delete: restrict]
 Ref sections_term_id_foreign: sections.term_id > terms.id [delete: restrict]
+Ref subjects_college_id_foreign: subjects.college_id > colleges.id [delete: restrict]
+Ref subject_offerings_section_id_foreign: subject_offerings.section_id > sections.id [delete: restrict]
+Ref subject_offerings_subject_id_foreign: subject_offerings.subject_id > subjects.id [delete: restrict]
+Ref subject_offerings_teacher_id_foreign: subject_offerings.teacher_id > teachers.id [delete: set null]
 Ref teachers_user_id_foreign: teachers.user_id - users.id [delete: cascade]
+Ref term_registrations_learner_id_foreign: term_registrations.learner_id > learners.id [delete: restrict]
+Ref term_registrations_registered_by_foreign: term_registrations.registered_by > users.id [delete: set null]
+Ref term_registrations_section_id_foreign: term_registrations.section_id > sections.id [delete: restrict]
+Ref term_registrations_term_id_foreign: term_registrations.term_id > terms.id [delete: restrict]
 Ref users_college_id_foreign: users.college_id > colleges.id [delete: restrict]

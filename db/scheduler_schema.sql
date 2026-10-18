@@ -11,7 +11,7 @@
 -- PERIOD FOR / WITHOUT OVERLAPS and the CHECK constraints are
 -- MariaDB-specific.
 --
--- offering_meetings.starts_at/ends_at use a reference week:
+-- schedules.starts_at/ends_at use a reference week:
 -- 2001-01-01 (Monday) through 2001-01-07 (Sunday).
 
 SET NAMES utf8mb4;
@@ -41,20 +41,6 @@ CREATE TABLE `colleges` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `colleges_code_unique` (`code`),
   UNIQUE KEY `colleges_name_unique` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `courses` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `college_id` bigint(20) unsigned NOT NULL,
-  `code` varchar(20) NOT NULL,
-  `title` varchar(150) NOT NULL,
-  `lecture_units` decimal(3,1) NOT NULL DEFAULT 0.0,
-  `laboratory_units` decimal(3,1) NOT NULL DEFAULT 0.0,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `courses_college_id_code_unique` (`college_id`,`code`),
-  CONSTRAINT `courses_college_id_foreign` FOREIGN KEY (`college_id`) REFERENCES `colleges` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `failed_jobs` (
@@ -134,7 +120,7 @@ CREATE TABLE `rooms` (
   `code` varchar(30) NOT NULL,
   `building` varchar(100) DEFAULT NULL,
   `floor` tinyint(4) DEFAULT NULL,
-  `capacity` smallint(5) unsigned NOT NULL,
+  `capacity` smallint(5) unsigned DEFAULT NULL,
   `room_type` enum('lecture','laboratory') NOT NULL DEFAULT 'lecture',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -153,6 +139,20 @@ CREATE TABLE `sessions` (
   PRIMARY KEY (`id`),
   KEY `sessions_user_id_index` (`user_id`),
   KEY `sessions_last_activity_index` (`last_activity`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `subjects` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `college_id` bigint(20) unsigned NOT NULL,
+  `code` varchar(20) NOT NULL,
+  `title` varchar(150) NOT NULL,
+  `lecture_units` decimal(3,1) NOT NULL DEFAULT 0.0,
+  `laboratory_units` decimal(3,1) NOT NULL DEFAULT 0.0,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `subjects_college_id_code_unique` (`college_id`,`code`),
+  CONSTRAINT `subjects_college_id_foreign` FOREIGN KEY (`college_id`) REFERENCES `colleges` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `terms` (
@@ -188,6 +188,7 @@ CREATE TABLE `sections` (
   `program_id` bigint(20) unsigned NOT NULL,
   `year_level` tinyint(3) unsigned NOT NULL,
   `name` varchar(30) NOT NULL,
+  `capacity` smallint(5) unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -199,7 +200,7 @@ CREATE TABLE `sections` (
 
 CREATE TABLE `users` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `role` enum('admin','dean','teacher','learner') NOT NULL DEFAULT 'learner',
+  `role` enum('admin','registrar','dean','teacher','learner') NOT NULL DEFAULT 'learner',
   `college_id` bigint(20) unsigned DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `email` varchar(255) NOT NULL,
@@ -323,38 +324,38 @@ CREATE TABLE `teachers` (
   CONSTRAINT `teachers_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `course_offerings` (
+CREATE TABLE `subject_offerings` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `section_id` bigint(20) unsigned NOT NULL,
-  `course_id` bigint(20) unsigned NOT NULL,
+  `subject_id` bigint(20) unsigned NOT NULL,
   `teacher_id` bigint(20) unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `course_offerings_section_id_course_id_unique` (`section_id`,`course_id`),
-  KEY `course_offerings_course_id_foreign` (`course_id`),
-  KEY `course_offerings_teacher_id_foreign` (`teacher_id`),
-  CONSTRAINT `course_offerings_course_id_foreign` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`),
-  CONSTRAINT `course_offerings_section_id_foreign` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`),
-  CONSTRAINT `course_offerings_teacher_id_foreign` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE SET NULL
+  UNIQUE KEY `subject_offerings_section_id_subject_id_unique` (`section_id`,`subject_id`),
+  KEY `subject_offerings_subject_id_foreign` (`subject_id`),
+  KEY `subject_offerings_teacher_id_foreign` (`teacher_id`),
+  CONSTRAINT `subject_offerings_section_id_foreign` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`),
+  CONSTRAINT `subject_offerings_subject_id_foreign` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`),
+  CONSTRAINT `subject_offerings_teacher_id_foreign` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `offering_groups` (
+CREATE TABLE `batches` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `course_offering_id` bigint(20) unsigned NOT NULL,
+  `subject_offering_id` bigint(20) unsigned NOT NULL,
   `name` varchar(30) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `offering_groups_course_offering_id_name_unique` (`course_offering_id`,`name`),
-  CONSTRAINT `offering_groups_course_offering_id_foreign` FOREIGN KEY (`course_offering_id`) REFERENCES `course_offerings` (`id`) ON DELETE CASCADE
+  UNIQUE KEY `batches_subject_offering_id_name_unique` (`subject_offering_id`,`name`),
+  CONSTRAINT `batches_subject_offering_id_foreign` FOREIGN KEY (`subject_offering_id`) REFERENCES `subject_offerings` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `enrollments` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `learner_id` bigint(20) unsigned NOT NULL,
-  `course_offering_id` bigint(20) unsigned NOT NULL,
-  `offering_group_id` bigint(20) unsigned DEFAULT NULL,
+  `subject_offering_id` bigint(20) unsigned NOT NULL,
+  `batch_id` bigint(20) unsigned DEFAULT NULL,
   `status` enum('enrolled','for_dropping','dropped') NOT NULL DEFAULT 'enrolled',
   `warning_level` tinyint(3) unsigned NOT NULL DEFAULT 0,
   `flagged_for_drop_at` timestamp NULL DEFAULT NULL,
@@ -363,20 +364,20 @@ CREATE TABLE `enrollments` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `enrollments_learner_id_course_offering_id_unique` (`learner_id`,`course_offering_id`),
-  KEY `enrollments_offering_group_id_foreign` (`offering_group_id`),
+  UNIQUE KEY `enrollments_learner_id_subject_offering_id_unique` (`learner_id`,`subject_offering_id`),
+  KEY `enrollments_batch_id_foreign` (`batch_id`),
   KEY `enrollments_drop_confirmed_by_foreign` (`drop_confirmed_by`),
-  KEY `enrollments_course_offering_id_status_index` (`course_offering_id`,`status`),
-  CONSTRAINT `enrollments_course_offering_id_foreign` FOREIGN KEY (`course_offering_id`) REFERENCES `course_offerings` (`id`),
+  KEY `enrollments_subject_offering_id_status_index` (`subject_offering_id`,`status`),
+  CONSTRAINT `enrollments_batch_id_foreign` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE SET NULL,
   CONSTRAINT `enrollments_drop_confirmed_by_foreign` FOREIGN KEY (`drop_confirmed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `enrollments_learner_id_foreign` FOREIGN KEY (`learner_id`) REFERENCES `learners` (`id`),
-  CONSTRAINT `enrollments_offering_group_id_foreign` FOREIGN KEY (`offering_group_id`) REFERENCES `offering_groups` (`id`) ON DELETE SET NULL
+  CONSTRAINT `enrollments_subject_offering_id_foreign` FOREIGN KEY (`subject_offering_id`) REFERENCES `subject_offerings` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `offering_meetings` (
+CREATE TABLE `schedules` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `course_offering_id` bigint(20) unsigned NOT NULL,
-  `offering_group_id` bigint(20) unsigned DEFAULT NULL,
+  `subject_offering_id` bigint(20) unsigned NOT NULL,
+  `batch_id` bigint(20) unsigned DEFAULT NULL,
   `term_id` bigint(20) unsigned NOT NULL,
   `teacher_id` bigint(20) unsigned NOT NULL,
   `room_id` bigint(20) unsigned DEFAULT NULL,
@@ -387,26 +388,26 @@ CREATE TABLE `offering_meetings` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PERIOD FOR `slot` (`starts_at`, `ends_at`),
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_offering_meetings_teacher_slot` (`term_id`,`teacher_id`,`slot` WITHOUT OVERLAPS),
-  UNIQUE KEY `uq_offering_meetings_room_slot` (`term_id`,`room_id`,`slot` WITHOUT OVERLAPS),
-  KEY `offering_meetings_course_offering_id_foreign` (`course_offering_id`),
-  KEY `offering_meetings_offering_group_id_foreign` (`offering_group_id`),
-  KEY `offering_meetings_teacher_id_foreign` (`teacher_id`),
-  KEY `offering_meetings_room_id_foreign` (`room_id`),
-  CONSTRAINT `offering_meetings_course_offering_id_foreign` FOREIGN KEY (`course_offering_id`) REFERENCES `course_offerings` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `offering_meetings_offering_group_id_foreign` FOREIGN KEY (`offering_group_id`) REFERENCES `offering_groups` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `offering_meetings_room_id_foreign` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`),
-  CONSTRAINT `offering_meetings_teacher_id_foreign` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`),
-  CONSTRAINT `offering_meetings_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`),
-  CONSTRAINT `chk_offering_meetings_reference_week` CHECK (`starts_at` >= '2001-01-01 00:00:00' and `ends_at` < '2001-01-08 00:00:00'),
-  CONSTRAINT `chk_offering_meetings_same_day` CHECK (cast(`starts_at` as date) = cast(`ends_at` as date)),
-  CONSTRAINT `chk_offering_meetings_room` CHECK (`room_id` is not null or `mode` = 'online')
+  UNIQUE KEY `uq_schedules_teacher_slot` (`term_id`,`teacher_id`,`slot` WITHOUT OVERLAPS),
+  UNIQUE KEY `uq_schedules_room_slot` (`term_id`,`room_id`,`slot` WITHOUT OVERLAPS),
+  KEY `schedules_subject_offering_id_foreign` (`subject_offering_id`),
+  KEY `schedules_batch_id_foreign` (`batch_id`),
+  KEY `schedules_teacher_id_foreign` (`teacher_id`),
+  KEY `schedules_room_id_foreign` (`room_id`),
+  CONSTRAINT `schedules_batch_id_foreign` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `schedules_room_id_foreign` FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`),
+  CONSTRAINT `schedules_subject_offering_id_foreign` FOREIGN KEY (`subject_offering_id`) REFERENCES `subject_offerings` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `schedules_teacher_id_foreign` FOREIGN KEY (`teacher_id`) REFERENCES `teachers` (`id`),
+  CONSTRAINT `schedules_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`),
+  CONSTRAINT `chk_schedules_reference_week` CHECK (`starts_at` >= '2001-01-01 00:00:00' and `ends_at` < '2001-01-08 00:00:00'),
+  CONSTRAINT `chk_schedules_same_day` CHECK (cast(`starts_at` as date) = cast(`ends_at` as date)),
+  CONSTRAINT `chk_schedules_room` CHECK (`room_id` is not null or `mode` = 'online')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `attendance_records` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `enrollment_id` bigint(20) unsigned NOT NULL,
-  `offering_meeting_id` bigint(20) unsigned NOT NULL,
+  `schedule_id` bigint(20) unsigned NOT NULL,
   `class_date` date NOT NULL,
   `status` enum('present','late','absent') NOT NULL,
   `absence_excuse_id` bigint(20) unsigned DEFAULT NULL,
@@ -414,14 +415,14 @@ CREATE TABLE `attendance_records` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `uq_attendance_records_meeting_date` (`enrollment_id`,`offering_meeting_id`,`class_date`),
+  UNIQUE KEY `uq_attendance_records_schedule_date` (`enrollment_id`,`schedule_id`,`class_date`),
   KEY `attendance_records_absence_excuse_id_foreign` (`absence_excuse_id`),
   KEY `attendance_records_recorded_by_foreign` (`recorded_by`),
-  KEY `attendance_records_offering_meeting_id_class_date_index` (`offering_meeting_id`,`class_date`),
+  KEY `attendance_records_schedule_id_class_date_index` (`schedule_id`,`class_date`),
   CONSTRAINT `attendance_records_absence_excuse_id_foreign` FOREIGN KEY (`absence_excuse_id`) REFERENCES `absence_excuses` (`id`),
   CONSTRAINT `attendance_records_enrollment_id_foreign` FOREIGN KEY (`enrollment_id`) REFERENCES `enrollments` (`id`),
-  CONSTRAINT `attendance_records_offering_meeting_id_foreign` FOREIGN KEY (`offering_meeting_id`) REFERENCES `offering_meetings` (`id`),
   CONSTRAINT `attendance_records_recorded_by_foreign` FOREIGN KEY (`recorded_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `attendance_records_schedule_id_foreign` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`),
   CONSTRAINT `chk_attendance_records_excuse` CHECK (`absence_excuse_id` is null or `status` = 'absent')
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -439,4 +440,26 @@ CREATE TABLE `attendance_audits` (
   KEY `attendance_audits_attendance_record_id_changed_at_index` (`attendance_record_id`,`changed_at`),
   CONSTRAINT `attendance_audits_attendance_record_id_foreign` FOREIGN KEY (`attendance_record_id`) REFERENCES `attendance_records` (`id`) ON DELETE CASCADE,
   CONSTRAINT `attendance_audits_changed_by_foreign` FOREIGN KEY (`changed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `term_registrations` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `learner_id` bigint(20) unsigned NOT NULL,
+  `term_id` bigint(20) unsigned NOT NULL,
+  `year_level` tinyint(3) unsigned NOT NULL,
+  `section_id` bigint(20) unsigned DEFAULT NULL,
+  `is_irregular` tinyint(1) NOT NULL DEFAULT 0,
+  `status` enum('registered','withdrawn') NOT NULL DEFAULT 'registered',
+  `registered_by` bigint(20) unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `term_registrations_learner_id_term_id_unique` (`learner_id`,`term_id`),
+  KEY `term_registrations_section_id_foreign` (`section_id`),
+  KEY `term_registrations_registered_by_foreign` (`registered_by`),
+  KEY `term_registrations_term_id_section_id_index` (`term_id`,`section_id`),
+  CONSTRAINT `term_registrations_learner_id_foreign` FOREIGN KEY (`learner_id`) REFERENCES `learners` (`id`),
+  CONSTRAINT `term_registrations_registered_by_foreign` FOREIGN KEY (`registered_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `term_registrations_section_id_foreign` FOREIGN KEY (`section_id`) REFERENCES `sections` (`id`),
+  CONSTRAINT `term_registrations_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

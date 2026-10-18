@@ -9,12 +9,13 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * Courses are owned by one college; shared subjects (e.g. English) are
-     * separate courses per college.
+     * Subjects are owned by one college and can be offered to any section of
+     * that college's programs. A subject every college teaches (e.g.
+     * English) is a separate subject per college.
      */
     public function up(): void
     {
-        Schema::create('courses', function (Blueprint $table) {
+        Schema::create('subjects', function (Blueprint $table) {
             $table->id();
             $table->foreignId('college_id')->constrained()->restrictOnDelete();
             $table->string('code', 20);
@@ -32,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('courses');
+        Schema::dropIfExists('subjects');
     }
 };

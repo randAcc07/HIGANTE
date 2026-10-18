@@ -19,8 +19,8 @@ return new class extends Migration
         Schema::create('enrollments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('learner_id')->constrained()->restrictOnDelete();
-            $table->foreignId('course_offering_id')->constrained()->restrictOnDelete();
-            $table->foreignId('offering_group_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('subject_offering_id')->constrained()->restrictOnDelete();
+            $table->foreignId('batch_id')->nullable()->constrained()->nullOnDelete();
             $table->enum('status', ['enrolled', 'for_dropping', 'dropped'])->default('enrolled');
             $table->unsignedTinyInteger('warning_level')->default(0);
             $table->timestamp('flagged_for_drop_at')->nullable();
@@ -28,8 +28,8 @@ return new class extends Migration
             $table->foreignId('drop_confirmed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->unique(['learner_id', 'course_offering_id']);
-            $table->index(['course_offering_id', 'status']);
+            $table->unique(['learner_id', 'subject_offering_id']);
+            $table->index(['subject_offering_id', 'status']);
         });
     }
 

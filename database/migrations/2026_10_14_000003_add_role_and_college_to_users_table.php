@@ -9,13 +9,14 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * Every non-admin user belongs to exactly one college; deans, teachers
-     * and learners are all scoped by it.
+     * Roles are exclusive. Deans, teachers and learners belong to exactly one
+     * college and are scoped by it; the admin and the registrar are
+     * campus-wide and have none.
      */
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->enum('role', ['admin', 'dean', 'teacher', 'learner'])->default('learner')->after('id');
+            $table->enum('role', ['admin', 'registrar', 'dean', 'teacher', 'learner'])->default('learner')->after('id');
             $table->foreignId('college_id')->nullable()->after('role')->constrained()->restrictOnDelete();
 
             $table->index(['college_id', 'role']);

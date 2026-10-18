@@ -10,8 +10,9 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * One weekly slot of an offering. A NULL group means the whole offering
-     * meets; otherwise only that group's learners.
+     * One weekly slot of a subject offering (e.g. Statics, 2A, Mon
+     * 08:00-10:00, Room 301). A NULL batch means the whole offering meets;
+     * otherwise only that batch's learners.
      *
      * starts_at/ends_at sit on a fixed reference week so the weekday is part
      * of the value: 2001-01-01 is a Monday, ..., 2001-01-07 is a Sunday.
@@ -21,17 +22,17 @@ return new class extends Migration
      *
      * term_id duplicates the section's term so the overlap keys can be
      * scoped per term. teacher_id is always filled (NULLs never conflict in
-     * a unique key). An online meeting has no room.
+     * a unique key). An online schedule has no room.
      *
-     * Section/group and per-learner conflicts depend on enrollments and are
+     * Section/batch and per-learner conflicts depend on enrollments and are
      * checked in the application.
      */
     public function up(): void
     {
-        Schema::create('offering_meetings', function (Blueprint $table) {
+        Schema::create('schedules', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('course_offering_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('offering_group_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('subject_offering_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('batch_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('term_id')->constrained()->restrictOnDelete();
             $table->foreignId('teacher_id')->constrained()->restrictOnDelete();
             $table->foreignId('room_id')->nullable()->constrained()->restrictOnDelete();
@@ -42,16 +43,16 @@ return new class extends Migration
         });
 
         DB::statement(<<<'SQL'
-            ALTER TABLE offering_meetings
-                ADD CONSTRAINT chk_offering_meetings_reference_week
+            ALTER TABLE schedules
+                ADD CONSTRAINT chk_schedules_reference_week
                     CHECK (starts_at >= '2001-01-01 00:00:00' AND ends_at < '2001-01-08 00:00:00'),
-                ADD CONSTRAINT chk_offering_meetings_same_day
+                ADD CONSTRAINT chk_schedules_same_day
                     CHECK (DATE(starts_at) = DATE(ends_at)),
-                ADD CONSTRAINT chk_offering_meetings_room
+                ADD CONSTRAINT chk_schedules_room
                     CHECK (room_id IS NOT NULL OR mode = 'online'),
                 ADD PERIOD FOR slot (starts_at, ends_at),
-                ADD UNIQUE KEY uq_offering_meetings_room_slot (term_id, room_id, slot WITHOUT OVERLAPS),
-                ADD UNIQUE KEY uq_offering_meetings_teacher_slot (term_id, teacher_id, slot WITHOUT OVERLAPS)
+                ADD UNIQUE KEY uq_schedules_room_slot (term_id, room_id, slot WITHOUT OVERLAPS),
+                ADD UNIQUE KEY uq_schedules_teacher_slot (term_id, teacher_id, slot WITHOUT OVERLAPS)
             SQL);
     }
 
@@ -60,6 +61,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('offering_meetings');
+        Schema::dropIfExists('schedules');
     }
 };

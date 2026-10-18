@@ -156,7 +156,7 @@ class SnapshotSchema extends Command
             -- PERIOD FOR / WITHOUT OVERLAPS and the CHECK constraints are
             -- MariaDB-specific.
             --
-            -- offering_meetings.starts_at/ends_at use a reference week:
+            -- schedules.starts_at/ends_at use a reference week:
             -- 2001-01-01 (Monday) through 2001-01-07 (Sunday).
 
             SET NAMES utf8mb4;
