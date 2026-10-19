@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\AccountSetupController;
+use App\Http\Controllers\Admin\AccountController;
 use App\Http\Controllers\Admin\CollegeController;
 use App\Http\Controllers\Admin\ProgramController;
 use App\Http\Controllers\Admin\RoomController;
@@ -9,6 +11,7 @@ use App\Http\Controllers\Admin\UserEmailController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailChangeLinkController;
+use App\Http\Controllers\Registrar\LearnerController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -33,9 +36,26 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
     Route::resource('subjects', SubjectController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('rooms', RoomController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('terms', TermController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::get('accounts', [AccountController::class, 'index'])->name('accounts.index');
+    Route::post('accounts', [AccountController::class, 'store'])->name('accounts.store');
+    Route::put('accounts/{account}', [AccountController::class, 'update'])->name('accounts.update');
+    Route::put('accounts/{account}/status', [AccountController::class, 'status'])->name('accounts.status');
+    Route::post('accounts/{account}/setup-link', [AccountController::class, 'setupLink'])->name('accounts.setup-link');
     Route::post('terms/{term}/close', [TermController::class, 'close'])->name('terms.close');
     Route::delete('terms/{term}/close', [TermController::class, 'reopen'])->name('terms.reopen');
 });
+
+Route::middleware(['auth', 'verified', 'role:registrar'])->prefix('registrar')->name('registrar.')->group(function () {
+    Route::get('learners', [LearnerController::class, 'index'])->name('learners.index');
+    Route::post('learners', [LearnerController::class, 'store'])->name('learners.store');
+    Route::put('learners/{learner}', [LearnerController::class, 'update'])->name('learners.update');
+    Route::put('learners/{learner}/status', [LearnerController::class, 'status'])->name('learners.status');
+    Route::post('learners/{learner}/setup-link', [LearnerController::class, 'setupLink'])->name('learners.setup-link');
+});
+
+// Account setup links. Signed URLs authorize them; see AccountSetupController.
+Route::get('account-setup/{user}', [AccountSetupController::class, 'show'])->whereNumber('user')->name('account-setup.show');
+Route::post('account-setup/{user}', [AccountSetupController::class, 'store'])->whereNumber('user')->middleware('throttle:10,1')->name('account-setup.store');
 
 // The links emailed during an email change. Signed URLs authorize them, so
 // they work without being logged in; see EmailChangeLinkController.

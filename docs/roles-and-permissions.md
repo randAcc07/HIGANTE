@@ -14,24 +14,26 @@ the college and can be offered to any section of its programs.
 
 ## Admin (campus-wide)
 
-| Responsibility                                                                                                                                                                 | Status |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
-| Create the first admin account (`php artisan app:create-admin`)                                                                                                                | ✅     |
-| Manage colleges and their programs                                                                                                                                             | ✅     |
-| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                                                                    | ✅     |
-| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                                                                                 | ✅     |
-| Manage subjects (each owned by one college)                                                                                                                                    | ✅     |
-| Create registrar, dean and teacher accounts                                                                                                                                    | ⏳     |
-| Deactivate accounts (replaces self-deletion). Login already refuses inactive accounts; the admin screen is pending                                                             | ⏳     |
-| Edit staff names; change any user's email directly (for lost inboxes). The email override works (with a reason, audited); its form and name editing come with the user screens | ⏳     |
-| Campus-wide holidays and class suspensions                                                                                                                                     | ✅     |
+| Responsibility                                                                                                               | Status |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Create the first admin account (`php artisan app:create-admin`)                                                              | ✅     |
+| Manage colleges and their programs                                                                                           | ✅     |
+| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                  | ✅     |
+| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                               | ✅     |
+| Manage subjects (each owned by one college)                                                                                  | ✅     |
+| Create registrar, dean and teacher accounts                                                                                  | ✅     |
+| Admin accounts: made and kept on the server (`php artisan app:create-admin`); no admin controls another admin's account      | ✅     |
+| Deactivate and reactivate registrar, dean and teacher accounts                                                               | ✅     |
+| Edit registrar, dean and teacher names and teacher details; change anyone's email but an admin's directly (for lost inboxes) | ✅     |
+| Campus-wide holidays and class suspensions                                                                                   | ✅     |
 
 ## Registrar (campus-wide)
 
 | Responsibility                                                                                                                                                                         | Status |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Admit learners: create the account and student record, set program and year level                                                                                                      | ⏳     |
-| Edit learners' names                                                                                                                                                                   | ⏳     |
+| Admit learners: create the account and student record, set program and year level                                                                                                      | ✅     |
+| Edit learners' names                                                                                                                                                                   | ✅     |
+| Deactivate and reactivate learner accounts; send new setup links                                                                                                                       | ✅     |
 | Register learners for a term from last year's list (1st semester: tick as each one enrolls; 2nd semester: carried over, untick who left), which places them in a section automatically | ⏳     |
 | Mark a registration as irregular (no automatic enrollment in the section's subjects)                                                                                                   | ⏳     |
 
@@ -76,15 +78,16 @@ the college and can be offered to any section of its programs.
 
 ## All users
 
-| Responsibility                                                                              | Status |
-| ------------------------------------------------------------------------------------------- | ------ |
-| Log in, reset password, two-factor login, passkeys                                          | ✅     |
-| See the calendar: campus-wide events plus their own college's (admin and registrar see all) | ✅     |
-| Change own name (staff only; learners' names are changed by the registrar)                  | ✅     |
-| Change own email, confirmed by both the new and the old address                             | ✅     |
-| Change own password                                                                         | ✅     |
-| Public sign-up                                                                              | 🚫     |
-| Delete own account                                                                          | 🚫     |
+| Responsibility                                                                                                                            | Status |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Log in, reset password, two-factor login, passkeys                                                                                        | ✅     |
+| See the calendar: campus-wide events plus their own college's (admin and registrar see all)                                               | ✅     |
+| Change own name (staff only; learners' names are changed by the registrar)                                                                | ✅     |
+| Change own email, confirmed by both the new and the old address                                                                           | ✅     |
+| Change own password                                                                                                                       | ✅     |
+| Forgot the password and lost the inbox: staff override the email and hand over a new setup link (registrar for learners, admin for staff) | ✅     |
+| Public sign-up                                                                                                                            | 🚫     |
+| Delete own account                                                                                                                        | 🚫     |
 
 ## System
 

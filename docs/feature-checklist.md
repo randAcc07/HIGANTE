@@ -67,11 +67,11 @@ Every feature is done only when:
 
 ## 5. Accounts and admission
 
-- [ ] Admin creates registrar, dean and teacher accounts (deans and teachers get a college)
-- [ ] Registrar admits learners: account, student number, program, year level
-- [ ] New accounts get a set-password link (emailed, and copyable)
-- [ ] Admin and registrar can edit names and deactivate/reactivate within their scope
-- [ ] Lists with search and filters (role, college, program, active)
+- [x] Admin creates registrar, dean and teacher accounts (deans and teachers get a college; teachers an employee number and duty status). Role and college are fixed once made. Admin accounts are peers, so no admin controls another: they are made and kept on the server (`php artisan app:create-admin`)
+- [x] Registrar admits learners: account, student number, program, year level, status; the learner's college follows the program. A program shift waits until the learner's current and coming terms are over
+- [x] New accounts get a set-password link: emailed, and shown once to whoever made the account to copy. Signed, 7 days, works once (voided when the password changes); doubles as an admin-assisted password reset. Accounts made by staff start with a verified email
+- [x] Admin edits registrar, dean and teacher names and teacher details, overrides the email of anyone but an admin (feature 2's form), and deactivates/reactivates those staff. Registrar edits learner records and names, and deactivates/reactivates learners. Someone who forgot their password and lost their inbox gets the email overridden, then a new setup link handed over
+- [x] Lists with search and filters: accounts (role, college, active), learners (college, program, year level, status)
 
 ## 6. Dean scheduling
 
@@ -140,6 +140,7 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 ## Later
 
 - [ ] Learner CSV import (needs a real file to design against)
+- [ ] Server commands for admin accounts, which no admin can change from the app: e.g. `app:reset-admin <email>` printing a new setup link, plus changing an admin's email and deactivating/reactivating an admin
 - [ ] Copy one subject's batches to the section's other split subjects
 - [ ] Schedule grid: adjustable time stops with zoom, adapted from LSIMS (needs LSIMS's frontend code)
 - [ ] Email warnings, once a mail server exists

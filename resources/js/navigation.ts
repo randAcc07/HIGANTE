@@ -4,13 +4,17 @@ import {
     CalendarDays,
     CalendarRange,
     DoorOpen,
+    GraduationCap,
     LayoutGrid,
+    Users,
 } from '@lucide/vue';
 import CollegeController from '@/actions/App/Http/Controllers/Admin/CollegeController';
 import RoomController from '@/actions/App/Http/Controllers/Admin/RoomController';
 import SubjectController from '@/actions/App/Http/Controllers/Admin/SubjectController';
+import AccountController from '@/actions/App/Http/Controllers/Admin/AccountController';
 import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
+import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
 import { dashboard } from '@/routes';
 import type { NavItem, UserRole } from '@/types';
 
@@ -20,12 +24,19 @@ import type { NavItem, UserRole } from '@/types';
  */
 const itemsByRole: Record<UserRole, () => NavItem[]> = {
     admin: () => [
+        { title: 'Accounts', href: AccountController.index(), icon: Users },
         { title: 'Colleges', href: CollegeController.index(), icon: Building2 },
         { title: 'Subjects', href: SubjectController.index(), icon: BookOpen },
         { title: 'Rooms', href: RoomController.index(), icon: DoorOpen },
         { title: 'Terms', href: TermController.index(), icon: CalendarRange },
     ],
-    registrar: () => [],
+    registrar: () => [
+        {
+            title: 'Learners',
+            href: LearnerController.index(),
+            icon: GraduationCap,
+        },
+    ],
     dean: () => [],
     teacher: () => [],
     learner: () => [],

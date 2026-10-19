@@ -51,7 +51,7 @@ class UserEmailTest extends TestCase
     public function test_a_reason_and_an_unused_address_are_required()
     {
         $admin = User::factory()->admin()->create();
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
         User::factory()->create(['email' => 'taken@example.com']);
 
         $this->actingAs($admin)
@@ -66,7 +66,7 @@ class UserEmailTest extends TestCase
 
     public function test_only_the_admin_can_override_an_email()
     {
-        $user = User::factory()->create(['email' => 'keep@example.com']);
+        $user = User::factory()->teacher()->create(['email' => 'keep@example.com']);
 
         foreach (['registrar', 'dean', 'teacher', 'learner'] as $role) {
             $this->actingAs(User::factory()->{$role}()->create())

@@ -1,3 +1,5 @@
+import type { UserRole } from './auth';
+
 export type College = {
     id: number;
     code: string;
@@ -95,4 +97,49 @@ export type CalendarEvent = {
     /** College code, or null for campus-wide. */
     college: string | null;
     can_edit: boolean;
+};
+
+export type DutyStatus = 'active' | 'on_leave';
+export type LearnerStatus = 'active' | 'inactive' | 'graduated' | 'dropped_out';
+
+/** A user as the account screens list them. */
+export type Account = {
+    id: number;
+    role: UserRole;
+    college_id: number | null;
+    is_active: boolean;
+    last_name: string;
+    first_name: string;
+    middle_name: string | null;
+    suffix: string | null;
+    full_name: string;
+    email: string;
+    college?: Pick<College, 'id' | 'code'> | null;
+    teacher?: {
+        id: number;
+        employee_number: string;
+        duty_status: DutyStatus;
+    } | null;
+    learner?: { id: number; student_number: string } | null;
+};
+
+export type LearnerRecord = {
+    id: number;
+    user_id: number;
+    program_id: number;
+    student_number: string;
+    year_level: number;
+    status: LearnerStatus;
+    user: Account;
+    program: Pick<Program, 'id' | 'college_id' | 'code'> & {
+        college: Pick<College, 'id' | 'code'>;
+    };
+};
+
+/** Flashed once after an account is made or sent a new setup link. */
+export type SetupLink = {
+    name: string;
+    email: string;
+    url: string;
+    days: number;
 };

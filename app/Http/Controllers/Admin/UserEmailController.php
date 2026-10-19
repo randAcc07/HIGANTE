@@ -18,6 +18,8 @@ class UserEmailController extends Controller
 {
     public function update(Request $request, User $user, SetEmailDirectly $setEmail): RedirectResponse
     {
+        AccountController::ensureNotAdmin($user);
+
         $validated = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique(User::class)->ignore($user->id)],
             'reason' => ['required', 'string', 'max:255'],
