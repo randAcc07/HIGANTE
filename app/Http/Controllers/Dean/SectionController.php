@@ -6,13 +6,10 @@ use App\Http\Controllers\Admin\Concerns\RefusesDeletingInUse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Dean\SectionRequest;
 use App\Models\Program;
-use App\Models\Room;
-use App\Models\Schedule;
 use App\Models\Section;
 use App\Models\Subject;
 use App\Models\Term;
 use App\Models\User;
-use App\Scheduling\ScheduleConflicts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -69,22 +66,19 @@ class SectionController extends Controller
         return to_route('dean.sections.show', $section);
     }
 
-    public function show(Section $section, ScheduleConflicts $checker): Response
+    /**
+     * A section's subjects and batches. Its classes are scheduled on the
+     * Timetables page.
+     */
+    public function show(Section $section): Response
     {
         Gate::authorize('view', $section);
 
         $section->load(['program:id,college_id,code,name', 'term']);
         $offerings = $section->subjectOfferings()
             ->with(['subject:id,code,title,lecture_units,laboratory_units', 'teacher.user:id,first_name,middle_name,last_name,suffix', 'batches' => fn ($batches) => $batches->withCount(['enrollments', 'schedules'])->orderBy('name')])
-            ->withCount('enrollments')
+            ->withCount(['enrollments', 'schedules'])
             ->orderBy('id')
-            ->get();
-
-        $schedules = Schedule::query()
-            ->with(['room', 'teacher.user', 'batch', 'subjectOffering.subject', 'subjectOffering.section'])
-            ->withCount('attendanceRecords')
-            ->whereIn('subject_offering_id', $offerings->pluck('id'))
-            ->orderBy('starts_at')
             ->get();
 
         $collegeId = $section->program->college_id;
@@ -97,17 +91,11 @@ class SectionController extends Controller
                 'registered' => $section->termRegistrations()->count(),
             ],
             'offerings' => $offerings,
-            'classes' => $schedules->map(fn (Schedule $schedule): array => [
-                ...ScheduleBlocks::block($schedule),
-                'warnings' => $checker->warnings($schedule),
-                'has_attendance' => $schedule->attendance_records_count > 0,
-            ]),
             'subjects' => Subject::where('college_id', $collegeId)
                 ->whereNotIn('id', $offerings->pluck('subject_id'))
                 ->orderBy('code')
                 ->get(['id', 'code', 'title']),
             'teachers' => ScheduleBlocks::teacherOptions($collegeId),
-            'rooms' => Room::where('is_active', true)->orderBy('building')->orderBy('code')->get(['id', 'code', 'name', 'building', 'capacity', 'room_type']),
             'canEdit' => Gate::allows('update', $section),
         ]);
     }

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Pencil, Plus } from '@lucide/vue';
+import { CalendarClock, Pencil, Plus, UsersRound } from '@lucide/vue';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
+import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import SectionFormDialog from '@/components/dean/SectionFormDialog.vue';
 import Heading from '@/components/Heading.vue';
@@ -153,21 +154,64 @@ function showTerm(id: number): void {
                             {{ section.subject_offerings_count }}
                         </td>
                         <td class="px-4 py-2">
-                            <div
-                                v-if="canEdit && term"
-                                class="flex justify-end gap-1"
-                            >
+                            <div class="flex justify-end gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    as-child
+                                    title="Subjects and batches"
+                                >
+                                    <Link
+                                        :href="
+                                            SectionController.show(section.id)
+                                        "
+                                    >
+                                        <Pencil class="h-4 w-4" />
+                                        <span class="sr-only"
+                                            >Subjects and batches</span
+                                        >
+                                    </Link>
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    as-child
+                                    title="Timetable"
+                                >
+                                    <Link
+                                        :href="
+                                            TimetableController.index({
+                                                query: {
+                                                    term: term?.id,
+                                                    view: 'section',
+                                                    target: section.id,
+                                                },
+                                            })
+                                        "
+                                    >
+                                        <CalendarClock class="h-4 w-4" />
+                                        <span class="sr-only">Timetable</span>
+                                    </Link>
+                                </Button>
                                 <SectionFormDialog
+                                    v-if="canEdit && term"
                                     :term-id="term.id"
                                     :programs="programs"
                                     :section="section"
                                 >
-                                    <Button variant="ghost" size="sm">
-                                        <Pencil class="h-4 w-4" />
-                                        <span class="sr-only">Edit</span>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        title="Name and capacity"
+                                    >
+                                        <UsersRound class="h-4 w-4" />
+                                        <span class="sr-only"
+                                            >Name and capacity</span
+                                        >
                                     </Button>
                                 </SectionFormDialog>
                                 <ConfirmDeleteDialog
+                                    v-if="canEdit"
                                     :title="`Delete ${section.program.code} ${section.name}?`"
                                     description="Its subjects, batches and classes go with it. Only a section with no registered or enrolled learners can be deleted."
                                     :url="

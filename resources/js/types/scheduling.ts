@@ -24,6 +24,19 @@ export type ClassBlock = {
     section_id?: number;
 };
 
+/**
+ * An empty grid slot to start a class in, with what the timetable being
+ * viewed fills in: its section, room or teacher, or a batch by name.
+ */
+export type NewClassSlot = {
+    weekday: Weekday;
+    start: string;
+    section_id?: number;
+    room_id?: number;
+    teacher_id?: number;
+    batch_name?: string;
+};
+
 /** Another college's booking of a shared room: no details. */
 export type BusyBlock = {
     id: number;
@@ -60,6 +73,8 @@ export type Offering = {
     teacher: { id: number; user: { full_name: string } } | null;
     batches: Batch[];
     enrollments_count: number;
+    /** Weekly classes, on the section page. */
+    schedules_count?: number;
 };
 
 /** What the grid draws. tone picks a colour; "busy" is greyed out. */
@@ -73,4 +88,6 @@ export type GridBlock = {
     lines: string[];
     tone: number | 'busy';
     warning?: boolean;
+    /** Orders classes that overlap, e.g. by batch name. */
+    group?: string;
 };

@@ -78,11 +78,21 @@ class ScheduleTest extends SchedulingTestCase
         $this->post(route('dean.schedules.store', $this->offering), $this->classData(['weekday' => 2, 'batch_id' => $b->id, 'room_id' => $this->otherRoom->id, 'teacher_id' => $this->otherTeacher->id]))
             ->assertSessionHasNoErrors();
 
-        // A batch of another subject might share learners, so it clashes.
+        // In another subject, the same batch name is the same learners, so it
+        // clashes; a different name is another group and may run alongside.
         $labs = $this->anotherOffering('CS 103');
-        $c = Batch::factory()->for($labs)->create(['name' => '1-AC']);
+        $sameGroup = Batch::factory()->for($labs)->create(['name' => '1-AA']);
+        $otherGroup = Batch::factory()->for($labs)->create(['name' => '1-AC']);
         $third = Teacher::factory()->forCollege($this->college)->create();
-        $this->post(route('dean.schedules.store', $labs), $this->classData(['weekday' => 2, 'batch_id' => $c->id, 'room_id' => Room::factory()->create()->id, 'teacher_id' => $third->id]))
+        $elsewhere = ['weekday' => 2, 'room_id' => Room::factory()->create()->id, 'teacher_id' => $third->id];
+
+        $this->post(route('dean.schedules.store', $labs), $this->classData([...$elsewhere, 'batch_id' => $sameGroup->id]))
+            ->assertSessionHasErrors(['slot.0' => 'The section already has BSCS 1-A · CS 101 (1-AA) Tue 8:00–9:30 AM.']);
+        $this->post(route('dean.schedules.store', $labs), $this->classData([...$elsewhere, 'batch_id' => $otherGroup->id]))
+            ->assertSessionHasNoErrors();
+
+        // A whole-section class still clashes with any batch's.
+        $this->post(route('dean.schedules.store', $this->offering), $this->classData(['weekday' => 2, 'room_id' => Room::factory()->create()->id, 'teacher_id' => Teacher::factory()->forCollege($this->college)->create()->id]))
             ->assertSessionHasErrors('slot.0');
     }
 

@@ -14,10 +14,12 @@ use Illuminate\Database\Eloquent\Collection;
  *
  * The database rejects room and teacher overlaps by itself (WITHOUT
  * OVERLAPS); this explains them, and adds the section check the database
- * cannot make. Two classes of one section clash when they overlap, except
- * different batches of the same subject, which share no learners. Batches of
- * different subjects might share learners, so they clash too; the exact
- * per-learner check comes with enrollment.
+ * cannot make. Two classes of one section clash when they overlap, unless
+ * both are for batches with different names: a section's batches go by name
+ * across its subjects (2-AA, 2-AB), so 2-AA's Physics lab may run while 2-AB
+ * has Chemistry. Two classes of the same batch name are the same learners
+ * and clash. Since membership is set per subject, enrollment (feature 8)
+ * must check each learner's own week as well.
  */
 class ScheduleConflicts
 {
@@ -133,13 +135,19 @@ class ScheduleConflicts
     }
 
     /**
-     * Different batches of the same subject never share learners.
+     * Batches with different names are different groups of learners, so
+     * their classes may run at the same time.
      */
     private static function parallelBatches(Schedule $a, Schedule $b): bool
     {
-        return $a->subject_offering_id === $b->subject_offering_id
-            && $a->batch_id !== null && $b->batch_id !== null
-            && $a->batch_id !== $b->batch_id;
+        if ($a->batch_id === null || $b->batch_id === null) {
+            return false;
+        }
+
+        $a->loadMissing('batch');
+        $b->loadMissing('batch');
+
+        return $a->batch?->name !== $b->batch?->name;
     }
 
     /**

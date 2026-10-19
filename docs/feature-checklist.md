@@ -79,9 +79,9 @@ Every feature is done only when:
 - [x] Subject offerings per section with a default teacher (own college only, or TBA); changing the teacher can move the subject's classes too (substitutes), checked against the new teacher's week
 - [x] Batches per offering (named, e.g. 1-AA / 1-AB)
 - [x] Schedules: day, time, room or online, whole offering or one batch, teacher
-- [x] Readable conflict messages for room, teacher and section/batch clashes, all listed at once (the database still rejects room and teacher overlaps). Batches of one subject may run together; batches of different subjects may not (the per-learner check comes in feature 8)
+- [x] Readable conflict messages for room, teacher and section/batch clashes, all listed at once (the database still rejects room and teacher overlaps). Batch classes with different names may run together, even of different subjects (2-AA's Physics lab while 2-AB has Chemistry); the same batch name is the same learners and clashes
 - [x] Room capacity and teacher-on-leave warnings when saving (never block)
-- [x] Schedule grid (Vue): Mon–Sat, 07:00–20:00, 30-minute steps; per section (click to add or edit), and per room or teacher (other colleges' bookings of a room show only as booked)
+- [x] Schedule grid (Vue): Mon–Sat, 07:00–20:00, classes in 30-minute steps; zoom 50% / 100% / 200% / 600% via − / +, Ctrl+scroll or pinch (adapted from LSIMS); lines and labels stay at 30 minutes (hourly at 50%), matching the 30-minute scheduling step. Classes are scheduled on the Timetables page, by view type (section, optionally as one batch sees it; room; teacher) then target: click a slot to add (from a room or teacher, the dialog also asks for the section), a class to edit. Section pages keep subjects and batches. Other colleges' bookings of a room show only as booked
 - [x] A closed term's sections, offerings and schedules are read-only; a class with attendance keeps its day and time and can't be removed
 - [x] Nothing with learners is deleted: sections with registrations, subjects with enrollments, batches with classes or learners
 
@@ -105,7 +105,7 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 - [ ] Queue of unsectioned learners; place or move learners between sections (warn past capacity)
 - [ ] Enroll irregular learners subject by subject
 - [ ] Assign learners to batches
-- [ ] Per-learner schedule conflict check when enrolling or batching
+- [ ] Per-learner schedule conflict check when enrolling or batching. Batch membership is set per subject, while scheduling assumes a batch name means the same group across subjects; a learner put in 2-AA of one subject and 2-AB of another must not end up in two overlapping labs
 
 ## 9. Attendance taking (teacher)
 
@@ -143,6 +143,5 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 - [ ] Learner CSV import (needs a real file to design against)
 - [ ] Server commands for admin accounts, which no admin can change from the app: e.g. `app:reset-admin <email>` printing a new setup link, plus changing an admin's email and deactivating/reactivating an admin
 - [ ] Copy one subject's batches to the section's other split subjects
-- [ ] Schedule grid: adjustable time stops with zoom, adapted from LSIMS (needs LSIMS's frontend code)
 - [ ] Email warnings, once a mail server exists
 - [ ] Open items from the roles doc: substitutes, guardian excuses, curriculum/prospectus

@@ -75,7 +75,7 @@ class SectionTest extends SchedulingTestCase
         $this->assertModelMissing($schedule);
     }
 
-    public function test_the_section_page_shows_its_subjects_classes_and_choices()
+    public function test_the_section_page_shows_its_subjects_batches_and_choices()
     {
         Schedule::factory()->for($this->offering)->slot(1, '08:00', '09:30')->create(['teacher_id' => $this->teacher->id, 'room_id' => $this->room->id]);
         Subject::factory()->for($this->college)->create(['code' => 'CS 200']);
@@ -84,10 +84,8 @@ class SectionTest extends SchedulingTestCase
         $this->get(route('dean.sections.show', $this->section))->assertInertia(fn (Assert $page) => $page
             ->component('dean/sections/Show')
             ->has('offerings', 1)
-            ->has('classes', 1)
-            ->where('classes.0.weekday', 1)
-            ->where('classes.0.start', '08:00')
-            ->where('classes.0.room', 'MB-101')
+            ->where('offerings.0.schedules_count', 1)
+            ->missing('classes')
             ->has('subjects', 1)
             ->where('subjects.0.code', 'CS 200')
             ->has('teachers', 2)

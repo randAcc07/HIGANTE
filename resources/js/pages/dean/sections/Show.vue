@@ -1,28 +1,22 @@
 <script setup lang="ts">
-import { Head, setLayoutProps } from '@inertiajs/vue3';
-import { Pencil, Plus, UserRound } from '@lucide/vue';
-import { computed, ref } from 'vue';
+import { Head, Link, setLayoutProps } from '@inertiajs/vue3';
+import { CalendarClock, Plus, UserRound } from '@lucide/vue';
 import BatchController from '@/actions/App/Http/Controllers/Dean/BatchController';
 import OfferingController from '@/actions/App/Http/Controllers/Dean/OfferingController';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
+import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import BatchFormDialog from '@/components/dean/BatchFormDialog.vue';
 import OfferingFormDialog from '@/components/dean/OfferingFormDialog.vue';
-import ScheduleFormDialog from '@/components/dean/ScheduleFormDialog.vue';
 import Heading from '@/components/Heading.vue';
-import ScheduleGrid from '@/components/ScheduleGrid.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type {
-    ClassBlock,
-    GridBlock,
     Offering,
     Program,
-    RoomOption,
     Subject,
     TeacherOption,
     TermPhase,
-    Weekday,
 } from '@/types';
 
 const props = defineProps<{
@@ -36,10 +30,8 @@ const props = defineProps<{
         registered: number;
     };
     offerings: Offering[];
-    classes: ClassBlock[];
     subjects: Pick<Subject, 'id' | 'code' | 'title'>[];
     teachers: TeacherOption[];
-    rooms: RoomOption[];
     canEdit: boolean;
 }>();
 
@@ -58,44 +50,6 @@ setLayoutProps({
     ],
 });
 
-const toneOf = computed(
-    () =>
-        new Map(props.offerings.map((offering, index) => [offering.id, index])),
-);
-
-const blocks = computed<GridBlock[]>(() =>
-    props.classes.map((item) => ({
-        key: `class-${item.id}`,
-        id: item.id,
-        weekday: item.weekday,
-        start: item.start,
-        end: item.end,
-        title: item.batch ? `${item.subject} · ${item.batch}` : item.subject,
-        lines: [item.room ?? 'Online', item.teacher],
-        tone: toneOf.value.get(item.subject_offering_id) ?? 0,
-        warning: (item.warnings?.length ?? 0) > 0,
-    })),
-);
-
-const dialogOpen = ref(false);
-const target = ref<ClassBlock | { weekday: Weekday; start: string } | null>(
-    null,
-);
-
-function addAt(weekday: Weekday, start: string): void {
-    if (props.offerings.length === 0) {
-        return;
-    }
-
-    target.value = { weekday, start };
-    dialogOpen.value = true;
-}
-
-function edit(block: GridBlock): void {
-    target.value = props.classes.find((item) => item.id === block.id) ?? null;
-    dialogOpen.value = target.value !== null;
-}
-
 function units(offering: Offering): string {
     const lecture = Number(offering.subject.lecture_units);
     const laboratory = Number(offering.subject.laboratory_units);
@@ -108,21 +62,12 @@ function units(offering: Offering): string {
         .join(' + ');
 }
 
-function weeklyHours(offering: Offering): string {
-    const minutes = props.classes
-        .filter(
-            (item) =>
-                item.subject_offering_id === offering.id &&
-                item.batch_id === null,
-        )
-        .reduce((sum, item) => {
-            const [sh, sm] = item.start.split(':').map(Number);
-            const [eh, em] = item.end.split(':').map(Number);
+function classesPerWeek(offering: Offering): string {
+    const count = offering.schedules_count ?? 0;
 
-            return sum + (eh * 60 + em) - (sh * 60 + sm);
-        }, 0);
-
-    return minutes ? `${minutes / 60} h/week` : '';
+    return count === 0
+        ? 'Not scheduled'
+        : `${count} class${count === 1 ? '' : 'es'}/week`;
 }
 
 function nextBatchName(offering: Offering): string {
@@ -134,10 +79,27 @@ function nextBatchName(offering: Offering): string {
     <Head :title="`${section.program.code} ${section.name}`" />
 
     <div class="flex flex-col gap-6 p-4">
-        <Heading
-            :title="`${section.program.code} ${section.name}`"
-            :description="`${section.program.name} · Year ${section.year_level} · ${section.term.label} · ${section.registered} registered${section.capacity ? ` of ${section.capacity}` : ''}`"
-        />
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <Heading
+                :title="`${section.program.code} ${section.name}`"
+                :description="`${section.program.name} · Year ${section.year_level} · ${section.term.label} · ${section.registered} registered${section.capacity ? ` of ${section.capacity}` : ''}`"
+            />
+            <Button variant="outline" as-child>
+                <Link
+                    :href="
+                        TimetableController.index({
+                            query: {
+                                term: section.term.id,
+                                view: 'section',
+                                target: section.id,
+                            },
+                        })
+                    "
+                >
+                    <CalendarClock class="h-4 w-4" /> Open timetable
+                </Link>
+            </Button>
+        </div>
 
         <p
             v-if="!canEdit"
@@ -200,7 +162,7 @@ function nextBatchName(offering: Offering): string {
                             <td class="px-4 py-2 whitespace-nowrap">
                                 {{ units(offering) }}
                                 <div class="text-xs text-muted-foreground">
-                                    {{ weeklyHours(offering) }}
+                                    {{ classesPerWeek(offering) }}
                                 </div>
                             </td>
                             <td class="px-4 py-2">
@@ -319,43 +281,5 @@ function nextBatchName(offering: Offering): string {
                 </table>
             </div>
         </section>
-
-        <section class="space-y-3">
-            <div class="flex items-center justify-between gap-4">
-                <Heading
-                    variant="small"
-                    title="Weekly timetable"
-                    :description="
-                        canEdit
-                            ? 'Click an empty half hour to add a class; click a class to change it'
-                            : 'Read-only'
-                    "
-                />
-                <Button
-                    v-if="canEdit"
-                    size="sm"
-                    variant="outline"
-                    :disabled="offerings.length === 0"
-                    @click="addAt(1, '07:00')"
-                >
-                    <Pencil class="h-4 w-4" /> Add class
-                </Button>
-            </div>
-            <ScheduleGrid
-                :blocks="blocks"
-                :editable="canEdit && offerings.length > 0"
-                @slot="addAt"
-                @block="edit"
-            />
-        </section>
     </div>
-
-    <ScheduleFormDialog
-        v-model:open="dialogOpen"
-        :offerings="offerings"
-        :teachers="teachers"
-        :rooms="rooms"
-        :target="target"
-        :editable="canEdit"
-    />
 </template>

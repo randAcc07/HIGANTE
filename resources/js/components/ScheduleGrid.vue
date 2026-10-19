@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { TriangleAlert } from '@lucide/vue';
 import { computed } from 'vue';
+import GridZoomControl from '@/components/GridZoomControl.vue';
+import { useGridZoom } from '@/composables/useGridZoom';
+import type { GridZoom } from '@/composables/useGridZoom';
 import { formatTime, fromMinutes, toMinutes, WEEKDAYS } from '@/lib/time';
 import type { GridBlock, Weekday } from '@/types';
 
 /**
- * A week of classes: Mon–Sat by default, 07:00–20:00 in 30-minute rows.
- * Clicking an empty half hour emits `slot`; clicking a class emits `block`.
+ * A week of classes: Mon–Sat by default, 07:00–20:00. Clicking an empty
+ * spot emits `slot` with the `step`-minute slot it falls in (classes are
+ * scheduled in those, whatever the zoom); clicking a class emits `block`.
  * Classes that overlap within a day (e.g. two batches' labs) sit side by
- * side.
+ * side. Zoom with the − / + buttons, Ctrl+scroll or a pinch (useGridZoom).
  */
 const props = withDefaults(
     defineProps<{
@@ -18,6 +22,8 @@ const props = withDefaults(
         to?: string;
         step?: number;
         editable?: boolean;
+        /** Shared zoom, when the page shows GridZoomControl in its own toolbar. */
+        zoom?: GridZoom;
     }>(),
     {
         days: () => [1, 2, 3, 4, 5, 6] as Weekday[],
@@ -25,6 +31,7 @@ const props = withDefaults(
         to: '20:00',
         step: 30,
         editable: false,
+        zoom: undefined,
     },
 );
 
@@ -33,27 +40,63 @@ const emit = defineEmits<{
     block: [block: GridBlock];
 }>();
 
-const ROW_HEIGHT = 28;
+// The page's zoom if it shows the control itself, else the grid's own.
+const zoom = props.zoom ?? useGridZoom();
+const ppm = zoom.pixelsPerMinute;
 const start = computed(() => toMinutes(props.from));
-const rows = computed(() => (toMinutes(props.to) - start.value) / props.step);
-const height = computed(() => rows.value * ROW_HEIGHT);
-const hours = computed(() =>
-    Array.from({ length: rows.value / (60 / props.step) }, (_, i) =>
-        fromMinutes(start.value + i * 60),
+const height = computed(() => (toMinutes(props.to) - start.value) * ppm.value);
+
+/** The labelled lines at the current zoom level. */
+const labels = computed(() =>
+    Array.from(
+        {
+            length: Math.floor(
+                (toMinutes(props.to) - start.value) / zoom.labelMinutes.value,
+            ),
+        },
+        (_, i) => fromMinutes(start.value + i * zoom.labelMinutes.value),
     ),
 );
+const lineSpacing = computed(() => zoom.labelMinutes.value * ppm.value);
 
-/** Each day's blocks with their lane, and how many lanes the day needs. */
+/**
+ * Each day's blocks with their lane and how many lanes they share. Lanes are
+ * worked out per overlap group, like a calendar app: a class that overlaps
+ * nothing keeps the full width, and only classes that overlap split it, each
+ * keeping one width for its whole height. Within a group, batches go in name
+ * order, so e.g. 2-AA stays on the left.
+ */
 const columns = computed(() =>
     props.days.map((day) => {
         const blocks = props.blocks
             .filter((block) => block.weekday === day)
-            .sort((a, b) => toMinutes(a.start) - toMinutes(b.start));
-        const laneEnds: number[] = [];
-        const placed = blocks.map((block) => {
-            let lane = laneEnds.findIndex(
-                (end) => end <= toMinutes(block.start),
+            .sort(
+                (a, b) =>
+                    toMinutes(a.start) - toMinutes(b.start) ||
+                    (a.group ?? '').localeCompare(b.group ?? ''),
             );
+        const placed: { block: GridBlock; lane: number; lanes: number }[] = [];
+        let group: { block: GridBlock; lane: number }[] = [];
+        let laneEnds: number[] = [];
+        let groupEnd = -1;
+
+        const closeGroup = (): void => {
+            for (const item of group) {
+                placed.push({ ...item, lanes: laneEnds.length });
+            }
+
+            group = [];
+            laneEnds = [];
+        };
+
+        for (const block of blocks) {
+            const blockStart = toMinutes(block.start);
+
+            if (blockStart >= groupEnd) {
+                closeGroup();
+            }
+
+            let lane = laneEnds.findIndex((laneEnd) => laneEnd <= blockStart);
 
             if (lane === -1) {
                 lane = laneEnds.length;
@@ -61,11 +104,13 @@ const columns = computed(() =>
             }
 
             laneEnds[lane] = toMinutes(block.end);
+            groupEnd = Math.max(groupEnd, toMinutes(block.end));
+            group.push({ block, lane });
+        }
 
-            return { block, lane };
-        });
+        closeGroup();
 
-        return { day, placed, lanes: Math.max(1, laneEnds.length) };
+        return { day, placed };
     }),
 );
 
@@ -92,8 +137,8 @@ function position(
     lanes: number,
 ): Record<string, string> {
     return {
-        top: `${((toMinutes(block.start) - start.value) / props.step) * ROW_HEIGHT}px`,
-        height: `${((toMinutes(block.end) - toMinutes(block.start)) / props.step) * ROW_HEIGHT - 2}px`,
+        top: `${(toMinutes(block.start) - start.value) * ppm.value}px`,
+        height: `${(toMinutes(block.end) - toMinutes(block.start)) * ppm.value - 2}px`,
         left: `calc(${(lane / lanes) * 100}% + 2px)`,
         width: `calc(${100 / lanes}% - 4px)`,
     };
@@ -104,85 +149,97 @@ function pick(day: Weekday, event: MouseEvent): void {
         return;
     }
 
-    const row = Math.floor(event.offsetY / ROW_HEIGHT);
-    emit('slot', day, fromMinutes(start.value + row * props.step));
+    const slot = Math.floor(event.offsetY / ppm.value / props.step);
+    emit('slot', day, fromMinutes(start.value + slot * props.step));
 }
 </script>
 
 <template>
-    <div class="overflow-x-auto rounded-lg border">
+    <div class="space-y-2">
+        <div v-if="!props.zoom" class="flex justify-end">
+            <GridZoomControl :zoom="zoom" />
+        </div>
+
         <div
-            class="grid min-w-[720px]"
-            :style="{
-                gridTemplateColumns: `4rem repeat(${days.length}, minmax(0, 1fr))`,
-            }"
+            class="max-h-[75vh] overflow-auto rounded-lg border"
+            @wheel="zoom.onWheel"
+            @touchstart="zoom.onTouchStart"
+            @touchmove="zoom.onTouchMove"
+            @touchend="zoom.onTouchEnd"
         >
-            <div class="border-b bg-muted/50" />
             <div
-                v-for="day in days"
-                :key="`head-${day}`"
-                class="border-b border-l bg-muted/50 px-2 py-1.5 text-center text-xs font-medium"
-            >
-                {{ WEEKDAYS[day] }}
-            </div>
-
-            <div class="relative" :style="{ height: `${height}px` }">
-                <span
-                    v-for="(hour, i) in hours"
-                    :key="hour"
-                    class="absolute right-2 -translate-y-1/2 text-[10px] text-muted-foreground"
-                    :style="{ top: `${i * ROW_HEIGHT * (60 / step)}px` }"
-                    >{{ i === 0 ? '' : formatTime(hour) }}</span
-                >
-            </div>
-
-            <div
-                v-for="column in columns"
-                :key="`day-${column.day}`"
-                class="relative border-l"
-                :class="editable ? 'cursor-cell' : ''"
+                class="grid min-w-[720px]"
                 :style="{
-                    height: `${height}px`,
-                    backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${ROW_HEIGHT * (60 / step) - 1}px, var(--border) ${ROW_HEIGHT * (60 / step) - 1}px, var(--border) ${ROW_HEIGHT * (60 / step)}px)`,
+                    gridTemplateColumns: `4rem repeat(${days.length}, minmax(0, 1fr))`,
                 }"
-                :data-weekday="column.day"
-                @click="pick(column.day, $event)"
             >
-                <button
-                    v-for="{ block, lane } in column.placed"
-                    :key="block.key"
-                    type="button"
-                    class="absolute overflow-hidden rounded-md border px-1.5 py-1 text-left text-[11px] leading-tight shadow-xs"
-                    :class="[
-                        tone(block),
-                        block.tone === 'busy'
-                            ? 'cursor-default'
-                            : 'hover:brightness-95',
-                    ]"
-                    :style="position(block, lane, column.lanes)"
-                    :title="
-                        [
-                            block.title,
-                            ...block.lines,
-                            `${formatTime(block.start)}–${formatTime(block.end)}`,
-                        ].join('\n')
-                    "
-                    @click="block.tone !== 'busy' && emit('block', block)"
+                <div class="sticky top-0 z-10 border-b bg-muted" />
+                <div
+                    v-for="day in days"
+                    :key="`head-${day}`"
+                    class="sticky top-0 z-10 border-b border-l bg-muted px-2 py-1.5 text-center text-xs font-medium"
                 >
-                    <span class="flex items-center gap-1 font-semibold">
-                        <TriangleAlert
-                            v-if="block.warning"
-                            class="h-3 w-3 shrink-0"
-                        />
-                        {{ block.title }}
-                    </span>
+                    {{ WEEKDAYS[day] }}
+                </div>
+
+                <div class="relative" :style="{ height: `${height}px` }">
                     <span
-                        v-for="line in block.lines"
-                        :key="line"
-                        class="block truncate opacity-80"
-                        >{{ line }}</span
+                        v-for="(time, i) in labels"
+                        :key="time"
+                        class="absolute right-2 -translate-y-1/2 text-[10px] text-muted-foreground"
+                        :style="{ top: `${i * lineSpacing}px` }"
+                        >{{ i === 0 ? '' : formatTime(time) }}</span
                     >
-                </button>
+                </div>
+
+                <div
+                    v-for="column in columns"
+                    :key="`day-${column.day}`"
+                    class="relative border-l"
+                    :class="editable ? 'cursor-cell' : ''"
+                    :style="{
+                        height: `${height}px`,
+                        backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${lineSpacing - 1}px, var(--border) ${lineSpacing - 1}px, var(--border) ${lineSpacing}px)`,
+                    }"
+                    :data-weekday="column.day"
+                    @click="pick(column.day, $event)"
+                >
+                    <button
+                        v-for="{ block, lane, lanes } in column.placed"
+                        :key="block.key"
+                        type="button"
+                        class="absolute overflow-hidden rounded-md border px-1.5 py-1 text-left text-[11px] leading-tight shadow-xs"
+                        :class="[
+                            tone(block),
+                            block.tone === 'busy'
+                                ? 'cursor-default'
+                                : 'hover:brightness-95',
+                        ]"
+                        :style="position(block, lane, lanes)"
+                        :title="
+                            [
+                                block.title,
+                                ...block.lines,
+                                `${formatTime(block.start)}–${formatTime(block.end)}`,
+                            ].join('\n')
+                        "
+                        @click="block.tone !== 'busy' && emit('block', block)"
+                    >
+                        <span class="flex items-center gap-1 font-semibold">
+                            <TriangleAlert
+                                v-if="block.warning"
+                                class="h-3 w-3 shrink-0"
+                            />
+                            {{ block.title }}
+                        </span>
+                        <span
+                            v-for="line in block.lines"
+                            :key="line"
+                            class="block truncate opacity-80"
+                            >{{ line }}</span
+                        >
+                    </button>
+                </div>
             </div>
         </div>
     </div>

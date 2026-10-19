@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import ScheduleController from '@/actions/App/Http/Controllers/Dean/ScheduleController';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { formatTime, fromMinutes, toMinutes, WEEKDAYS } from '@/lib/time';
 import type {
+    NewClassSlot,
     ClassBlock,
     Offering,
     RoomOption,
@@ -24,17 +25,28 @@ import type {
 /**
  * Add a class from an empty grid slot, or edit or remove one. Conflicts come
  * back from the server as slot.0, slot.1, ... and are all listed.
+ *
+ * In a section's timetable the section is fixed; from a room's or teacher's
+ * timetable (`sections` given) the dialog asks for the section too, with the
+ * room or teacher being viewed filled in.
  */
 const props = defineProps<{
+    /** Subjects to choose from: one section's, or every section's. */
     offerings: Offering[];
+    /** Given when the section has to be chosen in the dialog. */
+    sections?: { id: number; label: string }[];
     teachers: TeacherOption[];
     rooms: RoomOption[];
     /** An existing class to edit, or a slot to start a new one in. */
-    target: ClassBlock | { weekday: Weekday; start: string } | null;
+    target: ClassBlock | NewClassSlot | null;
     editable: boolean;
 }>();
 
 const open = defineModel<boolean>('open', { required: true });
+
+const emit = defineEmits<{
+    saved: [];
+}>();
 
 const TIMES = Array.from({ length: 27 }, (_, i) =>
     fromMinutes(7 * 60 + i * 30),
@@ -43,6 +55,8 @@ const TIMES = Array.from({ length: 27 }, (_, i) =>
 const existing = computed(() =>
     props.target && 'id' in props.target ? props.target : null,
 );
+
+const sectionId = ref<number | null>(null);
 
 const form = useForm({
     subject_offering_id: null as number | null,
@@ -55,6 +69,27 @@ const form = useForm({
     teacher_id: null as number | null,
 });
 
+/** The chosen section's subjects (all given ones in a section's view). */
+const sectionOfferings = computed(() =>
+    props.sections
+        ? props.offerings.filter((item) => item.section_id === sectionId.value)
+        : props.offerings,
+);
+
+/** The new class's subject defaults: first subject, its batch by name, its teacher. */
+function subjectDefaults(target: NewClassSlot, offerings: Offering[]) {
+    const first = offerings[0];
+    const batch = target.batch_name
+        ? first?.batches.find((item) => item.name === target.batch_name)
+        : undefined;
+
+    return {
+        subject_offering_id: first?.id ?? null,
+        batch_id: batch?.id ?? null,
+        teacher_id: target.teacher_id ?? first?.teacher_id ?? null,
+    };
+}
+
 watch(open, (isOpen) => {
     if (!isOpen || !props.target) {
         return;
@@ -64,6 +99,10 @@ watch(open, (isOpen) => {
     const target = props.target;
 
     if ('id' in target) {
+        sectionId.value =
+            props.offerings.find(
+                (item) => item.id === target.subject_offering_id,
+            )?.section_id ?? null;
         form.defaults({
             subject_offering_id: target.subject_offering_id,
             batch_id: target.batch_id,
@@ -75,20 +114,34 @@ watch(open, (isOpen) => {
             teacher_id: target.teacher_id,
         });
     } else {
-        const first = props.offerings[0];
+        sectionId.value = target.section_id ?? props.sections?.[0]?.id ?? null;
         form.defaults({
-            subject_offering_id: first?.id ?? null,
-            batch_id: null,
+            ...subjectDefaults(target, sectionOfferings.value),
             weekday: target.weekday,
             start: target.start,
             end: fromMinutes(Math.min(toMinutes(target.start) + 90, 20 * 60)),
             mode: 'onsite',
-            room_id: null,
-            teacher_id: first?.teacher_id ?? null,
+            room_id: target.room_id ?? null,
         });
     }
 
     form.reset();
+});
+
+// A new class in another section starts again from that section's subjects.
+watch(sectionId, (id, previous) => {
+    if (
+        !existing.value &&
+        previous !== null &&
+        id !== previous &&
+        props.target &&
+        !('id' in props.target)
+    ) {
+        Object.assign(
+            form,
+            subjectDefaults(props.target, sectionOfferings.value),
+        );
+    }
 });
 
 const offering = computed(
@@ -97,14 +150,23 @@ const offering = computed(
         null,
 );
 
-// A new class takes the subject's default teacher.
+// A new class takes the subject's default teacher (unless it was opened from
+// a teacher's timetable) and that subject's batch of the viewed name.
 watch(
     () => form.subject_offering_id,
     () => {
-        if (!existing.value) {
-            form.batch_id = null;
-            form.teacher_id = offering.value?.teacher_id ?? form.teacher_id;
+        const target = props.target;
+
+        if (existing.value || !target || 'id' in target) {
+            return;
         }
+
+        form.batch_id =
+            offering.value?.batches.find(
+                (item) => item.name === target.batch_name,
+            )?.id ?? null;
+        form.teacher_id =
+            target.teacher_id ?? offering.value?.teacher_id ?? form.teacher_id;
     },
 );
 
@@ -148,6 +210,7 @@ function submit(): void {
             preserveScroll: true,
             onSuccess: () => {
                 open.value = false;
+                emit('saved');
             },
         },
     );
@@ -159,6 +222,7 @@ function remove(): void {
             preserveScroll: true,
             onSuccess: () => {
                 open.value = false;
+                emit('saved');
             },
         });
     }
@@ -198,6 +262,23 @@ const selectClass =
             </ul>
 
             <form v-if="editable" class="space-y-4" @submit.prevent="submit">
+                <div v-if="sections && !existing" class="grid gap-2">
+                    <Label for="class-section">Section</Label>
+                    <select
+                        id="class-section"
+                        v-model="sectionId"
+                        :class="selectClass"
+                    >
+                        <option
+                            v-for="section in sections"
+                            :key="section.id"
+                            :value="section.id"
+                        >
+                            {{ section.label }}
+                        </option>
+                    </select>
+                </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">
                         <Label for="class-subject">Subject</Label>
@@ -208,7 +289,7 @@ const selectClass =
                             :disabled="!!existing"
                         >
                             <option
-                                v-for="item in offerings"
+                                v-for="item in sectionOfferings"
                                 :key="item.id"
                                 :value="item.id"
                             >
