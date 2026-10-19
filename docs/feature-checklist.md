@@ -28,6 +28,7 @@ Every feature is done only when:
 | Mark corrections | Teachers correct their own marks; deans can correct marks in their college; every change is audited. No edit time limit for now                                                                                 |
 | Teacher view     | Teachers see warning and drop status for learners in their own classes                                                                                                                                          |
 | Class period     | One scheduled class on one date counts as one period (Mon and Wed Statics = two a week; a 3-hour lab = one)                                                                                                     |
+| Year levels      | Go up by one at the 1st semester of a new school year; unchanged for the 2nd. No summer term in practice, but the option stays                                                                                  |
 | Learner import   | Single admission first; CSV import later, once a real file format is known                                                                                                                                      |
 | Notifications    | In-app first; email warnings once a mail server exists                                                                                                                                                          |
 
@@ -58,8 +59,11 @@ Every feature is done only when:
 
 ## 4. Terms and calendar
 
-- [ ] Terms (school year, semester, dates) with their attendance policy, defaulting to the handbook (3 lates = 1 absence, warn at 3 and 4, drop at 5)
-- [ ] Calendar events: admin for campus-wide, deans for their own college; whether each one suspends classes
+- [x] Terms (school year as `2026-2027`, semester, dates) saved with their attendance policy, defaulting to the handbook (3 lates = 1 absence, warn at 3 and 4, drop at 5). Terms never overlap; warnings must come before the drop count; the current term is worked out from today's date
+- [x] Term phases: upcoming, in session and ended come from the dates; the admin closes an ended term once its records are final (read-only; can be reopened). Screens that prepare a term open the next upcoming one; screens that view one open the term in session, else the next upcoming, else the latest
+- [x] A term with data is never deleted (only empty ones), and its dates can't move away from recorded attendance
+- [x] Calendar events: admin for campus-wide, deans for their own college (`CalendarEventPolicy`); whether each one suspends classes. Everyone sees the calendar read-only: campus-wide events plus their own college's (admin and registrar see all)
+- [x] Date-only columns serialize as `Y-m-d`, so Manila's UTC+8 can't move a date to the day before
 
 ## 5. Accounts and admission
 
@@ -78,13 +82,22 @@ Every feature is done only when:
 - [ ] Readable conflict messages for room, teacher and section/batch clashes (the database still rejects room and teacher overlaps)
 - [ ] Room capacity warning when known (never blocks)
 - [ ] Schedule grid (Vue): Mon–Sat, 07:00–20:00, 30-minute steps; views per section, room and teacher
+- [ ] A closed term's sections, offerings and schedules are read-only
 
 ## 7. Term registration (registrar)
 
-- [ ] Register admitted learners for a term, with year level and irregular flag
-- [ ] Auto-sectioning: the emptiest section of the learner's program and year level with room; otherwise unsectioned
+Learners re-enroll at the registrar's office once per school year; the
+registrar's approval in the system is the enrollment. There is no learner-side
+confirmation (it would duplicate the office visit) and no enrollment window.
+
+- [ ] 1st semester: the registrar works from a list of last year's active learners, year level already raised by one, nobody ticked; ticks and approves them (singly or in batches) as they complete enrollment
+- [ ] 2nd semester: the same list, pre-ticked with everyone registered in the 1st semester of the same school year (withdrawn learners unticked), same year level; the registrar unticks those who left
+- [ ] New learners (freshmen, transferees) are admitted and registered directly
+- [ ] The registrar can override the proposed year level (returnees, irregulars) and mark a registration irregular (no automatic enrollment in the section's subjects)
+- [ ] Approval registers the learner and auto-sections them: the emptiest section of their program and year level with room; otherwise unsectioned for the dean
 - [ ] Regular learners are enrolled in every offering of their section, including offerings the dean adds later
 - [ ] Withdrawal keeps the registration and its history
+- [ ] Later, if enrollment moves online: learner-side confirmation as a status that feeds the same list
 
 ## 8. Dean placement
 
@@ -99,6 +112,7 @@ Every feature is done only when:
 - [ ] Class list for a schedule on a date; mark present / late / absent
 - [ ] Correct marks; deans can correct marks in their college; audited
 - [ ] Marks only on real class days (the schedule's weekday, inside the term, not suspended)
+- [ ] A closed term's attendance is read-only
 
 ## 10. Absence tracking and drops
 
@@ -115,6 +129,7 @@ Every feature is done only when:
 - [ ] Dean reviews; `medical` needs at least one file to be approved
 - [ ] Approval excuses the learner's absences in every class in the range (lates stay); revoking restores them
 - [ ] Learner sees each excuse's status
+- [ ] Excuses covering a closed term's days can't be reviewed or revoked
 
 ## 12. Learner views
 
@@ -128,4 +143,4 @@ Every feature is done only when:
 - [ ] Copy one subject's batches to the section's other split subjects
 - [ ] Schedule grid: adjustable time stops with zoom, adapted from LSIMS (needs LSIMS's frontend code)
 - [ ] Email warnings, once a mail server exists
-- [ ] Open items from the roles doc: substitutes, guardian excuses, curriculum/prospectus, year-level promotion
+- [ ] Open items from the roles doc: substitutes, guardian excuses, curriculum/prospectus

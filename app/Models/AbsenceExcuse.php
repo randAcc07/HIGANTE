@@ -45,8 +45,8 @@ class AbsenceExcuse extends Model
     protected function casts(): array
     {
         return [
-            'date_from' => 'date',
-            'date_to' => 'date',
+            'date_from' => 'date:Y-m-d',
+            'date_to' => 'date:Y-m-d',
             'reason' => ExcuseReason::class,
             'status' => ExcuseStatus::class,
             'reviewed_at' => 'datetime',

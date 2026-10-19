@@ -157,49 +157,6 @@ CREATE TABLE `subjects` (
   CONSTRAINT `subjects_college_id_foreign` FOREIGN KEY (`college_id`) REFERENCES `colleges` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `terms` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `school_year` char(9) NOT NULL,
-  `semester` enum('first','second','summer') NOT NULL,
-  `starts_on` date NOT NULL,
-  `ends_on` date NOT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `terms_school_year_semester_unique` (`school_year`,`semester`),
-  CONSTRAINT `chk_terms_dates` CHECK (`ends_on` > `starts_on`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `attendance_policies` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `term_id` bigint(20) unsigned NOT NULL,
-  `lates_per_absence` tinyint(3) unsigned NOT NULL DEFAULT 3,
-  `drop_at_absences` tinyint(3) unsigned NOT NULL DEFAULT 5,
-  `warn_at_absences` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Ascending equivalent-absence counts that trigger a warning, e.g. [3,4]' CHECK (json_valid(`warn_at_absences`)),
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `attendance_policies_term_id_unique` (`term_id`),
-  CONSTRAINT `attendance_policies_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `chk_attendance_policies_positive` CHECK (`lates_per_absence` > 0 and `drop_at_absences` > 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `sections` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `term_id` bigint(20) unsigned NOT NULL,
-  `program_id` bigint(20) unsigned NOT NULL,
-  `year_level` tinyint(3) unsigned NOT NULL,
-  `name` varchar(30) NOT NULL,
-  `capacity` smallint(5) unsigned DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `sections_term_id_program_id_name_unique` (`term_id`,`program_id`,`name`),
-  KEY `sections_program_id_foreign` (`program_id`),
-  CONSTRAINT `sections_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`),
-  CONSTRAINT `sections_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE TABLE `users` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `role` enum('admin','registrar','dean','teacher','learner') NOT NULL DEFAULT 'learner',
@@ -359,6 +316,53 @@ CREATE TABLE `teachers` (
   UNIQUE KEY `teachers_user_id_unique` (`user_id`),
   UNIQUE KEY `teachers_employee_number_unique` (`employee_number`),
   CONSTRAINT `teachers_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `terms` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `school_year` char(9) NOT NULL,
+  `semester` enum('first','second','summer') NOT NULL,
+  `starts_on` date NOT NULL,
+  `ends_on` date NOT NULL,
+  `closed_at` timestamp NULL DEFAULT NULL,
+  `closed_by` bigint(20) unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `terms_school_year_semester_unique` (`school_year`,`semester`),
+  KEY `terms_closed_by_foreign` (`closed_by`),
+  CONSTRAINT `terms_closed_by_foreign` FOREIGN KEY (`closed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `chk_terms_dates` CHECK (`ends_on` > `starts_on`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `attendance_policies` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `term_id` bigint(20) unsigned NOT NULL,
+  `lates_per_absence` tinyint(3) unsigned NOT NULL DEFAULT 3,
+  `drop_at_absences` tinyint(3) unsigned NOT NULL DEFAULT 5,
+  `warn_at_absences` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Ascending equivalent-absence counts that trigger a warning, e.g. [3,4]' CHECK (json_valid(`warn_at_absences`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `attendance_policies_term_id_unique` (`term_id`),
+  CONSTRAINT `attendance_policies_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_attendance_policies_positive` CHECK (`lates_per_absence` > 0 and `drop_at_absences` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `sections` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `term_id` bigint(20) unsigned NOT NULL,
+  `program_id` bigint(20) unsigned NOT NULL,
+  `year_level` tinyint(3) unsigned NOT NULL,
+  `name` varchar(30) NOT NULL,
+  `capacity` smallint(5) unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `sections_term_id_program_id_name_unique` (`term_id`,`program_id`,`name`),
+  KEY `sections_program_id_foreign` (`program_id`),
+  CONSTRAINT `sections_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`),
+  CONSTRAINT `sections_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `subject_offerings` (

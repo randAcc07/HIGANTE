@@ -9,12 +9,6 @@ Enum rooms_room_type {
   "venue"
 }
 
-Enum terms_semester {
-  "first"
-  "second"
-  "summer"
-}
-
 Enum users_role {
   "admin"
   "registrar"
@@ -51,6 +45,12 @@ Enum absence_excuses_status {
 Enum teachers_duty_status {
   "active"
   "on_leave"
+}
+
+Enum terms_semester {
+  "first"
+  "second"
+  "summer"
 }
 
 Enum enrollments_status {
@@ -244,58 +244,6 @@ Table subjects {
   }
 }
 
-Table terms {
-  id "bigint(20) unsigned" [pk, increment, not null]
-  school_year char(9) [not null]
-  semester terms_semester [not null]
-  starts_on date [not null]
-  ends_on date [not null]
-  created_at timestamp [null]
-  updated_at timestamp [null]
-
-  indexes {
-    (school_year, semester) [unique, name: 'terms_school_year_semester_unique']
-  }
-
-  Note: '''
-  CHECK chk_terms_dates: `ends_on` > `starts_on`
-  '''
-}
-
-Table attendance_policies {
-  id "bigint(20) unsigned" [pk, increment, not null]
-  term_id "bigint(20) unsigned" [not null]
-  lates_per_absence "tinyint(3) unsigned" [not null, default: 3]
-  drop_at_absences "tinyint(3) unsigned" [not null, default: 5]
-  warn_at_absences json [not null, note: 'Ascending equivalent-absence counts that trigger a warning, e.g. [3,4]']
-  created_at timestamp [null]
-  updated_at timestamp [null]
-
-  indexes {
-    term_id [unique, name: 'attendance_policies_term_id_unique']
-  }
-
-  Note: '''
-  CHECK chk_attendance_policies_positive: `lates_per_absence` > 0 and `drop_at_absences` > 0
-  '''
-}
-
-Table sections {
-  id "bigint(20) unsigned" [pk, increment, not null]
-  term_id "bigint(20) unsigned" [not null]
-  program_id "bigint(20) unsigned" [not null]
-  year_level "tinyint(3) unsigned" [not null]
-  name varchar(30) [not null]
-  capacity "smallint(5) unsigned" [null]
-  created_at timestamp [null]
-  updated_at timestamp [null]
-
-  indexes {
-    program_id [name: 'sections_program_id_foreign']
-    (term_id, program_id, name) [unique, name: 'sections_term_id_program_id_name_unique']
-  }
-}
-
 Table users {
   id "bigint(20) unsigned" [pk, increment, not null]
   role users_role [not null, default: 'learner']
@@ -463,6 +411,61 @@ Table teachers {
   indexes {
     employee_number [unique, name: 'teachers_employee_number_unique']
     user_id [unique, name: 'teachers_user_id_unique']
+  }
+}
+
+Table terms {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  school_year char(9) [not null]
+  semester terms_semester [not null]
+  starts_on date [not null]
+  ends_on date [not null]
+  closed_at timestamp [null]
+  closed_by "bigint(20) unsigned" [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    closed_by [name: 'terms_closed_by_foreign']
+    (school_year, semester) [unique, name: 'terms_school_year_semester_unique']
+  }
+
+  Note: '''
+  CHECK chk_terms_dates: `ends_on` > `starts_on`
+  '''
+}
+
+Table attendance_policies {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  term_id "bigint(20) unsigned" [not null]
+  lates_per_absence "tinyint(3) unsigned" [not null, default: 3]
+  drop_at_absences "tinyint(3) unsigned" [not null, default: 5]
+  warn_at_absences json [not null, note: 'Ascending equivalent-absence counts that trigger a warning, e.g. [3,4]']
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    term_id [unique, name: 'attendance_policies_term_id_unique']
+  }
+
+  Note: '''
+  CHECK chk_attendance_policies_positive: `lates_per_absence` > 0 and `drop_at_absences` > 0
+  '''
+}
+
+Table sections {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  term_id "bigint(20) unsigned" [not null]
+  program_id "bigint(20) unsigned" [not null]
+  year_level "tinyint(3) unsigned" [not null]
+  name varchar(30) [not null]
+  capacity "smallint(5) unsigned" [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    program_id [name: 'sections_program_id_foreign']
+    (term_id, program_id, name) [unique, name: 'sections_term_id_program_id_name_unique']
   }
 }
 
@@ -640,6 +643,7 @@ Ref subject_offerings_section_id_foreign: subject_offerings.section_id > section
 Ref subject_offerings_subject_id_foreign: subject_offerings.subject_id > subjects.id [delete: restrict]
 Ref subject_offerings_teacher_id_foreign: subject_offerings.teacher_id > teachers.id [delete: set null]
 Ref teachers_user_id_foreign: teachers.user_id - users.id [delete: cascade]
+Ref terms_closed_by_foreign: terms.closed_by > users.id [delete: set null]
 Ref term_registrations_learner_id_foreign: term_registrations.learner_id > learners.id [delete: restrict]
 Ref term_registrations_registered_by_foreign: term_registrations.registered_by > users.id [delete: set null]
 Ref term_registrations_section_id_foreign: term_registrations.section_id > sections.id [delete: restrict]

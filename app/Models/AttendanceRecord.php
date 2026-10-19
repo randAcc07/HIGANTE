@@ -42,7 +42,7 @@ class AttendanceRecord extends Model
     protected function casts(): array
     {
         return [
-            'class_date' => 'date',
+            'class_date' => 'date:Y-m-d',
             'status' => AttendanceStatus::class,
         ];
     }

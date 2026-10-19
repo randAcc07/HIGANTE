@@ -54,3 +54,45 @@ export type Paginated<T> = {
     total: number;
     links: { url: string | null; label: string; active: boolean }[];
 };
+
+export type Semester = 'first' | 'second' | 'summer';
+
+/** Upcoming, in session and ended come from the dates; closed is set by the admin. */
+export type TermPhase = 'upcoming' | 'in_session' | 'ended' | 'closed';
+
+export type AttendancePolicy = {
+    lates_per_absence: number;
+    drop_at_absences: number;
+    warn_at_absences: number[];
+};
+
+export type Term = {
+    id: number;
+    school_year: string;
+    semester: Semester;
+    /** Y-m-d */
+    starts_on: string;
+    /** Y-m-d */
+    ends_on: string;
+    /** "1st Semester 2026-2027" */
+    label: string;
+    phase?: TermPhase;
+    closed_at?: string | null;
+    attendance_policy?: AttendancePolicy | null;
+    sections_count?: number;
+    term_registrations_count?: number;
+};
+
+export type CalendarEvent = {
+    id: number;
+    title: string;
+    description: string | null;
+    /** Y-m-d */
+    starts_on: string;
+    /** Y-m-d */
+    ends_on: string;
+    suspends_classes: boolean;
+    /** College code, or null for campus-wide. */
+    college: string | null;
+    can_edit: boolean;
+};
