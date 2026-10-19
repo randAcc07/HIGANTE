@@ -51,9 +51,10 @@ Every feature is done only when:
 
 ## 3. Campus catalog (admin)
 
-- [ ] Colleges and their programs
-- [ ] Subjects per college
-- [ ] Rooms: building, floor, type, optional capacity, active/inactive
+- [x] Colleges and their programs (a program's college is fixed once created)
+- [x] Subjects per college: codes unique within a college, lecture/lab units to one decimal, college fixed once created; filter by college and search
+- [x] Rooms: building, floor, type, optional warn-only capacity, active/inactive; filter by type, status and search
+- [x] Nothing in use is deleted: each delete says what still uses the record (rooms in use are deactivated instead)
 
 ## 4. Terms and calendar
 

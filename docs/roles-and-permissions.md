@@ -17,10 +17,10 @@ the college and can be offered to any section of its programs.
 | Responsibility                                                                                                                                                                 | Status                   |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
 | Create the first admin account (`php artisan app:create-admin`)                                                                                                                | ✅                       |
-| Manage colleges and their programs                                                                                                                                             | ⏳                       |
-| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                                                                    | ⏳                       |
+| Manage colleges and their programs                                                                                                                                             | ✅                       |
+| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                                                                    | ✅                       |
 | Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                                                                                 | ⏳                       |
-| Manage subjects (each owned by one college)                                                                                                                                    | ⏳                       |
+| Manage subjects (each owned by one college)                                                                                                                                    | ✅                       |
 | Create registrar, dean and teacher accounts                                                                                                                                    | ⏳                       |
 | Deactivate accounts (replaces self-deletion). Login already refuses inactive accounts; the admin screen is pending                                                             | ⏳                       |
 | Edit staff names; change any user's email directly (for lost inboxes). The email override works (with a reason, audited); its form and name editing come with the user screens | ⏳                       |

@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\Admin\CollegeController;
+use App\Http\Controllers\Admin\ProgramController;
+use App\Http\Controllers\Admin\RoomController;
+use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\UserEmailController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmailChangeLinkController;
@@ -13,6 +17,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::put('users/{user}/email', [UserEmailController::class, 'update'])->name('users.email.update');
+
+    Route::resource('colleges', CollegeController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::resource('colleges.programs', ProgramController::class)->shallow()->only(['store', 'update', 'destroy']);
+    Route::resource('subjects', SubjectController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('rooms', RoomController::class)->only(['index', 'store', 'update', 'destroy']);
 });
 
 // The links emailed during an email change. Signed URLs authorize them, so

@@ -1,4 +1,7 @@
-import { LayoutGrid } from '@lucide/vue';
+import { BookOpen, Building2, DoorOpen, LayoutGrid } from '@lucide/vue';
+import CollegeController from '@/actions/App/Http/Controllers/Admin/CollegeController';
+import RoomController from '@/actions/App/Http/Controllers/Admin/RoomController';
+import SubjectController from '@/actions/App/Http/Controllers/Admin/SubjectController';
 import { dashboard } from '@/routes';
 import type { NavItem, UserRole } from '@/types';
 
@@ -7,7 +10,11 @@ import type { NavItem, UserRole } from '@/types';
  * still enforces access on every route.
  */
 const itemsByRole: Record<UserRole, () => NavItem[]> = {
-    admin: () => [],
+    admin: () => [
+        { title: 'Colleges', href: CollegeController.index(), icon: Building2 },
+        { title: 'Subjects', href: SubjectController.index(), icon: BookOpen },
+        { title: 'Rooms', href: RoomController.index(), icon: DoorOpen },
+    ],
     registrar: () => [],
     dean: () => [],
     teacher: () => [],
