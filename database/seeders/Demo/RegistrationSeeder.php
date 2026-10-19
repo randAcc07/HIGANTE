@@ -6,6 +6,7 @@ use App\Enums\EnrollmentStatus;
 use App\Enums\LearnerStatus;
 use App\Enums\RegistrationStatus;
 use App\Enums\UserRole;
+use App\Models\Batch;
 use App\Models\College;
 use App\Models\Learner;
 use App\Models\Program;
@@ -234,8 +235,9 @@ class RegistrationSeeder extends Seeder
     }
 
     /**
-     * Batch A takes about half the class plus a few, but never more than its
-     * lab room holds; batch B takes the rest.
+     * Batch A takes about half the class plus a few, batch B the rest, and
+     * neither more than its lab room holds. Only when the class outgrows both
+     * rooms together does batch B run over (capacity only ever warns).
      *
      * @param  list<int>  $learnerIds
      * @return array<int, int>
@@ -248,9 +250,13 @@ class RegistrationSeeder extends Seeder
             return [];
         }
 
-        $roomCapacity = $batches[0]->schedules->first()?->room->capacity ?? PHP_INT_MAX;
+        $capacityA = self::labCapacity($batches[0]);
+        $capacityB = self::labCapacity($batches[1]);
+        $count = count($learnerIds);
         shuffle($learnerIds);
-        $sizeA = min($roomCapacity, intdiv(count($learnerIds) + 1, 2) + mt_rand(0, 4), count($learnerIds));
+        $sizeA = min($capacityA, intdiv($count + 1, 2) + mt_rand(0, 4), $count);
+        // If batch B would overflow its room, move learners to A while A has seats.
+        $sizeA = max($sizeA, min($capacityA, $count - $capacityB));
         $batchOf = [];
 
         foreach ($learnerIds as $index => $learnerId) {
@@ -258,6 +264,14 @@ class RegistrationSeeder extends Seeder
         }
 
         return $batchOf;
+    }
+
+    /**
+     * The capacity of the room the batch has its lab in; no limit when unknown.
+     */
+    private static function labCapacity(Batch $batch): int
+    {
+        return $batch->schedules->first()?->room->capacity ?? PHP_INT_MAX;
     }
 
     /**

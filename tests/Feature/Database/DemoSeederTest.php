@@ -59,12 +59,22 @@ class DemoSeederTest extends TestCase
             WHERE s.college_id <> u.college_id
             SQL)->n);
 
-        // Marks only up to yesterday, on the schedule's weekday, never on a campus holiday.
+        // Marks only up to yesterday, on the schedule's weekday, never on a day
+        // the learner's classes were suspended (campus-wide or by their
+        // college, on any day of the event).
         $this->assertSame('2026-10-17', DB::table('attendance_records')->max('class_date'));
         $this->assertSame(0, DB::selectOne(<<<'SQL'
             SELECT COUNT(*) AS n FROM attendance_records r JOIN schedules s ON s.id = r.schedule_id
             WHERE WEEKDAY(r.class_date) <> WEEKDAY(s.starts_at)
-               OR r.class_date IN (SELECT starts_on FROM calendar_events WHERE college_id IS NULL AND suspends_classes)
+            SQL)->n);
+        $this->assertSame(0, DB::selectOne(<<<'SQL'
+            SELECT COUNT(*) AS n FROM attendance_records r
+            JOIN enrollments e ON e.id = r.enrollment_id
+            JOIN learners l ON l.id = e.learner_id
+            JOIN users u ON u.id = l.user_id
+            JOIN calendar_events ev ON ev.suspends_classes
+                AND (ev.college_id IS NULL OR ev.college_id = u.college_id)
+                AND r.class_date BETWEEN ev.starts_on AND ev.ends_on
             SQL)->n);
 
         // Only approved excuses excuse absences; every mark has its first audit.
@@ -76,19 +86,23 @@ class DemoSeederTest extends TestCase
         Storage::disk('local')->assertExists(DB::table('absence_excuse_documents')->value('path') ?? '');
         $this->assertStringStartsWith(ExcuseSeeder::DOCUMENT_DIRECTORY, (string) DB::table('absence_excuse_documents')->value('path'));
 
-        // Standing follows the handbook: 3 lates = 1 absence, warn at 3 and 4, flag at 5.
+        // Standing follows the handbook: 3 lates = 1 absence, warn at 3 and 4,
+        // flag at 5. Dropped classes (withdrawals and confirmed drops) keep
+        // the warnings they reached.
         $standings = DB::select(<<<'SQL'
             SELECT e.status, e.warning_level,
                    SUM(r.status = 'absent' AND r.absence_excuse_id IS NULL) + FLOOR(SUM(r.status = 'late') / 3) AS equivalent
             FROM enrollments e JOIN attendance_records r ON r.enrollment_id = e.id
-            WHERE e.status <> 'dropped'
             GROUP BY e.id, e.status, e.warning_level
             SQL);
 
         foreach ($standings as $standing) {
             $equivalent = (int) $standing->equivalent;
-            $this->assertSame($equivalent >= 5 ? 'for_dropping' : 'enrolled', $standing->status);
-            $this->assertSame($equivalent >= 5 ? 4 : ($equivalent >= 3 ? min($equivalent, 4) : 0), (int) $standing->warning_level);
+            $this->assertSame($equivalent >= 3 ? min($equivalent, 4) : 0, (int) $standing->warning_level);
+
+            if ($standing->status !== 'dropped') {
+                $this->assertSame($equivalent >= 5 ? 'for_dropping' : 'enrolled', $standing->status);
+            }
         }
 
         $this->assertSame(EnrollmentStatus::ForDropping->value, DB::table('enrollments')

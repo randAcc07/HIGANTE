@@ -20,6 +20,9 @@ use Illuminate\Support\Facades\DB;
  * happened. In each college the earliest flag (other than the atrisk demo
  * login's) was already confirmed by the dean two days later, and that
  * class has no marks after the drop.
+ *
+ * Classes already dropped by a withdrawal keep the warnings they reached
+ * before it, but are never flagged.
  */
 class StandingSeeder extends Seeder
 {
@@ -35,16 +38,16 @@ class StandingSeeder extends Seeder
 
         $counts = DB::table('enrollments')
             ->join('attendance_records', 'attendance_records.enrollment_id', '=', 'enrollments.id')
-            ->where('enrollments.status', EnrollmentStatus::Enrolled->value)
-            ->groupBy('enrollments.id')
-            ->selectRaw("enrollments.id, SUM(attendance_records.status = 'absent' AND attendance_records.absence_excuse_id IS NULL) AS absences, SUM(attendance_records.status = 'late') AS lates")
+            ->whereIn('enrollments.status', [EnrollmentStatus::Enrolled->value, EnrollmentStatus::Dropped->value])
+            ->groupBy('enrollments.id', 'enrollments.status')
+            ->selectRaw("enrollments.id, enrollments.status, SUM(attendance_records.status = 'absent' AND attendance_records.absence_excuse_id IS NULL) AS absences, SUM(attendance_records.status = 'late') AS lates")
             ->get();
 
         foreach ($counts as $count) {
             $equivalent = (int) $count->absences + intdiv((int) $count->lates, $policy->lates_per_absence);
             $reached = array_filter($warnAt, fn (int $at): bool => $at <= $equivalent);
 
-            if ($equivalent >= $policy->drop_at_absences) {
+            if ($equivalent >= $policy->drop_at_absences && $count->status === EnrollmentStatus::Enrolled->value) {
                 DB::table('enrollments')->where('id', $count->id)->update([
                     'warning_level' => max([0, ...$warnAt]),
                     'status' => EnrollmentStatus::ForDropping->value,
