@@ -44,10 +44,10 @@ Every feature is done only when:
 
 ## 2. Email change with two-step verification
 
-- [ ] Table for pending email changes (user, new email, token, expiry, new-confirmed and old-approved times), modeled on LSIMS's `EmailChangeTokens`
-- [ ] Requesting a change emails both addresses; the email changes only after both confirm; links expire
-- [ ] One pending change per user; a new request replaces the old one
-- [ ] Admin can set any user's email directly (marks it verified, cancels any pending change), with an audit trail
+- [x] `email_changes` table (user, new email, expiry, new-confirmed and old-approved times). Instead of LSIMS's stored token hash, the emailed links are signed URLs that expire with the request; deleting the row voids them
+- [x] Requesting a change (current password required) emails both addresses; the email changes only after both agree, in either order; links expire after 24 hours. Opening a link only shows a page, so mail scanners cannot answer for anyone; the old address can also cancel ("this wasn't me")
+- [x] One pending change per user; a new request replaces the old one. Expired requests are pruned daily (`model:prune`)
+- [x] Admin can set any user's email directly (verified, cancels any pending change, reason required), audited in `email_audits` with completed self-service changes; the old address is told. Endpoint only for now: its form comes with the admin user screens in feature 5
 
 ## 3. Campus catalog (admin)
 

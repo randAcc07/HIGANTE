@@ -242,6 +242,37 @@ CREATE TABLE `calendar_events` (
   CONSTRAINT `chk_calendar_events_dates` CHECK (`ends_on` >= `starts_on`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `email_audits` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `old_email` varchar(255) NOT NULL,
+  `new_email` varchar(255) NOT NULL,
+  `method` enum('self_service','admin') NOT NULL,
+  `changed_by` bigint(20) unsigned DEFAULT NULL,
+  `reason` varchar(255) DEFAULT NULL,
+  `changed_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `email_audits_changed_by_foreign` (`changed_by`),
+  KEY `email_audits_user_id_changed_at_index` (`user_id`,`changed_at`),
+  CONSTRAINT `email_audits_changed_by_foreign` FOREIGN KEY (`changed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `email_audits_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `email_changes` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint(20) unsigned NOT NULL,
+  `new_email` varchar(255) NOT NULL,
+  `expires_at` timestamp NOT NULL,
+  `new_confirmed_at` timestamp NULL DEFAULT NULL,
+  `old_approved_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email_changes_user_id_unique` (`user_id`),
+  KEY `email_changes_expires_at_index` (`expires_at`),
+  CONSTRAINT `email_changes_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `learners` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint(20) unsigned NOT NULL,

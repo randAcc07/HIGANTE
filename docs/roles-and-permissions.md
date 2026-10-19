@@ -14,17 +14,17 @@ the college and can be offered to any section of its programs.
 
 ## Admin (campus-wide)
 
-| Responsibility                                                                                                     | Status                   |
-| ------------------------------------------------------------------------------------------------------------------ | ------------------------ |
-| Create the first admin account (`php artisan app:create-admin`)                                                    | ✅                       |
-| Manage colleges and their programs                                                                                 | ⏳                       |
-| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                        | ⏳                       |
-| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                     | ⏳                       |
-| Manage subjects (each owned by one college)                                                                        | ⏳                       |
-| Create registrar, dean and teacher accounts                                                                        | ⏳                       |
-| Deactivate accounts (replaces self-deletion). Login already refuses inactive accounts; the admin screen is pending | ⏳                       |
-| Edit staff names; change any user's email directly (for lost inboxes)                                              | ⏳                       |
-| Campus-wide holidays and class suspensions                                                                         | ❓ admin or someone else |
+| Responsibility                                                                                                                                                                 | Status                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------ |
+| Create the first admin account (`php artisan app:create-admin`)                                                                                                                | ✅                       |
+| Manage colleges and their programs                                                                                                                                             | ⏳                       |
+| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                                                                    | ⏳                       |
+| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                                                                                 | ⏳                       |
+| Manage subjects (each owned by one college)                                                                                                                                    | ⏳                       |
+| Create registrar, dean and teacher accounts                                                                                                                                    | ⏳                       |
+| Deactivate accounts (replaces self-deletion). Login already refuses inactive accounts; the admin screen is pending                                                             | ⏳                       |
+| Edit staff names; change any user's email directly (for lost inboxes). The email override works (with a reason, audited); its form and name editing come with the user screens | ⏳                       |
+| Campus-wide holidays and class suspensions                                                                                                                                     | ❓ admin or someone else |
 
 ## Registrar (campus-wide)
 
@@ -80,7 +80,7 @@ the college and can be offered to any section of its programs.
 | -------------------------------------------------------------------------- | ------ |
 | Log in, reset password, two-factor login, passkeys                         | ✅     |
 | Change own name (staff only; learners' names are changed by the registrar) | ✅     |
-| Change own email, confirmed by both the new and the old address            | ⏳     |
+| Change own email, confirmed by both the new and the old address            | ✅     |
 | Change own password                                                        | ✅     |
 | Public sign-up                                                             | 🚫     |
 | Delete own account                                                         | 🚫     |

@@ -15,7 +15,8 @@ class ProfileUpdateRequest extends FormRequest
      * Get the validation rules that apply to the request.
      *
      * Staff may change their own name; a learner's name is a school record
-     * that only the registrar changes, so learners may not send one.
+     * that only the registrar changes. The email is never changed here: it
+     * goes through the confirmed email change (EmailChangeController).
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
@@ -24,13 +25,10 @@ class ProfileUpdateRequest extends FormRequest
         /** @var User $user */
         $user = $this->user();
 
-        if ($user->role->isStaff()) {
-            return $this->profileRules($user->id);
-        }
+        $names = $user->role->isStaff()
+            ? $this->nameRules()
+            : array_map(fn (): array => ['prohibited'], $this->nameRules());
 
-        return [
-            ...array_map(fn (): array => ['prohibited'], $this->nameRules()),
-            'email' => $this->emailRules($user->id),
-        ];
+        return [...$names, 'email' => ['prohibited']];
     }
 }

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Form, Head, usePage } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import { Form, Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import EmailChangeController from '@/actions/App/Http/Controllers/Settings/EmailChangeController';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/Heading.vue';
 import InputError from '@/components/InputError.vue';
@@ -22,14 +22,28 @@ defineOptions({
     },
 });
 
-defineProps<{
+type PendingEmailChange = {
+    new_email: string;
+    new_confirmed: boolean;
+    old_approved: boolean;
+    expires_at: string;
+};
+
+const props = defineProps<{
     mustVerifyEmail: boolean;
     canEditName: boolean;
+    pendingEmailChange: PendingEmailChange | null;
     status?: string;
 }>();
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+
+const expiresAt = computed(() =>
+    props.pendingEmailChange
+        ? new Date(props.pendingEmailChange.expires_at).toLocaleString()
+        : '',
+);
 </script>
 
 <template>
@@ -40,20 +54,21 @@ const user = computed(() => page.props.auth.user);
     <div class="flex flex-col space-y-6">
         <Heading
             variant="small"
-            title="Profile"
+            title="Name"
             :description="
                 canEditName
-                    ? 'Update your name and email address'
-                    : 'Update your email address'
+                    ? 'How your name appears across the system'
+                    : 'Your name is part of your school record'
             "
         />
 
         <Form
+            v-if="canEditName"
             v-bind="ProfileController.update.form()"
             class="space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div v-if="canEditName" class="grid gap-4 sm:grid-cols-2">
+            <div class="grid gap-4 sm:grid-cols-2">
                 <div class="grid gap-2">
                     <Label for="first_name">First name</Label>
                     <Input
@@ -99,55 +114,129 @@ const user = computed(() => page.props.auth.user);
                 </div>
             </div>
 
-            <div v-else class="grid gap-2" data-test="read-only-name">
-                <Label>Name</Label>
-                <p class="text-sm">{{ user.full_name }}</p>
-                <p class="text-sm text-muted-foreground">
-                    Your name is part of your school record. Ask the registrar's
-                    office to correct it.
-                </p>
+            <Button :disabled="processing" data-test="update-profile-button">
+                Save name
+            </Button>
+        </Form>
+
+        <div v-else class="grid gap-2" data-test="read-only-name">
+            <p class="text-sm">{{ user.full_name }}</p>
+            <p class="text-sm text-muted-foreground">
+                Ask the registrar's office to correct it.
+            </p>
+        </div>
+    </div>
+
+    <div class="flex flex-col space-y-6">
+        <Heading
+            variant="small"
+            title="Email address"
+            description="Changing it needs a confirmation from both the new and the current address"
+        />
+
+        <div class="grid gap-1 text-sm">
+            <span class="text-muted-foreground">Current address</span>
+            <span>{{ user.email }}</span>
+        </div>
+
+        <div v-if="mustVerifyEmail && !user.email_verified_at">
+            <p class="text-sm text-muted-foreground">
+                Your email address is unverified.
+                <Link
+                    :href="send()"
+                    as="button"
+                    class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
+                >
+                    Click here to re-send the verification email.
+                </Link>
+            </p>
+
+            <div
+                v-if="status === 'verification-link-sent'"
+                class="mt-2 text-sm font-medium text-green-600"
+            >
+                A new verification link has been sent to your email address.
+            </div>
+        </div>
+
+        <div
+            v-if="pendingEmailChange"
+            class="space-y-3 rounded-lg border p-4 text-sm"
+            data-test="pending-email-change"
+        >
+            <p>
+                Changing to
+                <span class="font-medium">{{
+                    pendingEmailChange.new_email
+                }}</span>
+            </p>
+            <ul class="space-y-1 text-muted-foreground">
+                <li>
+                    New address:
+                    {{
+                        pendingEmailChange.new_confirmed
+                            ? 'confirmed'
+                            : 'waiting for confirmation'
+                    }}
+                </li>
+                <li>
+                    Current address:
+                    {{
+                        pendingEmailChange.old_approved
+                            ? 'approved'
+                            : 'waiting for approval'
+                    }}
+                </li>
+                <li>The links expire {{ expiresAt }}.</li>
+            </ul>
+            <Form
+                v-bind="EmailChangeController.destroy.form()"
+                v-slot="{ processing }"
+            >
+                <Button variant="outline" size="sm" :disabled="processing">
+                    Cancel this change
+                </Button>
+            </Form>
+        </div>
+
+        <Form
+            v-bind="EmailChangeController.store.form()"
+            class="space-y-6"
+            reset-on-success
+            v-slot="{ errors, processing }"
+        >
+            <div class="grid gap-2">
+                <Label for="new_email">New email address</Label>
+                <Input
+                    id="new_email"
+                    type="email"
+                    name="new_email"
+                    required
+                    autocomplete="email"
+                    placeholder="name@example.com"
+                />
+                <InputError :message="errors.new_email" />
             </div>
 
             <div class="grid gap-2">
-                <Label for="email">Email address</Label>
+                <Label for="email_change_password">Current password</Label>
                 <Input
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    name="email"
-                    :default-value="user.email"
+                    id="email_change_password"
+                    type="password"
+                    name="password"
                     required
-                    autocomplete="username"
-                    placeholder="Email address"
+                    autocomplete="current-password"
                 />
-                <InputError class="mt-2" :message="errors.email" />
+                <InputError :message="errors.password" />
             </div>
 
-            <div v-if="page.props.mustVerifyEmail && !user.email_verified_at">
-                <p class="-mt-4 text-sm text-muted-foreground">
-                    Your email address is unverified.
-                    <Link
-                        :href="send()"
-                        as="button"
-                        class="text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current! dark:decoration-neutral-500"
-                    >
-                        Click here to re-send the verification email.
-                    </Link>
-                </p>
+            <p v-if="pendingEmailChange" class="text-sm text-muted-foreground">
+                Sending a new request replaces the pending one and its links.
+            </p>
 
-                <div
-                    v-if="page.props.status === 'verification-link-sent'"
-                    class="mt-2 text-sm font-medium text-green-600"
-                >
-                    A new verification link has been sent to your email address.
-                </div>
-            </div>
-
-            <div class="flex items-center gap-4">
-                <Button :disabled="processing" data-test="update-profile-button"
-                    >Save</Button
-                >
-            </div>
+            <Button :disabled="processing" data-test="request-email-change">
+                Send confirmation links
+            </Button>
         </Form>
     </div>
 </template>

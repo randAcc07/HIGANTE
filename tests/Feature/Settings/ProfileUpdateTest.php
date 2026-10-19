@@ -21,7 +21,7 @@ class ProfileUpdateTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_staff_can_update_their_name_and_email()
+    public function test_staff_can_update_their_name()
     {
         $user = User::factory()->teacher()->create();
 
@@ -32,37 +32,24 @@ class ProfileUpdateTest extends TestCase
                 'middle_name' => 'Pablo',
                 'last_name' => 'Dela Cruz',
                 'suffix' => 'Jr.',
-                'email' => 'test@example.com',
             ]);
 
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('profile.edit'));
 
-        $user->refresh();
-
-        $this->assertSame('Juan P. Dela Cruz Jr.', $user->full_name);
-        $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertSame('Juan P. Dela Cruz Jr.', $user->refresh()->full_name);
     }
 
-    public function test_learners_can_update_their_email_but_not_their_name()
+    public function test_learners_cannot_change_their_name()
     {
         $user = User::factory()->learner()->create(['first_name' => 'Maria', 'last_name' => 'Santos']);
-
-        $this
-            ->actingAs($user)
-            ->patch(route('profile.update'), ['email' => 'learner@example.com'])
-            ->assertSessionHasNoErrors();
-
-        $this->assertSame('learner@example.com', $user->refresh()->email);
 
         $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
                 'first_name' => 'Changed',
                 'last_name' => 'Name',
-                'email' => 'learner@example.com',
             ])
             ->assertSessionHasErrors(['first_name', 'last_name']);
 
@@ -84,19 +71,16 @@ class ProfileUpdateTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('canEditName', true));
     }
 
-    public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
+    public function test_saving_the_name_keeps_the_email_verified()
     {
         $user = User::factory()->create();
 
-        $response = $this
+        $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
                 'first_name' => $user->first_name,
                 'last_name' => $user->last_name,
-                'email' => $user->email,
-            ]);
-
-        $response
+            ])
             ->assertSessionHasNoErrors()
             ->assertRedirect(route('profile.edit'));
 

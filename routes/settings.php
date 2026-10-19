@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\EmailChangeController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -12,6 +13,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
+
+    Route::post('settings/email', [EmailChangeController::class, 'store'])->middleware('throttle:6,1')->name('email-change.store');
+    Route::delete('settings/email', [EmailChangeController::class, 'destroy'])->name('email-change.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

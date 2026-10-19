@@ -22,6 +22,11 @@ Enum users_role {
   "learner"
 }
 
+Enum email_audits_method {
+  "self_service"
+  "admin"
+}
+
 Enum learners_status {
   "active"
   "inactive"
@@ -336,6 +341,38 @@ Table calendar_events {
   '''
 }
 
+Table email_audits {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  user_id "bigint(20) unsigned" [not null]
+  old_email varchar(255) [not null]
+  new_email varchar(255) [not null]
+  method email_audits_method [not null]
+  changed_by "bigint(20) unsigned" [null]
+  reason varchar(255) [null]
+  changed_at timestamp [not null, default: `current_timestamp()`]
+
+  indexes {
+    changed_by [name: 'email_audits_changed_by_foreign']
+    (user_id, changed_at) [name: 'email_audits_user_id_changed_at_index']
+  }
+}
+
+Table email_changes {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  user_id "bigint(20) unsigned" [not null]
+  new_email varchar(255) [not null]
+  expires_at timestamp [not null]
+  new_confirmed_at timestamp [null]
+  old_approved_at timestamp [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    expires_at [name: 'email_changes_expires_at_index']
+    user_id [unique, name: 'email_changes_user_id_unique']
+  }
+}
+
 Table learners {
   id "bigint(20) unsigned" [pk, increment, not null]
   user_id "bigint(20) unsigned" [not null]
@@ -577,6 +614,9 @@ Ref attendance_records_schedule_id_foreign: attendance_records.schedule_id > sch
 Ref batches_subject_offering_id_foreign: batches.subject_offering_id > subject_offerings.id [delete: cascade]
 Ref calendar_events_college_id_foreign: calendar_events.college_id > colleges.id [delete: cascade]
 Ref calendar_events_created_by_foreign: calendar_events.created_by > users.id [delete: set null]
+Ref email_audits_changed_by_foreign: email_audits.changed_by > users.id [delete: set null]
+Ref email_audits_user_id_foreign: email_audits.user_id > users.id [delete: cascade]
+Ref email_changes_user_id_foreign: email_changes.user_id - users.id [delete: cascade]
 Ref enrollments_batch_id_foreign: enrollments.batch_id > batches.id [delete: set null]
 Ref enrollments_drop_confirmed_by_foreign: enrollments.drop_confirmed_by > users.id [delete: set null]
 Ref enrollments_learner_id_foreign: enrollments.learner_id > learners.id [delete: restrict]

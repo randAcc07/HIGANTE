@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -41,6 +42,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read College|null $college
  * @property-read Teacher|null $teacher
  * @property-read Learner|null $learner
+ * @property-read EmailChange|null $emailChange
  *
  * role, college_id and is_active are deliberately not fillable: only the
  * admin or registrar assigns them, explicitly, never from a mass-assigned
@@ -107,6 +109,24 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     public function learner(): HasOne
     {
         return $this->hasOne(Learner::class);
+    }
+
+    /**
+     * The pending email change, if any.
+     *
+     * @return HasOne<EmailChange, $this>
+     */
+    public function emailChange(): HasOne
+    {
+        return $this->hasOne(EmailChange::class);
+    }
+
+    /**
+     * @return HasMany<EmailAudit, $this>
+     */
+    public function emailAudits(): HasMany
+    {
+        return $this->hasMany(EmailAudit::class);
     }
 
     public function hasRole(UserRole ...$roles): bool
