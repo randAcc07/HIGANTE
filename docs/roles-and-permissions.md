@@ -41,10 +41,10 @@ the college and can be offered to any section of its programs.
 
 | Responsibility                                                                              | Status |
 | ------------------------------------------------------------------------------------------- | ------ |
-| Create sections for a term (optional capacity) before registration opens                    | ⏳     |
-| Create subject offerings for sections; split an offering into uneven batches                | ⏳     |
-| Create schedules: day, time, any campus room, onsite or online, whole offering or one batch | ⏳     |
-| Assign teachers from their own college only                                                 | ⏳     |
+| Create sections for a term (optional capacity) before registration opens                    | ✅     |
+| Create subject offerings for sections; split an offering into uneven batches                | ✅     |
+| Create schedules: day, time, any campus room, onsite or online, whole offering or one batch | ✅     |
+| Assign teachers from their own college only                                                 | ✅     |
 | Place learners auto-sectioning could not fit; move learners between sections                | ⏳     |
 | Copy one subject's batches to the section's other split subjects                            | ⏳     |
 | Enroll irregular learners subject by subject                                                | ⏳     |
@@ -53,7 +53,7 @@ the college and can be offered to any section of its programs.
 | See an at-risk learners list                                                                | ⏳     |
 | College-only holidays and suspensions for their own college                                 | ✅     |
 | Correct a teacher's attendance marks                                                        | ❓     |
-| Reassign schedules to a substitute when a teacher is on leave                               | ❓     |
+| Reassign a subject's classes to another teacher (e.g. a substitute for a teacher on leave)  | ✅     |
 
 ## Teacher (own college only)
 
@@ -100,4 +100,4 @@ the college and can be offered to any section of its programs.
 | Calculate equivalent absences; send each warning once                                                                                          | ⏳     |
 | Flag for dropping at the drop count; lower or clear warnings and flags when marks are corrected (unless the dean already confirmed the drop)   | ⏳     |
 | Apply an approved excuse to every class in its date range                                                                                      | ⏳     |
-| Catch section, batch and per-learner schedule conflicts                                                                                        | ⏳     |
+| Catch room, teacher and section/batch schedule conflicts (per-learner conflicts come with enrollment)                                          | ✅     |

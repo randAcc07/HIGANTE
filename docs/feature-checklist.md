@@ -75,14 +75,15 @@ Every feature is done only when:
 
 ## 6. Dean scheduling
 
-- [ ] Sections for a term (program, year level, name, optional capacity)
-- [ ] Subject offerings per section with a default teacher (own college only)
-- [ ] Batches per offering
-- [ ] Schedules: day, time, room or online, whole offering or one batch, teacher
-- [ ] Readable conflict messages for room, teacher and section/batch clashes (the database still rejects room and teacher overlaps)
-- [ ] Room capacity warning when known (never blocks)
-- [ ] Schedule grid (Vue): Mon–Sat, 07:00–20:00, 30-minute steps; views per section, room and teacher
-- [ ] A closed term's sections, offerings and schedules are read-only
+- [x] Sections for a term (program, year level, name, optional capacity); term, program and year level fixed once made. Opens on the next upcoming term
+- [x] Subject offerings per section with a default teacher (own college only, or TBA); changing the teacher can move the subject's classes too (substitutes), checked against the new teacher's week
+- [x] Batches per offering (named, e.g. 1-AA / 1-AB)
+- [x] Schedules: day, time, room or online, whole offering or one batch, teacher
+- [x] Readable conflict messages for room, teacher and section/batch clashes, all listed at once (the database still rejects room and teacher overlaps). Batches of one subject may run together; batches of different subjects may not (the per-learner check comes in feature 8)
+- [x] Room capacity and teacher-on-leave warnings when saving (never block)
+- [x] Schedule grid (Vue): Mon–Sat, 07:00–20:00, 30-minute steps; per section (click to add or edit), and per room or teacher (other colleges' bookings of a room show only as booked)
+- [x] A closed term's sections, offerings and schedules are read-only; a class with attendance keeps its day and time and can't be removed
+- [x] Nothing with learners is deleted: sections with registrations, subjects with enrollments, batches with classes or learners
 
 ## 7. Term registration (registrar)
 

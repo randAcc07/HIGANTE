@@ -10,6 +10,11 @@ use App\Http\Controllers\Admin\TermController;
 use App\Http\Controllers\Admin\UserEmailController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Dean\BatchController;
+use App\Http\Controllers\Dean\OfferingController;
+use App\Http\Controllers\Dean\ScheduleController;
+use App\Http\Controllers\Dean\SectionController;
+use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
 use App\Http\Controllers\Registrar\LearnerController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +56,21 @@ Route::middleware(['auth', 'verified', 'role:registrar'])->prefix('registrar')->
     Route::put('learners/{learner}', [LearnerController::class, 'update'])->name('learners.update');
     Route::put('learners/{learner}/status', [LearnerController::class, 'status'])->name('learners.status');
     Route::post('learners/{learner}/setup-link', [LearnerController::class, 'setupLink'])->name('learners.setup-link');
+});
+
+// Scheduling: each change is authorized through its section (SectionPolicy).
+Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean.')->group(function () {
+    Route::resource('sections', SectionController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
+    Route::post('sections/{section}/offerings', [OfferingController::class, 'store'])->name('offerings.store');
+    Route::put('offerings/{offering}', [OfferingController::class, 'update'])->name('offerings.update');
+    Route::delete('offerings/{offering}', [OfferingController::class, 'destroy'])->name('offerings.destroy');
+    Route::post('offerings/{offering}/batches', [BatchController::class, 'store'])->name('batches.store');
+    Route::put('batches/{batch}', [BatchController::class, 'update'])->name('batches.update');
+    Route::delete('batches/{batch}', [BatchController::class, 'destroy'])->name('batches.destroy');
+    Route::post('offerings/{offering}/schedules', [ScheduleController::class, 'store'])->name('schedules.store');
+    Route::put('schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
+    Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
+    Route::get('timetables', [TimetableController::class, 'index'])->name('timetables.index');
 });
 
 // Account setup links. Signed URLs authorize them; see AccountSetupController.

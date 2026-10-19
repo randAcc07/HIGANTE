@@ -2,10 +2,12 @@ import {
     BookOpen,
     Building2,
     CalendarDays,
+    CalendarClock,
     CalendarRange,
     DoorOpen,
     GraduationCap,
     LayoutGrid,
+    LayoutList,
     Users,
 } from '@lucide/vue';
 import CollegeController from '@/actions/App/Http/Controllers/Admin/CollegeController';
@@ -14,6 +16,8 @@ import SubjectController from '@/actions/App/Http/Controllers/Admin/SubjectContr
 import AccountController from '@/actions/App/Http/Controllers/Admin/AccountController';
 import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
+import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
+import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
 import { dashboard } from '@/routes';
 import type { NavItem, UserRole } from '@/types';
@@ -37,7 +41,18 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             icon: GraduationCap,
         },
     ],
-    dean: () => [],
+    dean: () => [
+        {
+            title: 'Sections',
+            href: SectionController.index(),
+            icon: LayoutList,
+        },
+        {
+            title: 'Timetables',
+            href: TimetableController.index(),
+            icon: CalendarClock,
+        },
+    ],
     teacher: () => [],
     learner: () => [],
 };
