@@ -31,6 +31,7 @@ const props = defineProps<{
 const open = ref(false);
 const form = useForm({
     code: props.room?.code ?? '',
+    name: props.room?.name ?? '',
     building: props.room?.building ?? '',
     // Text in the form; empty means "not set".
     floor: props.room?.floor?.toString() ?? '',
@@ -42,6 +43,7 @@ const form = useForm({
 function submit(): void {
     form.transform((data) => ({
         ...data,
+        name: data.name || null,
         building: data.building || null,
         floor: data.floor === '' ? null : Number(data.floor),
         capacity: data.capacity === '' ? null : Number(data.capacity),
@@ -70,7 +72,7 @@ function submit(): void {
         </DialogTrigger>
         <DialogContent>
             <DialogTitle>{{
-                room ? `Edit ${room.code}` : 'Add room'
+                room ? `Edit ${room.label}` : 'Add room'
             }}</DialogTitle>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid grid-cols-2 gap-4">
@@ -94,10 +96,26 @@ function submit(): void {
                                 <SelectItem value="laboratory"
                                     >Laboratory</SelectItem
                                 >
+                                <SelectItem value="venue"
+                                    >Venue (gym, court, AVR)</SelectItem
+                                >
                             </SelectContent>
                         </Select>
                         <InputError :message="form.errors.room_type" />
                     </div>
+                </div>
+                <div class="grid gap-2">
+                    <Label for="room-name">Name</Label>
+                    <Input
+                        id="room-name"
+                        v-model="form.name"
+                        placeholder="Computer Laboratory 1"
+                    />
+                    <p class="text-xs text-muted-foreground">
+                        Optional; usually for laboratories and special rooms. A
+                        named room is shown by its name instead of its code.
+                    </p>
+                    <InputError :message="form.errors.name" />
                 </div>
                 <div class="grid gap-2">
                     <Label for="room-building">Building</Label>

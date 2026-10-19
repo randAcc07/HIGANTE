@@ -32,4 +32,9 @@ class RoomFactory extends Factory
     {
         return $this->state(['room_type' => RoomType::Laboratory]);
     }
+
+    public function venue(): static
+    {
+        return $this->state(['room_type' => RoomType::Venue]);
+    }
 }

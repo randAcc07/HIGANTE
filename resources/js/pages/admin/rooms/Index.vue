@@ -53,7 +53,7 @@ const filters = useFilters(RoomController.index.url(), {
             <Input
                 v-model="filters.search"
                 class="max-w-xs"
-                placeholder="Search code or building"
+                placeholder="Search name, code or building"
                 aria-label="Search rooms"
             />
             <select
@@ -64,6 +64,7 @@ const filters = useFilters(RoomController.index.url(), {
                 <option :value="null">All types</option>
                 <option value="lecture">Lecture</option>
                 <option value="laboratory">Laboratory</option>
+                <option value="venue">Venue</option>
             </select>
             <select
                 v-model="filters.status"
@@ -80,7 +81,7 @@ const filters = useFilters(RoomController.index.url(), {
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
-                        <th class="px-4 py-2 font-medium">Code</th>
+                        <th class="px-4 py-2 font-medium">Room</th>
                         <th class="px-4 py-2 font-medium">Building</th>
                         <th class="px-4 py-2 text-right font-medium">Floor</th>
                         <th class="px-4 py-2 font-medium">Type</th>
@@ -101,14 +102,22 @@ const filters = useFilters(RoomController.index.url(), {
                         :key="room.id"
                         class="border-t"
                     >
-                        <td class="px-4 py-2 font-medium whitespace-nowrap">
-                            {{ room.code }}
-                            <Badge
-                                v-if="!room.is_active"
-                                variant="secondary"
-                                class="ml-2"
-                                >Inactive</Badge
+                        <td class="px-4 py-2">
+                            <div class="font-medium whitespace-nowrap">
+                                {{ room.label }}
+                                <Badge
+                                    v-if="!room.is_active"
+                                    variant="secondary"
+                                    class="ml-2"
+                                    >Inactive</Badge
+                                >
+                            </div>
+                            <div
+                                v-if="room.name"
+                                class="text-xs text-muted-foreground"
                             >
+                                {{ room.code }}
+                            </div>
                         </td>
                         <td class="px-4 py-2">{{ room.building ?? '—' }}</td>
                         <td class="px-4 py-2 text-right">
@@ -135,7 +144,7 @@ const filters = useFilters(RoomController.index.url(), {
                                     </Button>
                                 </RoomFormDialog>
                                 <ConfirmDeleteDialog
-                                    :title="`Delete ${room.code}?`"
+                                    :title="`Delete ${room.label}?`"
                                     description="Only a room with no classes can be deleted. Deactivate a room in use instead."
                                     :url="RoomController.destroy.url(room.id)"
                                 />

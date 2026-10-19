@@ -21,6 +21,7 @@ class RoomRequest extends FormRequest
 
         return [
             'code' => ['required', 'string', 'max:30', 'regex:/^[A-Za-z0-9-]+$/', Rule::unique(Room::class)->ignore($room instanceof Room ? $room->id : null)],
+            'name' => ['nullable', 'string', 'max:100', Rule::unique(Room::class)->ignore($room instanceof Room ? $room->id : null)],
             'building' => ['nullable', 'string', 'max:100'],
             'floor' => ['nullable', 'integer', 'between:-5,99'],
             // Optional, and only ever used to warn; never blocks a booking.

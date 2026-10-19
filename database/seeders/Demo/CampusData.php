@@ -2,6 +2,8 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Enums\RoomType;
+
 /**
  * The fixed shape of the demo campus: colleges, programs, first-semester
  * curricula, rooms and the current term's calendar. Everything random
@@ -62,9 +64,10 @@ final class CampusData
 
     /**
      * Shared rooms. General education classes use the main building; PE uses
-     * the gym and the covered court. MB-304 is inactive (under renovation).
+     * the gym and the covered court (venues). MB-304 is inactive (under
+     * renovation). Rooms without a `room_type` are lecture rooms.
      *
-     * @var list<array{code: string, building: string, floor: int|null, capacity: int|null, is_active: bool}>
+     * @var list<array{code: string, building: string, floor: int|null, capacity: int|null, is_active: bool, room_type?: RoomType}>
      */
     public const SHARED_ROOMS = [
         ['code' => 'MB-101', 'building' => 'Main Building', 'floor' => 1, 'capacity' => 45, 'is_active' => true],
@@ -79,8 +82,27 @@ final class CampusData
         ['code' => 'MB-302', 'building' => 'Main Building', 'floor' => 3, 'capacity' => 50, 'is_active' => true],
         ['code' => 'MB-303', 'building' => 'Main Building', 'floor' => 3, 'capacity' => 40, 'is_active' => true],
         ['code' => 'MB-304', 'building' => 'Main Building', 'floor' => 3, 'capacity' => 40, 'is_active' => false],
-        ['code' => 'GYM', 'building' => 'Gymnasium', 'floor' => null, 'capacity' => null, 'is_active' => true],
-        ['code' => 'COURT', 'building' => 'Covered Court', 'floor' => null, 'capacity' => null, 'is_active' => true],
+        ['code' => 'GYM', 'building' => 'Gymnasium', 'floor' => null, 'capacity' => null, 'is_active' => true, 'room_type' => RoomType::Venue],
+        ['code' => 'COURT', 'building' => 'Covered Court', 'floor' => null, 'capacity' => null, 'is_active' => true, 'room_type' => RoomType::Venue],
+    ];
+
+    /**
+     * Rooms known by name rather than code: the labs and the PE venues.
+     *
+     * @var array<string, string>
+     */
+    public const ROOM_NAMES = [
+        'CL-1' => 'Computer Laboratory 1',
+        'CL-2' => 'Computer Laboratory 2',
+        'SL-1' => 'Science Laboratory 1',
+        'SL-2' => 'Science Laboratory 2',
+        'ML-1' => 'Multimedia Laboratory',
+        'EL-1' => 'Engineering Laboratory 1',
+        'EL-2' => 'Engineering Laboratory 2',
+        'DL-1' => 'Drafting Laboratory',
+        'CHL-1' => 'Chemistry Laboratory',
+        'GYM' => 'Gymnasium',
+        'COURT' => 'Covered Court',
     ];
 
     /**

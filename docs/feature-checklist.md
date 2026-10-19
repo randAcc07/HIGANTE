@@ -53,7 +53,7 @@ Every feature is done only when:
 
 - [x] Colleges and their programs (a program's college is fixed once created)
 - [x] Subjects per college: codes unique within a college, lecture/lab units to one decimal, college fixed once created; filter by college and search
-- [x] Rooms: building, floor, type, optional warn-only capacity, active/inactive; filter by type, status and search
+- [x] Rooms: building, floor, type (lecture, laboratory or venue, e.g. the gym or an AVR), optional warn-only capacity, active/inactive; filter by type, status and search. An optional unique name (labs, the gym) becomes the room's label everywhere (`Room::label`), with the code kept as the short identifier
 - [x] Nothing in use is deleted: each delete says what still uses the record (rooms in use are deactivated instead)
 
 ## 4. Terms and calendar

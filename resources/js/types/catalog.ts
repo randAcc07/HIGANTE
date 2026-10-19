@@ -28,11 +28,14 @@ export type Subject = {
     offerings_count?: number;
 };
 
-export type RoomType = 'lecture' | 'laboratory';
+export type RoomType = 'lecture' | 'laboratory' | 'venue';
 
 export type Room = {
     id: number;
     code: string;
+    name: string | null;
+    /** The name if set, else the code: how to refer to the room. */
+    label: string;
     building: string | null;
     floor: number | null;
     capacity: number | null;

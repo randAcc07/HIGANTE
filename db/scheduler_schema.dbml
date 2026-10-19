@@ -6,6 +6,7 @@ Project scheduler {
 Enum rooms_room_type {
   "lecture"
   "laboratory"
+  "venue"
 }
 
 Enum terms_semester {
@@ -199,6 +200,7 @@ Table programs {
 Table rooms {
   id "bigint(20) unsigned" [pk, increment, not null]
   code varchar(30) [not null]
+  name varchar(100) [null]
   building varchar(100) [null]
   floor tinyint(4) [null]
   capacity "smallint(5) unsigned" [null]
@@ -209,6 +211,7 @@ Table rooms {
 
   indexes {
     code [unique, name: 'rooms_code_unique']
+    name [unique, name: 'rooms_name_unique']
   }
 }
 

@@ -49,6 +49,44 @@ class RoomTest extends TestCase
         $this->assertSame(RoomType::Lecture, $room->room_type);
     }
 
+    public function test_a_named_room_is_labelled_and_found_by_its_name()
+    {
+        $this->post(route('admin.rooms.store'), ['code' => 'CL-1', 'name' => 'Computer Laboratory 1', 'building' => 'Science Building', 'room_type' => 'laboratory', 'is_active' => true])
+            ->assertSessionHasNoErrors();
+        Room::factory()->create(['code' => 'MB-101', 'name' => null]);
+
+        $this->assertSame('Computer Laboratory 1', Room::where('code', 'CL-1')->sole()->label);
+        $this->assertSame('MB-101', Room::where('code', 'MB-101')->sole()->label);
+
+        $this->get(route('admin.rooms.index', ['search' => 'computer lab']))->assertInertia(fn (Assert $page) => $page
+            ->has('rooms.data', 1)
+            ->where('rooms.data.0.label', 'Computer Laboratory 1')
+            ->where('rooms.data.0.code', 'CL-1'));
+    }
+
+    public function test_venues_are_a_room_type_of_their_own()
+    {
+        $this->post(route('admin.rooms.store'), ['code' => 'AVR', 'name' => 'Audio-Visual Room', 'room_type' => 'venue', 'is_active' => true])
+            ->assertSessionHasNoErrors();
+        Room::factory()->laboratory()->create();
+
+        $this->assertSame(RoomType::Venue, Room::where('code', 'AVR')->sole()->room_type);
+        $this->get(route('admin.rooms.index', ['type' => 'venue']))
+            ->assertInertia(fn (Assert $page) => $page->has('rooms.data', 1)->where('rooms.data.0.code', 'AVR'));
+    }
+
+    public function test_room_names_are_unique_but_optional()
+    {
+        Room::factory()->create(['name' => 'Chemistry Laboratory']);
+        Room::factory()->count(2)->create(['name' => null]);
+
+        $this->post(route('admin.rooms.store'), ['code' => 'CHL-2', 'name' => 'Chemistry Laboratory', 'room_type' => 'laboratory', 'is_active' => true])
+            ->assertSessionHasErrors('name');
+
+        $this->post(route('admin.rooms.store'), ['code' => 'MB-102', 'name' => null, 'room_type' => 'lecture', 'is_active' => true])
+            ->assertSessionHasNoErrors();
+    }
+
     public function test_room_input_is_checked()
     {
         Room::factory()->create(['code' => 'MB-101']);
@@ -63,7 +101,7 @@ class RoomTest extends TestCase
         $this->assertNotNull($room);
 
         $this->delete(route('admin.rooms.destroy', $room))
-            ->assertInertiaFlash('toast.message', "{$room->code} still has 1 schedule, so it can't be deleted. Deactivate it instead.");
+            ->assertInertiaFlash('toast.message', "{$room->label} still has 1 schedule, so it can't be deleted. Deactivate it instead.");
         $this->assertModelExists($room);
 
         $this->put(route('admin.rooms.update', $room), [...$room->only(['code', 'building', 'floor', 'capacity']), 'room_type' => $room->room_type->value, 'is_active' => false])

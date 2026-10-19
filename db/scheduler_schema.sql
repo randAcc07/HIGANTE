@@ -118,15 +118,17 @@ CREATE TABLE `programs` (
 CREATE TABLE `rooms` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(30) NOT NULL,
+  `name` varchar(100) DEFAULT NULL,
   `building` varchar(100) DEFAULT NULL,
   `floor` tinyint(4) DEFAULT NULL,
   `capacity` smallint(5) unsigned DEFAULT NULL,
-  `room_type` enum('lecture','laboratory') NOT NULL DEFAULT 'lecture',
+  `room_type` enum('lecture','laboratory','venue') NOT NULL DEFAULT 'lecture',
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `rooms_code_unique` (`code`)
+  UNIQUE KEY `rooms_code_unique` (`code`),
+  UNIQUE KEY `rooms_name_unique` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `sessions` (

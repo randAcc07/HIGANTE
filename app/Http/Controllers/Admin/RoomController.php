@@ -29,6 +29,7 @@ class RoomController extends Controller
             ->withCount('schedules')
             ->when($filters['search'], fn ($query, string $search) => $query->where(fn ($query) => $query
                 ->where('code', 'like', "%{$search}%")
+                ->orWhere('name', 'like', "%{$search}%")
                 ->orWhere('building', 'like', "%{$search}%")))
             ->when($filters['type'], fn ($query, string $type) => $query->where('room_type', $type))
             ->when($filters['status'], fn ($query, string $status) => $query->where('is_active', $status === 'active'))
@@ -64,7 +65,7 @@ class RoomController extends Controller
 
     public function destroy(Room $room): RedirectResponse
     {
-        $refusal = $this->refuseIfInUse($room->code, ['schedule' => $room->schedules()->count()], __('Deactivate it instead.'));
+        $refusal = $this->refuseIfInUse($room->label, ['schedule' => $room->schedules()->count()], __('Deactivate it instead.'));
 
         if ($refusal !== null) {
             return $refusal;

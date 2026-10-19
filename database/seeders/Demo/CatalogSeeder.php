@@ -10,7 +10,8 @@ use App\Models\Subject;
 use Illuminate\Database\Seeder;
 
 /**
- * Colleges, programs, subjects and rooms, straight from CampusData.
+ * Colleges, programs, subjects and rooms (named where people use a name),
+ * straight from CampusData.
  */
 class CatalogSeeder extends Seeder
 {
@@ -57,7 +58,11 @@ class CatalogSeeder extends Seeder
         }
 
         foreach (CampusData::SHARED_ROOMS as $room) {
-            Room::create([...$room, 'room_type' => RoomType::Lecture]);
+            Room::create(['room_type' => RoomType::Lecture, ...$room]);
+        }
+
+        foreach (CampusData::ROOM_NAMES as $code => $name) {
+            Room::where('code', $code)->sole()->update(['name' => $name]);
         }
     }
 
