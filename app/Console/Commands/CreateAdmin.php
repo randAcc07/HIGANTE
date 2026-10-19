@@ -19,7 +19,11 @@ use function Laravel\Prompts\text;
  * made. Every other account is created by an admin. The password is always
  * prompted for, so it never ends up in shell history.
  */
-#[Signature('app:create-admin {--name= : Full name} {--email= : Login email address}')]
+#[Signature('app:create-admin
+    {--first-name= : First name}
+    {--middle-name= : Middle name (optional)}
+    {--last-name= : Last name}
+    {--email= : Login email address}')]
 #[Description('Create an admin account')]
 class CreateAdmin extends Command
 {
@@ -30,8 +34,13 @@ class CreateAdmin extends Command
      */
     public function handle(): int
     {
+        // Only ask for the optional middle name when the name is being typed in.
+        $askForNames = ! $this->option('first-name');
+
         $input = [
-            'name' => $this->option('name') ?: text('Name', required: true),
+            'first_name' => $this->option('first-name') ?: text('First name', required: true),
+            'middle_name' => $this->option('middle-name') ?: ($askForNames ? (text('Middle name (optional)') ?: null) : null),
+            'last_name' => $this->option('last-name') ?: text('Last name', required: true),
             'email' => $this->option('email') ?: text('Email', required: true),
             'password' => password('Password', required: true),
             'password_confirmation' => password('Confirm password', required: true),
@@ -50,7 +59,7 @@ class CreateAdmin extends Command
             return self::FAILURE;
         }
 
-        $user = new User($validator->safe()->only(['name', 'email', 'password']));
+        $user = new User($validator->safe()->only(['first_name', 'middle_name', 'last_name', 'email', 'password']));
         $user->role = UserRole::Admin;
         // Created by whoever runs the server, so there is no inbox to verify.
         $user->email_verified_at = now();

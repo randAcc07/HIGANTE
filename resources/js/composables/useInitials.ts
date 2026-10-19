@@ -1,5 +1,6 @@
 export type UseInitialsReturn = {
     getInitials: (fullName?: string) => string;
+    getNameInitials: (firstName?: string, lastName?: string) => string;
 };
 
 function getInitial(name: string): string {
@@ -24,6 +25,14 @@ export function getInitials(fullName?: string): string {
     return `${getInitial(names[0])}${getInitial(names[names.length - 1])}`.toUpperCase();
 }
 
+/**
+ * Initials from separate name fields, so a multi-word last name such as
+ * "Dela Cruz" still gives "JD" for Juan.
+ */
+export function getNameInitials(firstName?: string, lastName?: string): string {
+    return `${getInitial(firstName?.trim() ?? '')}${getInitial(lastName?.trim() ?? '')}`.toUpperCase();
+}
+
 export function useInitials(): UseInitialsReturn {
-    return { getInitials };
+    return { getInitials, getNameInitials };
 }

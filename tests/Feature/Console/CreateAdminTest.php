@@ -14,13 +14,14 @@ class CreateAdminTest extends TestCase
 
     public function test_it_creates_a_verified_admin()
     {
-        $this->artisan('app:create-admin', ['--name' => 'Campus Admin', '--email' => 'admin@example.com'])
+        $this->artisan('app:create-admin', ['--first-name' => 'Campus', '--last-name' => 'Admin', '--email' => 'admin@example.com'])
             ->expectsQuestion('Password', 'a-strong-password')
             ->expectsQuestion('Confirm password', 'a-strong-password')
             ->assertSuccessful();
 
         $admin = User::where('email', 'admin@example.com')->sole();
 
+        $this->assertSame('Campus Admin', $admin->full_name);
         $this->assertSame(UserRole::Admin, $admin->role);
         $this->assertNull($admin->college_id);
         $this->assertNotNull($admin->email_verified_at);
@@ -29,7 +30,7 @@ class CreateAdminTest extends TestCase
 
     public function test_it_rejects_a_mismatched_password()
     {
-        $this->artisan('app:create-admin', ['--name' => 'Campus Admin', '--email' => 'admin@example.com'])
+        $this->artisan('app:create-admin', ['--first-name' => 'Campus', '--last-name' => 'Admin', '--email' => 'admin@example.com'])
             ->expectsQuestion('Password', 'a-strong-password')
             ->expectsQuestion('Confirm password', 'something-else')
             ->assertFailed();
@@ -41,7 +42,7 @@ class CreateAdminTest extends TestCase
     {
         User::factory()->create(['email' => 'admin@example.com']);
 
-        $this->artisan('app:create-admin', ['--name' => 'Campus Admin', '--email' => 'admin@example.com'])
+        $this->artisan('app:create-admin', ['--first-name' => 'Campus', '--last-name' => 'Admin', '--email' => 'admin@example.com'])
             ->expectsQuestion('Password', 'a-strong-password')
             ->expectsQuestion('Confirm password', 'a-strong-password')
             ->assertFailed();

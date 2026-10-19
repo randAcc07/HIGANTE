@@ -2,6 +2,10 @@
 
 namespace Tests\Feature\Database;
 
+use App\Models\Enrollment;
+use App\Models\Room;
+use App\Models\SubjectOffering;
+use App\Models\Teacher;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -32,30 +36,20 @@ class ScheduleConstraintsTest extends TestCase
     {
         parent::setUp();
 
-        $collegeId = DB::table('colleges')->insertGetId(['code' => 'COE', 'name' => 'College of Engineering']);
-        $programId = DB::table('programs')->insertGetId(['college_id' => $collegeId, 'code' => 'BSCE', 'name' => 'BS Civil Engineering']);
-        $this->termId = DB::table('terms')->insertGetId(['school_year' => '2026-2027', 'semester' => 'first', 'starts_on' => '2026-08-10', 'ends_on' => '2026-12-18']);
-        $sectionId = DB::table('sections')->insertGetId(['term_id' => $this->termId, 'program_id' => $programId, 'year_level' => 2, 'name' => '2A', 'capacity' => 40]);
-        $subjectId = DB::table('subjects')->insertGetId(['college_id' => $collegeId, 'code' => 'CE201', 'title' => 'Statics']);
+        $offering = SubjectOffering::factory()->create();
+        $college = $offering->section->program->college;
+        $this->termId = $offering->section->term_id;
+        $this->offeringId = $offering->id;
 
         foreach (['a', 'b'] as $key) {
-            $userId = DB::table('users')->insertGetId([
-                'role' => 'teacher', 'college_id' => $collegeId, 'name' => "Teacher {$key}",
-                'email' => "teacher-{$key}@example.com", 'password' => 'x',
-            ]);
-            $this->teacherIds[$key] = DB::table('teachers')->insertGetId(['user_id' => $userId, 'employee_number' => "EMP-{$key}"]);
-            $this->roomIds[$key] = DB::table('rooms')->insertGetId(['code' => "R-{$key}", 'capacity' => 40]);
+            $this->teacherIds[$key] = Teacher::factory()->forCollege($college)->create()->id;
+            $this->roomIds[$key] = Room::factory()->create()->id;
         }
 
-        $this->offeringId = DB::table('subject_offerings')->insertGetId(['section_id' => $sectionId, 'subject_id' => $subjectId, 'teacher_id' => $this->teacherIds['a']]);
+        $this->enrollmentId = Enrollment::factory()->for($offering)->create()->id;
 
-        $learnerUserId = DB::table('users')->insertGetId([
-            'role' => 'learner', 'college_id' => $collegeId, 'name' => 'Learner', 'email' => 'learner@example.com', 'password' => 'x',
-        ]);
-        $learnerId = DB::table('learners')->insertGetId(['user_id' => $learnerUserId, 'program_id' => $programId, 'student_number' => '2026-0001', 'year_level' => 2]);
-        $this->enrollmentId = DB::table('enrollments')->insertGetId(['learner_id' => $learnerId, 'subject_offering_id' => $this->offeringId]);
-
-        // Monday 08:00-09:30 in room a with teacher a.
+        // Monday 08:00-09:30 in room a with teacher a. Schedules are inserted
+        // directly so each test exercises the database rule, not app code.
         $this->schedule('a', 'a', '2001-01-01 08:00', '2001-01-01 09:30');
     }
 

@@ -22,6 +22,12 @@ defineOptions({
     },
 });
 
+defineProps<{
+    mustVerifyEmail: boolean;
+    canEditName: boolean;
+    status?: string;
+}>();
+
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 </script>
@@ -35,7 +41,11 @@ const user = computed(() => page.props.auth.user);
         <Heading
             variant="small"
             title="Profile"
-            description="Update your name and email address"
+            :description="
+                canEditName
+                    ? 'Update your name and email address'
+                    : 'Update your email address'
+            "
         />
 
         <Form
@@ -43,18 +53,59 @@ const user = computed(() => page.props.auth.user);
             class="space-y-6"
             v-slot="{ errors, processing }"
         >
-            <div class="grid gap-2">
-                <Label for="name">Name</Label>
-                <Input
-                    id="name"
-                    class="mt-1 block w-full"
-                    name="name"
-                    :default-value="user.name"
-                    required
-                    autocomplete="name"
-                    placeholder="Full name"
-                />
-                <InputError class="mt-2" :message="errors.name" />
+            <div v-if="canEditName" class="grid gap-4 sm:grid-cols-2">
+                <div class="grid gap-2">
+                    <Label for="first_name">First name</Label>
+                    <Input
+                        id="first_name"
+                        name="first_name"
+                        :default-value="user.first_name"
+                        required
+                        autocomplete="given-name"
+                    />
+                    <InputError :message="errors.first_name" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="middle_name">Middle name</Label>
+                    <Input
+                        id="middle_name"
+                        name="middle_name"
+                        :default-value="user.middle_name ?? ''"
+                        autocomplete="additional-name"
+                    />
+                    <InputError :message="errors.middle_name" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="last_name">Last name</Label>
+                    <Input
+                        id="last_name"
+                        name="last_name"
+                        :default-value="user.last_name"
+                        required
+                        autocomplete="family-name"
+                    />
+                    <InputError :message="errors.last_name" />
+                </div>
+                <div class="grid gap-2">
+                    <Label for="suffix">Suffix</Label>
+                    <Input
+                        id="suffix"
+                        name="suffix"
+                        :default-value="user.suffix ?? ''"
+                        autocomplete="honorific-suffix"
+                        placeholder="Jr., III"
+                    />
+                    <InputError :message="errors.suffix" />
+                </div>
+            </div>
+
+            <div v-else class="grid gap-2" data-test="read-only-name">
+                <Label>Name</Label>
+                <p class="text-sm">{{ user.full_name }}</p>
+                <p class="text-sm text-muted-foreground">
+                    Your name is part of your school record. Ask the registrar's
+                    office to correct it.
+                </p>
             </div>
 
             <div class="grid gap-2">

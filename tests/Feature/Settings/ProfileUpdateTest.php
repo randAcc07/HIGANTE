@@ -21,14 +21,17 @@ class ProfileUpdateTest extends TestCase
         $response->assertOk();
     }
 
-    public function test_profile_information_can_be_updated()
+    public function test_staff_can_update_their_name_and_email()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->teacher()->create();
 
         $response = $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
-                'name' => 'Test User',
+                'first_name' => 'Juan',
+                'middle_name' => 'Pablo',
+                'last_name' => 'Dela Cruz',
+                'suffix' => 'Jr.',
                 'email' => 'test@example.com',
             ]);
 
@@ -38,9 +41,47 @@ class ProfileUpdateTest extends TestCase
 
         $user->refresh();
 
-        $this->assertSame('Test User', $user->name);
+        $this->assertSame('Juan P. Dela Cruz Jr.', $user->full_name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+    }
+
+    public function test_learners_can_update_their_email_but_not_their_name()
+    {
+        $user = User::factory()->learner()->create(['first_name' => 'Maria', 'last_name' => 'Santos']);
+
+        $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), ['email' => 'learner@example.com'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('learner@example.com', $user->refresh()->email);
+
+        $this
+            ->actingAs($user)
+            ->patch(route('profile.update'), [
+                'first_name' => 'Changed',
+                'last_name' => 'Name',
+                'email' => 'learner@example.com',
+            ])
+            ->assertSessionHasErrors(['first_name', 'last_name']);
+
+        $user->refresh();
+        $this->assertSame('Maria', $user->first_name);
+        $this->assertSame('Santos', $user->last_name);
+    }
+
+    public function test_learners_see_their_name_as_read_only()
+    {
+        $this
+            ->actingAs(User::factory()->learner()->create())
+            ->get(route('profile.edit'))
+            ->assertInertia(fn ($page) => $page->where('canEditName', false));
+
+        $this
+            ->actingAs(User::factory()->registrar()->create())
+            ->get(route('profile.edit'))
+            ->assertInertia(fn ($page) => $page->where('canEditName', true));
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged()
@@ -50,7 +91,8 @@ class ProfileUpdateTest extends TestCase
         $response = $this
             ->actingAs($user)
             ->patch(route('profile.update'), [
-                'name' => 'Test User',
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
                 'email' => $user->email,
             ]);
 

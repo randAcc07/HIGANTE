@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '@/components/PlaceholderPattern.vue';
+import { Head, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import Heading from '@/components/Heading.vue';
 import { dashboard } from '@/routes';
 
 defineOptions({
@@ -13,35 +14,32 @@ defineOptions({
         ],
     },
 });
+
+const props = defineProps<{
+    roleLabel: string;
+    collegeName: string | null;
+}>();
+
+const page = usePage();
+const user = computed(() => page.props.auth.user);
+
+const scope = computed(() =>
+    props.collegeName
+        ? `${props.roleLabel} · ${props.collegeName}`
+        : `${props.roleLabel} · Campus-wide`,
+);
 </script>
 
 <template>
     <Head title="Dashboard" />
 
-    <div
-        class="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4"
-    >
-        <div class="grid auto-rows-min gap-4 md:grid-cols-3">
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-            <div
-                class="relative aspect-video overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border"
-            >
-                <PlaceholderPattern />
-            </div>
-        </div>
+    <div class="flex h-full flex-1 flex-col gap-4 p-4">
+        <Heading :title="`Welcome, ${user.first_name}`" :description="scope" />
+
         <div
-            class="relative min-h-[100vh] flex-1 rounded-xl border border-sidebar-border/70 md:min-h-min dark:border-sidebar-border"
+            class="rounded-xl border border-sidebar-border/70 p-6 text-sm text-muted-foreground dark:border-sidebar-border"
         >
-            <PlaceholderPattern />
+            Your tools will appear here as they are added.
         </div>
     </div>
 </template>

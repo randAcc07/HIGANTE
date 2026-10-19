@@ -3,15 +3,20 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\ResetUserPassword;
+use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
+use Laravel\Passkeys\Contracts\PasskeyUser;
+use Laravel\Passkeys\Passkeys;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -29,8 +34,38 @@ class FortifyServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureActions();
+        $this->configureAuthentication();
         $this->configureViews();
         $this->configureRateLimiting();
+    }
+
+    /**
+     * Refuse deactivated accounts on both login paths. Sessions that were
+     * already signed in are ended by the EnsureUserIsActive middleware.
+     */
+    private function configureAuthentication(): void
+    {
+        Fortify::authenticateUsing(function (Request $request): ?User {
+            $user = User::where(Fortify::username(), $request->string(Fortify::username())->value())->first();
+
+            if (! $user || ! Hash::check($request->string('password')->value(), $user->password)) {
+                return null;
+            }
+
+            // Only said after the password checks out, so it reveals nothing
+            // about which emails have accounts.
+            if (! $user->is_active) {
+                throw ValidationException::withMessages([
+                    Fortify::username() => __('This account has been deactivated. Contact the school administrator.'),
+                ]);
+            }
+
+            return $user;
+        });
+
+        Passkeys::authorizeLoginUsing(
+            fn (Request $request, PasskeyUser $user): bool => $user instanceof User && $user->is_active,
+        );
     }
 
     /**
