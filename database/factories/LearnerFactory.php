@@ -27,7 +27,7 @@ class LearnerFactory extends Factory
             'user_id' => fn (array $attributes) => User::factory()->learner(
                 self::program($attributes['program_id'])->college,
             ),
-            'student_number' => fake()->unique()->numerify('2026-#####'),
+            'student_number' => fake()->unique()->numerify('M2026-#####'),
             'year_level' => fake()->numberBetween(1, 4),
             'status' => LearnerStatus::Active,
         ];

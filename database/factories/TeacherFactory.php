@@ -22,7 +22,7 @@ class TeacherFactory extends Factory
     {
         return [
             'user_id' => User::factory()->teacher(),
-            'employee_number' => fake()->unique()->numerify('EMP-#####'),
+            'employee_number' => fake()->unique()->numerify('URS-P-#####'),
             'duty_status' => DutyStatus::Active,
         ];
     }

@@ -51,6 +51,10 @@
             "npm install",
             "npm run build"
         ],
+        "db:demo": [
+            "@php artisan migrate:fresh --database=mariadb_migrate",
+            "@php artisan db:seed"
+        ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
