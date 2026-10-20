@@ -28,7 +28,7 @@ const showAvatar = computed(
             :src="user.avatar!"
             :alt="user.full_name"
         />
-        <AvatarFallback class="rounded-lg text-black dark:text-white">
+        <AvatarFallback class="rounded-lg text-foreground">
             {{ getNameInitials(user.first_name, user.last_name) }}
         </AvatarFallback>
     </Avatar>

@@ -114,20 +114,21 @@ const columns = computed(() =>
     }),
 );
 
+// Listed in full so Tailwind can see each class; colors live in app.css.
 const TONES = [
-    'bg-sky-100 border-sky-300 text-sky-950 dark:bg-sky-950 dark:border-sky-800 dark:text-sky-100',
-    'bg-emerald-100 border-emerald-300 text-emerald-950 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-100',
-    'bg-amber-100 border-amber-300 text-amber-950 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-100',
-    'bg-violet-100 border-violet-300 text-violet-950 dark:bg-violet-950 dark:border-violet-800 dark:text-violet-100',
-    'bg-rose-100 border-rose-300 text-rose-950 dark:bg-rose-950 dark:border-rose-800 dark:text-rose-100',
-    'bg-teal-100 border-teal-300 text-teal-950 dark:bg-teal-950 dark:border-teal-800 dark:text-teal-100',
-    'bg-orange-100 border-orange-300 text-orange-950 dark:bg-orange-950 dark:border-orange-800 dark:text-orange-100',
-    'bg-indigo-100 border-indigo-300 text-indigo-950 dark:bg-indigo-950 dark:border-indigo-800 dark:text-indigo-100',
+    'bg-event-1 border-event-1-border text-event-1-foreground',
+    'bg-event-2 border-event-2-border text-event-2-foreground',
+    'bg-event-3 border-event-3-border text-event-3-foreground',
+    'bg-event-4 border-event-4-border text-event-4-foreground',
+    'bg-event-5 border-event-5-border text-event-5-foreground',
+    'bg-event-6 border-event-6-border text-event-6-foreground',
+    'bg-event-7 border-event-7-border text-event-7-foreground',
+    'bg-event-8 border-event-8-border text-event-8-foreground',
 ];
 
 function tone(block: GridBlock): string {
     return block.tone === 'busy'
-        ? 'border-dashed border-neutral-300 bg-[repeating-linear-gradient(45deg,transparent,transparent_6px,rgb(0_0_0/0.05)_6px,rgb(0_0_0/0.05)_12px)] text-muted-foreground dark:border-neutral-700'
+        ? 'border-dashed border-event-busy-border bg-[repeating-linear-gradient(45deg,transparent,transparent_6px,var(--event-busy-stripe)_6px,var(--event-busy-stripe)_12px)] text-muted-foreground'
         : TONES[block.tone % TONES.length];
 }
 

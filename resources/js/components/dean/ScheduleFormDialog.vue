@@ -254,7 +254,7 @@ const selectClass =
 
             <ul
                 v-if="existing?.warnings?.length"
-                class="space-y-1 rounded-md bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-100"
+                class="space-y-1 rounded-md bg-warning-soft p-3 text-sm text-warning-soft-foreground"
             >
                 <li v-for="warning in existing.warnings" :key="warning">
                     {{ warning }}
