@@ -257,6 +257,10 @@ class RegistrationTest extends TestCase
         $this->post(route('registrar.registrations.withdraw', $registration))->assertForbidden();
         $this->delete(route('registrar.registrations.destroy', $registration))->assertForbidden();
 
+        // An ended term opens on its record; there is nobody to register.
+        $this->get(route('registrar.registrations.index', ['term' => $this->lastYear->id]))
+            ->assertInertia(fn (Assert $page) => $page->where('canRegister', false)->where('candidates', null)->has('registrations.data', 1));
+
         $this->actingAs(User::factory()->dean($this->program->college)->create());
         $this->register($this->first, [$learner])->assertForbidden();
         $this->get(route('registrar.registrations.index'))->assertForbidden();

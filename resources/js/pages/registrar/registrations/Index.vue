@@ -222,6 +222,7 @@ function registerOne(learnerId: number): void {
 
             <div class="flex flex-wrap items-center gap-2 border-b">
                 <button
+                    v-if="canRegister"
                     type="button"
                     class="-mb-px border-b-2 px-3 py-2 text-sm font-medium"
                     :class="

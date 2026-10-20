@@ -51,6 +51,11 @@ class RegistrationController extends Controller
         $terms = Term::orderByDesc('starts_on')->get();
         $term = $terms->firstWhere('id', $filters['term']) ?? Term::forPreparation() ?? Term::forViewing();
 
+        // An ended or closed term has nobody left to register: only its record.
+        if ($term !== null && ! TermRegistrar::isOpen($term)) {
+            $filters['view'] = 'registered';
+        }
+
         return Inertia::render('registrar/registrations/Index', [
             'terms' => $terms->map(fn (Term $term): array => self::termOption($term)),
             'term' => $term === null ? null : self::termOption($term),
