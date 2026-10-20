@@ -17,6 +17,7 @@ import SubjectController from '@/actions/App/Http/Controllers/Admin/SubjectContr
 import AccountController from '@/actions/App/Http/Controllers/Admin/AccountController';
 import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
+import DeanLearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
@@ -58,6 +59,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             title: 'Timetables',
             href: TimetableController.index(),
             icon: CalendarClock,
+        },
+        {
+            title: 'Learners',
+            href: DeanLearnerController.index(),
+            icon: GraduationCap,
         },
     ],
     teacher: () => [],

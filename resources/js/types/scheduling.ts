@@ -59,6 +59,8 @@ export type Batch = {
     name: string;
     enrollments_count?: number;
     schedules_count?: number;
+    /** Seats in the smallest room the batch meets in, on the section page. */
+    room_capacity?: number | null;
 };
 
 export type Offering = {

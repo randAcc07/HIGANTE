@@ -40,21 +40,22 @@ the college and can be offered to any section of its programs.
 
 ## Dean (own college only; does not teach)
 
-| Responsibility                                                                              | Status |
-| ------------------------------------------------------------------------------------------- | ------ |
-| Create sections for a term (optional capacity) before registration opens                    | ✅     |
-| Create subject offerings for sections; split an offering into uneven batches                | ✅     |
-| Create schedules: day, time, any campus room, onsite or online, whole offering or one batch | ✅     |
-| Assign teachers from their own college only                                                 | ✅     |
-| Place learners auto-sectioning could not fit; move learners between sections                | ⏳     |
-| Copy one subject's batches to the section's other split subjects                            | ⏳     |
-| Enroll irregular learners subject by subject                                                | ⏳     |
-| Approve or reject excuses for their college's learners (`medical` needs at least one file)  | ⏳     |
-| Confirm or dismiss drops flagged at the policy's drop count                                 | ⏳     |
-| See an at-risk learners list                                                                | ⏳     |
-| College-only holidays and suspensions for their own college                                 | ✅     |
-| Correct a teacher's attendance marks                                                        | ❓     |
-| Reassign a subject's classes to another teacher (e.g. a substitute for a teacher on leave)  | ✅     |
+| Responsibility                                                                                                         | Status |
+| ---------------------------------------------------------------------------------------------------------------------- | ------ |
+| Create sections for a term (optional capacity) before registration opens                                               | ✅     |
+| Create subject offerings for sections; split an offering into uneven batches                                           | ✅     |
+| Create schedules: day, time, any campus room, onsite or online, whole offering or one batch                            | ✅     |
+| Assign teachers from their own college only                                                                            | ✅     |
+| Place learners auto-sectioning could not fit; move learners between sections                                           | ✅     |
+| Copy one subject's batches to the section's other split subjects                                                       | ⏳     |
+| Enroll irregular learners subject by subject                                                                           | ✅     |
+| Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week | ✅     |
+| Approve or reject excuses for their college's learners (`medical` needs at least one file)                             | ⏳     |
+| Confirm or dismiss drops flagged at the policy's drop count                                                            | ⏳     |
+| See an at-risk learners list                                                                                           | ⏳     |
+| College-only holidays and suspensions for their own college                                                            | ✅     |
+| Correct a teacher's attendance marks                                                                                   | ❓     |
+| Reassign a subject's classes to another teacher (e.g. a substitute for a teacher on leave)                             | ✅     |
 
 ## Teacher (own college only)
 
@@ -102,3 +103,4 @@ the college and can be offered to any section of its programs.
 | Flag for dropping at the drop count; lower or clear warnings and flags when marks are corrected (unless the dean already confirmed the drop)   | ⏳     |
 | Apply an approved excuse to every class in its date range                                                                                      | ⏳     |
 | Catch room, teacher and section/batch schedule conflicts (per-learner conflicts come with enrollment)                                          | ✅     |
+| Refuse enrolling or batching a learner into two classes at once; warn when a class is scheduled over a learner's other class                   | ✅     |

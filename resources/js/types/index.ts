@@ -4,3 +4,4 @@ export * from './navigation';
 export * from './scheduling';
 export * from './ui';
 export * from './registration';
+export * from './placement';

@@ -7,6 +7,7 @@ import SectionController from '@/actions/App/Http/Controllers/Dean/SectionContro
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import BatchFormDialog from '@/components/dean/BatchFormDialog.vue';
+import BatchRoster from '@/components/dean/BatchRoster.vue';
 import OfferingFormDialog from '@/components/dean/OfferingFormDialog.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import type {
     Offering,
     Program,
+    RosterRow,
     Subject,
     TeacherOption,
     TermPhase,
@@ -32,6 +34,7 @@ const props = defineProps<{
     offerings: Offering[];
     subjects: Pick<Subject, 'id' | 'code' | 'title'>[];
     teachers: TeacherOption[];
+    roster: RosterRow[];
     canEdit: boolean;
 }>();
 
@@ -280,6 +283,20 @@ function nextBatchName(offering: Offering): string {
                     </tbody>
                 </table>
             </div>
+        </section>
+
+        <section class="space-y-3">
+            <Heading
+                variant="small"
+                title="Learners and batches"
+                description="Everyone taking this section's subjects. Set all puts a learner in the batch of that name in every split subject; each change is checked against the learner's week."
+            />
+            <BatchRoster
+                :section-id="section.id"
+                :roster="roster"
+                :offerings="offerings"
+                :can-edit="canEdit"
+            />
         </section>
     </div>
 </template>

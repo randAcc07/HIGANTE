@@ -103,10 +103,11 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 
 ## 8. Dean placement
 
-- [ ] Queue of unsectioned learners; place or move learners between sections (warn past capacity)
-- [ ] Enroll irregular learners subject by subject
-- [ ] Assign learners to batches
-- [ ] Per-learner schedule conflict check when enrolling or batching. Batch membership is set per subject, while scheduling assumes a batch name means the same group across subjects; a learner put in 2-AA of one subject and 2-AB of another must not end up in two overlapping labs
+- [x] Queue of unsectioned learners (the dean's Learners page, per term, filtered to "No section"); place or move learners between sections of their program and year level (warn past capacity). Moving a regular learner swaps the old section's subjects for the new one's (subjects with attendance stay as dropped, confirmed by the dean); an irregular learner keeps their subjects
+- [x] Enroll learners subject by subject from any section of the college this term, optionally in a batch; removing a subject deletes it, or marks it dropped once attendance is recorded; a dropped subject can be taken again (same enrollment, history kept). Adding or removing a subject for a regular learner makes them irregular
+- [x] Assign learners to batches: the section page's roster (everyone taking its subjects, including irregulars from other sections) with one batch per split subject and "set all" by batch name; "Split automatically" places everyone without a batch by last name, in blocks, toward an even split within each batch's lab seats (those with a batch stay, and get the same batch in subjects they lack one in); tick learners to put them in a batch in every split subject or one. Nothing is saved until "Save batches", which saves the whole roster; one subject's batch can also be changed from the learner's page
+- [x] Per-learner schedule conflict check when enrolling or batching (`LearnerConflicts`): refused with every clash listed, e.g. 2-AA of one subject and 2-AB of another at the same time. Saving a class warns (never blocks) when a learner in it has another class then
+- [x] The learner's page shows their week (whole-class meetings plus their batches'); placement is the learner's own dean's, while they are registered and the term isn't closed
 
 ## 9. Attendance taking (teacher)
 

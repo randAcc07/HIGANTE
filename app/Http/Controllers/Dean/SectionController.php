@@ -2,14 +2,21 @@
 
 namespace App\Http\Controllers\Dean;
 
+use App\Enums\EnrollmentStatus;
 use App\Http\Controllers\Admin\Concerns\RefusesDeletingInUse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Dean\SectionRequest;
+use App\Models\Batch;
+use App\Models\Enrollment;
 use App\Models\Program;
+use App\Models\Schedule;
 use App\Models\Section;
 use App\Models\Subject;
+use App\Models\SubjectOffering;
 use App\Models\Term;
+use App\Models\TermRegistration;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -81,6 +88,21 @@ class SectionController extends Controller
             ->orderBy('id')
             ->get();
 
+        // A batch seats as many as the smallest room it meets in (null when
+        // unknown); the roster's automatic split sizes batches by it.
+        $batches = $offerings->flatMap(fn (SubjectOffering $offering) => $offering->batches->all())->all();
+        $roomCapacities = Schedule::query()
+            ->join('rooms', 'rooms.id', '=', 'schedules.room_id')
+            ->whereIn('schedules.batch_id', array_map(fn (Batch $batch): int => $batch->id, $batches))
+            ->whereNotNull('rooms.capacity')
+            ->groupBy('schedules.batch_id')
+            ->selectRaw('schedules.batch_id, min(rooms.capacity) as capacity')
+            ->pluck('capacity', 'batch_id');
+
+        foreach ($batches as $batch) {
+            $batch->setAttribute('room_capacity', isset($roomCapacities[$batch->id]) ? (int) $roomCapacities[$batch->id] : null);
+        }
+
         $collegeId = $section->program->college_id;
 
         return Inertia::render('dean/sections/Show', [
@@ -96,6 +118,7 @@ class SectionController extends Controller
                 ->orderBy('code')
                 ->get(['id', 'code', 'title']),
             'teachers' => ScheduleBlocks::teacherOptions($collegeId),
+            'roster' => $this->roster($section, $offerings),
             'canEdit' => Gate::allows('update', $section),
         ]);
     }
@@ -135,5 +158,47 @@ class SectionController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Section deleted.')]);
 
         return to_route('dean.sections.index', ['term' => $termId]);
+    }
+
+    /**
+     * Everyone taking the section's subjects (its members and irregular
+     * learners from elsewhere), with their batch in each subject.
+     *
+     * @param  Collection<int, SubjectOffering>  $offerings
+     * @return list<array<string, mixed>>
+     */
+    private function roster(Section $section, Collection $offerings): array
+    {
+        $enrollments = Enrollment::with('learner.user')
+            ->whereIn('subject_offering_id', $offerings->modelKeys())
+            ->where('status', '!=', EnrollmentStatus::Dropped)
+            ->get()
+            ->groupBy('learner_id');
+        $registrations = TermRegistration::with('section:id,name')
+            ->where('term_id', $section->term_id)
+            ->whereIn('learner_id', $enrollments->keys())
+            ->get()
+            ->keyBy('learner_id');
+
+        return array_values($enrollments
+            ->map(function ($own, int $learnerId) use ($registrations, $section): array {
+                $learner = $own->first()->learner;
+                $registration = $registrations->get($learnerId);
+
+                return [
+                    'learner_id' => $learnerId,
+                    'registration_id' => $registration?->id,
+                    'name' => $learner->user->last_name.', '.$learner->user->first_name,
+                    'student_number' => $learner->student_number,
+                    'is_irregular' => (bool) $registration?->is_irregular,
+                    // Null when the learner belongs to this section.
+                    'from_section' => $registration?->section_id === $section->id ? null : ($registration?->section->name ?? '—'),
+                    'enrollments' => $own->mapWithKeys(fn (Enrollment $enrollment): array => [
+                        $enrollment->subject_offering_id => ['id' => $enrollment->id, 'batch_id' => $enrollment->batch_id],
+                    ])->all(),
+                ];
+            })
+            ->sortBy(fn (array $row): string => ($row['from_section'] === null ? '0' : '1').$row['name'])
+            ->all());
     }
 }

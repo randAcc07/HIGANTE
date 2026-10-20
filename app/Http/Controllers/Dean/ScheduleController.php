@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Dean\ScheduleRequest;
 use App\Models\Schedule;
 use App\Models\SubjectOffering;
+use App\Scheduling\LearnerConflicts;
 use App\Scheduling\ScheduleConflicts;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,7 @@ use Inertia\Inertia;
  */
 class ScheduleController extends Controller
 {
-    public function __construct(private ScheduleConflicts $checker) {}
+    public function __construct(private ScheduleConflicts $checker, private LearnerConflicts $learners) {}
 
     public function store(ScheduleRequest $request, SubjectOffering $offering): RedirectResponse
     {
@@ -60,7 +61,7 @@ class ScheduleController extends Controller
             throw ValidationException::withMessages(['slot.0' => __('That room or teacher was just booked by someone else. Check the timetable and try again.')]);
         }
 
-        $warnings = $this->checker->warnings($schedule);
+        $warnings = [...$this->checker->warnings($schedule), ...$this->learners->clashesWith($schedule)];
 
         Inertia::flash('toast', $warnings === []
             ? ['type' => 'success', 'message' => $message]

@@ -11,7 +11,9 @@ use App\Http\Controllers\Admin\UserEmailController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dean\BatchController;
+use App\Http\Controllers\Dean\LearnerController as DeanLearnerController;
 use App\Http\Controllers\Dean\OfferingController;
+use App\Http\Controllers\Dean\PlacementController;
 use App\Http\Controllers\Dean\ScheduleController;
 use App\Http\Controllers\Dean\SectionController;
 use App\Http\Controllers\Dean\TimetableController;
@@ -77,6 +79,15 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
     Route::put('schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
     Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
     Route::get('timetables', [TimetableController::class, 'index'])->name('timetables.index');
+    Route::put('sections/{section}/batches', [BatchController::class, 'roster'])->name('batches.roster');
+
+    // Placement: authorized through the learner's registration (TermRegistrationPolicy).
+    Route::get('learners', [DeanLearnerController::class, 'index'])->name('learners.index');
+    Route::get('learners/{registration}', [DeanLearnerController::class, 'show'])->name('learners.show');
+    Route::put('learners/{registration}/section', [PlacementController::class, 'section'])->name('learners.section');
+    Route::post('learners/{registration}/enrollments', [PlacementController::class, 'enroll'])->name('learners.enroll');
+    Route::put('enrollments/{enrollment}', [PlacementController::class, 'batch'])->name('enrollments.update');
+    Route::delete('enrollments/{enrollment}', [PlacementController::class, 'remove'])->name('enrollments.destroy');
 });
 
 // Account setup links. Signed URLs authorize them; see AccountSetupController.
