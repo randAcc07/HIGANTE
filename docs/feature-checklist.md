@@ -6,9 +6,14 @@ change set: review it, then commit. Roles and their permissions are tracked in
 
 Every feature is done only when:
 
-- `composer ci:check` passes (formatting, lint, TypeScript, Pint, PHPStan, Pest).
+- `composer ci:check` passes (formatting, lint, TypeScript, frontend unit
+  tests, Pint, PHPStan, Pest).
+- `composer test:browser` passes: real pages in Chromium (Pest browser plugin).
+  Every new page gets a row in `tests/Browser/SmokeTest.php`; client-side logic
+  worth clicking through (ticks, splits, dialogs) gets a flow test there too.
 - New behaviour has tests, including the permission boundaries (wrong role,
-  wrong college).
+  wrong college). Pure frontend logic lives in `resources/js/lib/` with a
+  `*.test.ts` next to it (`npm test`).
 - Schema changes ran through `php artisan migrate --database=mariadb_migrate`,
   and `db/scheduler_schema.sql` / `.dbml` were regenerated.
 - `roles-and-permissions.md` reflects what was built.

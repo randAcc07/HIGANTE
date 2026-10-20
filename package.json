@@ -9,7 +9,8 @@
         "check": "vp check",
         "check:fix": "vp check --fix",
         "types:check": "vue-tsc --noEmit",
-        "colors:check": "node scripts/check-colors.mjs"
+        "colors:check": "node scripts/check-colors.mjs",
+        "test": "vp test run"
     },
     "dependencies": {
         "@inertiajs/vite": "^3.0.0",
@@ -34,9 +35,10 @@
         "@types/node": "^22.13.5",
         "@vitejs/plugin-vue": "^6.0.0",
         "concurrently": "^10.0.3",
+        "playwright": "^1.64.1",
         "typescript": "^5.2.2",
-        "vite": "^8.0.0",
-        "vite-plus": "0.3.0",
+        "vite": "npm:@voidzero-dev/vite-plus-core@0.3.3",
+        "vite-plus": "0.3.3",
         "vue-tsc": "^2.2.4"
     },
     "optionalDependencies": {
@@ -47,5 +49,8 @@
         "@tailwindcss/oxide-win32-x64-msvc": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1",
         "lightningcss-win32-x64-msvc": "^1.29.1"
+    },
+    "overrides": {
+        "vite": "$vite"
     }
 }

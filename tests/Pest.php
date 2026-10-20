@@ -16,7 +16,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->in('Feature', 'Browser');
 
 /*
 |--------------------------------------------------------------------------
@@ -47,4 +47,16 @@ expect()->extend('toBeOne', function () {
 function something()
 {
     // ..
+}
+
+/**
+ * A route as a path, for browser tests. The browser plugin serves the app
+ * in-process and sends only paths there; an absolute URL (APP_URL) would
+ * reach whatever runs at it, such as the dev server.
+ *
+ * @param  array<string, mixed>|object  $parameters
+ */
+function path(string $name, mixed $parameters = []): string
+{
+    return route($name, $parameters, absolute: false);
 }

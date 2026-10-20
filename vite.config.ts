@@ -42,6 +42,15 @@ export default defineConfig({
             ],
         },
     },
+    // Unit tests for the frontend's pure logic (`vp test`); pages and
+    // components are covered by the Pest browser tests instead.
+    test: {
+        include: ['resources/js/**/*.test.ts'],
+        environment: 'node',
+        // A zone behind UTC, where parsing "2026-08-10" as UTC would land on
+        // the 9th: the date helpers must not.
+        env: { TZ: 'America/Los_Angeles' },
+    },
     lint: {
         ignorePatterns: [
             'vendor/**',
