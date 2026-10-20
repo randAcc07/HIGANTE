@@ -74,9 +74,13 @@
         "types:check": [
             "phpstan analyse --memory-limit=1G"
         ],
+        "colors:check": [
+            "node scripts/check-colors.mjs"
+        ],
         "test": [
             "@php artisan config:clear --ansi",
             "@lint:check",
+            "@colors:check",
             "@types:check",
             "@php artisan test"
         ],

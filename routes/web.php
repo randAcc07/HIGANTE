@@ -20,7 +20,7 @@ use App\Http\Controllers\Registrar\LearnerController;
 use App\Http\Controllers\Registrar\RegistrationController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'Welcome')->name('home');
+Route::get('/', fn () => to_route('dashboard'))->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
