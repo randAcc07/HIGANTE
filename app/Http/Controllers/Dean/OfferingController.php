@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Dean;
 
 use App\Http\Controllers\Admin\Concerns\RefusesDeletingInUse;
 use App\Http\Controllers\Controller;
+use App\Models\AttendanceRecord;
 use App\Models\Section;
 use App\Models\Subject;
 use App\Models\SubjectOffering;
 use App\Models\Teacher;
+use App\Registration\TermRegistrar;
 use App\Scheduling\ScheduleConflicts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,7 +27,10 @@ class OfferingController extends Controller
 {
     use RefusesDeletingInUse;
 
-    public function store(Request $request, Section $section): RedirectResponse
+    /**
+     * Add a subject; the section's regular learners are enrolled in it.
+     */
+    public function store(Request $request, Section $section, TermRegistrar $registrar): RedirectResponse
     {
         Gate::authorize('update', $section);
         $collegeId = $section->program->college_id;
@@ -39,9 +44,16 @@ class OfferingController extends Controller
             'teacher_id' => ['nullable', 'integer', self::teacherRule($collegeId)],
         ], ['subject_id.unique' => __('The section already has this subject.')]);
 
-        $section->subjectOfferings()->create($validated);
+        $enrolled = DB::transaction(function () use ($section, $validated, $registrar): int {
+            $offering = $section->subjectOfferings()->create($validated);
+            $registrar->enrollSectionIn($offering);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Subject added.')]);
+            return $offering->enrollments()->count();
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => $enrolled === 0
+            ? __('Subject added.')
+            : trans_choice('{1} Subject added; :count regular learner enrolled.|[2,*] Subject added; :count regular learners enrolled.', $enrolled, ['count' => $enrolled])]);
 
         return back();
     }
@@ -89,18 +101,28 @@ class OfferingController extends Controller
         return back();
     }
 
+    /**
+     * Remove a subject while nothing has been recorded for it; its
+     * enrollments go with it.
+     */
     public function destroy(SubjectOffering $offering): RedirectResponse
     {
         Gate::authorize('update', $offering->section);
 
-        $refusal = $this->refuseIfInUse($offering->subject->code, ['enrollment' => $offering->enrollments()->count()]);
+        $refusal = $this->refuseIfInUse(
+            $offering->subject->code,
+            ['attendance record' => AttendanceRecord::whereIn('enrollment_id', $offering->enrollments()->select('id'))->count()],
+        );
 
         if ($refusal !== null) {
             return $refusal;
         }
 
-        // Batches and classes cascade.
-        $offering->delete();
+        DB::transaction(function () use ($offering): void {
+            $offering->enrollments()->delete();
+            // Batches and classes cascade.
+            $offering->delete();
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Subject removed from the section.')]);
 

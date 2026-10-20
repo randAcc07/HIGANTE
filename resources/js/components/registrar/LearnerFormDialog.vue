@@ -5,6 +5,7 @@ import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerC
 import InputError from '@/components/InputError.vue';
 import NameFields from '@/components/NameFields.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
     Dialog,
     DialogContent,
@@ -22,7 +23,17 @@ const props = defineProps<{
         programs: Pick<Program, 'id' | 'college_id' | 'code' | 'name'>[];
     })[];
     learner?: LearnerRecord;
+    /** Terms a new learner can be registered for right away. */
+    registrationTerms?: { id: number; label: string }[];
+    defaultRegistrationTerm?: number | null;
 }>();
+
+const defaultTerm = (): number | null =>
+    props.registrationTerms?.some(
+        (term) => term.id === props.defaultRegistrationTerm,
+    )
+        ? (props.defaultRegistrationTerm ?? null)
+        : null;
 
 const open = ref(false);
 const form = useForm({
@@ -35,6 +46,8 @@ const form = useForm({
     program_id: props.learner?.program_id ?? null,
     year_level: String(props.learner?.year_level ?? 1),
     status: (props.learner?.status ?? 'active') as LearnerStatus,
+    register_term_id: defaultTerm(),
+    is_irregular: false,
 });
 
 function submit(): void {
@@ -43,7 +56,14 @@ function submit(): void {
         middle_name: data.middle_name || null,
         last_name: data.last_name,
         suffix: data.suffix || null,
-        ...(props.learner ? {} : { email: data.email }),
+        ...(props.learner
+            ? {}
+            : {
+                  email: data.email,
+                  register_term_id:
+                      data.status === 'active' ? data.register_term_id : null,
+                  is_irregular: data.is_irregular,
+              }),
         student_number: data.student_number,
         program_id: data.program_id,
         year_level: Number(data.year_level),
@@ -79,7 +99,7 @@ function submit(): void {
                 {{
                     learner
                         ? 'The email changes through Settings, or the admin for a lost inbox.'
-                        : 'They get a link to set their own password. Register them for a term separately.'
+                        : 'They get a link to set their own password. Freshmen and transferees can be registered for a term right away.'
                 }}
             </DialogDescription>
             <form class="space-y-4" @submit.prevent="submit">
@@ -163,6 +183,36 @@ function submit(): void {
                         <option value="dropped_out">Dropped out</option>
                     </select>
                     <InputError :message="form.errors.status" />
+                </div>
+
+                <div
+                    v-if="!learner && registrationTerms?.length"
+                    class="grid gap-2"
+                >
+                    <Label for="learner-register">Register for</Label>
+                    <select
+                        id="learner-register"
+                        v-model="form.register_term_id"
+                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                        :disabled="form.status !== 'active'"
+                    >
+                        <option :value="null">Don't register yet</option>
+                        <option
+                            v-for="term in registrationTerms"
+                            :key="term.id"
+                            :value="term.id"
+                        >
+                            {{ term.label }}
+                        </option>
+                    </select>
+                    <InputError :message="form.errors.register_term_id" />
+                    <label
+                        v-if="form.register_term_id && form.status === 'active'"
+                        class="flex items-center gap-2 text-sm"
+                    >
+                        <Checkbox v-model="form.is_irregular" />
+                        Irregular (the dean enrolls them subject by subject)
+                    </label>
                 </div>
 
                 <DialogFooter>

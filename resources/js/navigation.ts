@@ -4,6 +4,7 @@ import {
     CalendarDays,
     CalendarClock,
     CalendarRange,
+    ClipboardCheck,
     DoorOpen,
     GraduationCap,
     LayoutGrid,
@@ -19,6 +20,7 @@ import CalendarController from '@/actions/App/Http/Controllers/CalendarControlle
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
+import RegistrationController from '@/actions/App/Http/Controllers/Registrar/RegistrationController';
 import { dashboard } from '@/routes';
 import type { NavItem, UserRole } from '@/types';
 
@@ -39,6 +41,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             title: 'Learners',
             href: LearnerController.index(),
             icon: GraduationCap,
+        },
+        {
+            title: 'Registration',
+            href: RegistrationController.index(),
+            icon: ClipboardCheck,
         },
     ],
     dean: () => [

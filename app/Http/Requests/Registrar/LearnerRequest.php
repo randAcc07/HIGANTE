@@ -6,6 +6,7 @@ use App\Concerns\ProfileValidationRules;
 use App\Enums\LearnerStatus;
 use App\Models\Learner;
 use App\Models\Program;
+use App\Models\Term;
 use App\Models\User;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -39,7 +40,20 @@ class LearnerRequest extends FormRequest
             'program_id' => ['required', 'integer', Rule::exists(Program::class, 'id')],
             'year_level' => ['required', 'integer', 'between:1,6'],
             'status' => ['required', Rule::enum(LearnerStatus::class)],
+            // Freshmen and transferees are registered as they are admitted.
+            ...($creating ? [
+                'register_term_id' => ['nullable', 'integer', Rule::exists(Term::class, 'id'), 'prohibited_unless:status,active'],
+                'is_irregular' => ['boolean'],
+            ] : []),
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return ['register_term_id.prohibited_unless' => __('Only an active learner can be registered.')];
     }
 
     /**

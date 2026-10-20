@@ -34,8 +34,9 @@ the college and can be offered to any section of its programs.
 | Admit learners: create the account and student record, set program and year level                                                                                                      | ✅     |
 | Edit learners' names                                                                                                                                                                   | ✅     |
 | Deactivate and reactivate learner accounts; send new setup links                                                                                                                       | ✅     |
-| Register learners for a term from last year's list (1st semester: tick as each one enrolls; 2nd semester: carried over, untick who left), which places them in a section automatically | ⏳     |
-| Mark a registration as irregular (no automatic enrollment in the section's subjects)                                                                                                   | ⏳     |
+| Register learners for a term from last year's list (1st semester: tick as each one enrolls; 2nd semester: carried over, untick who left), which places them in a section automatically | ✅     |
+| Mark a registration as irregular (no automatic enrollment in the section's subjects)                                                                                                   | ✅     |
+| Register freshmen and transferees as they are admitted; withdraw a learner (drops their classes, keeps the record); undo a mistaken registration until attendance is recorded          | ✅     |
 
 ## Dean (own college only; does not teach)
 
@@ -94,8 +95,8 @@ the college and can be offered to any section of its programs.
 | Responsibility                                                                                                                                 | Status |
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Reject double-booked rooms and teachers, plus the other database rules                                                                         | ✅     |
-| Place newly registered learners in the emptiest section of their program and year level that has room; leave them for the dean if all are full | ⏳     |
-| Enroll section members in every offering of their section, including offerings added later                                                     | ⏳     |
+| Place newly registered learners in the emptiest section of their program and year level that has room; leave them for the dean if all are full | ✅     |
+| Enroll section members in every offering of their section, including offerings added later                                                     | ✅     |
 | Count expected class days per offering, skipping holidays and suspensions                                                                      | ⏳     |
 | Calculate equivalent absences; send each warning once                                                                                          | ⏳     |
 | Flag for dropping at the drop count; lower or clear warnings and flags when marks are corrected (unless the dean already confirmed the drop)   | ⏳     |

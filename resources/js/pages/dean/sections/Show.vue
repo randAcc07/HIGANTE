@@ -258,7 +258,7 @@ function nextBatchName(offering: Offering): string {
                                     </OfferingFormDialog>
                                     <ConfirmDeleteDialog
                                         :title="`Remove ${offering.subject.code}?`"
-                                        description="Its batches and classes go with it. A subject with enrolled learners stays."
+                                        description="Its batches, classes and enrollments go with it. A subject with recorded attendance stays."
                                         :url="
                                             OfferingController.destroy.url(
                                                 offering.id,

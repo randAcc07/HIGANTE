@@ -9,10 +9,14 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Registrar\LearnerRequest;
 use App\Models\College;
 use App\Models\Learner;
+use App\Models\Term;
+use App\Models\TermRegistration;
 use App\Models\User;
+use App\Registration\TermRegistrar;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -25,7 +29,7 @@ use Inertia\Response;
  */
 class LearnerController extends Controller
 {
-    public function __construct(private SendAccountSetupLink $setupLink) {}
+    public function __construct(private SendAccountSetupLink $setupLink, private TermRegistrar $registrar) {}
 
     public function index(Request $request): Response
     {
@@ -39,12 +43,7 @@ class LearnerController extends Controller
 
         $learners = Learner::query()
             ->with(['user', 'program:id,college_id,code', 'program.college:id,code'])
-            ->when($filters['search'], fn ($query, string $search) => $query->where(fn ($query) => $query
-                ->where('student_number', 'like', "%{$search}%")
-                ->orWhereHas('user', fn ($user) => $user
-                    ->where('last_name', 'like', "%{$search}%")
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%"))))
+            ->when($filters['search'], fn ($query, string $search) => $query->matching($search))
             ->when($filters['college'], fn ($query, int $college) => $query->whereHas('program', fn ($program) => $program->where('college_id', $college)))
             ->when($filters['program'], fn ($query, int $program) => $query->where('program_id', $program))
             ->when($filters['year'], fn ($query, int $year) => $query->where('year_level', $year))
@@ -62,14 +61,30 @@ class LearnerController extends Controller
                 ->orderBy('code')
                 ->get(['id', 'code', 'name']),
             'filters' => $filters,
+            // The terms a new learner can be registered for as they are admitted.
+            'registrationTerms' => Term::orderBy('starts_on')->get()
+                ->filter(fn (Term $term): bool => TermRegistrar::isOpen($term))
+                ->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label])
+                ->values(),
+            'defaultRegistrationTerm' => Term::forPreparation()?->id,
         ]);
     }
 
+    /**
+     * Admit a learner, optionally registering them for a term right away.
+     */
     public function store(LearnerRequest $request): RedirectResponse
     {
         $program = $request->program();
+        /** @var User $registrar */
+        $registrar = $request->user();
+        $term = $request->filled('register_term_id') ? Term::findOrFail($request->integer('register_term_id')) : null;
 
-        $learner = DB::transaction(function () use ($request, $program): Learner {
+        if ($term !== null) {
+            Gate::authorize('create', [TermRegistration::class, $term]);
+        }
+
+        [$learner, $registered] = DB::transaction(function () use ($request, $program, $term, $registrar): array {
             $account = new User($request->safe()->only(['last_name', 'first_name', 'middle_name', 'suffix', 'email']));
             $account->forceFill([
                 'role' => UserRole::Learner,
@@ -80,13 +95,27 @@ class LearnerController extends Controller
                 'email_verified_at' => now(),
             ])->save();
 
-            return $account->learner()->create([
+            $learner = $account->learner()->create([
                 ...$request->safe()->only(['student_number', 'year_level', 'status']),
                 'program_id' => $program->id,
             ]);
+
+            $registered = $term === null ? null : $this->registrar->register($learner, $term, $learner->year_level, $request->boolean('is_irregular'), $registrar);
+
+            return [$learner, $registered];
         });
 
         $this->flashSetupLink($learner->user);
+
+        if ($registered !== null) {
+            $section = $registered['registration']->section;
+            Inertia::flash('toast', [
+                'type' => $section === null || $registered['warning'] !== null ? 'warning' : 'success',
+                'message' => trim(($section === null
+                    ? __('Registered for :term; no section has room, so the dean places them.', ['term' => $term?->label])
+                    : __('Registered for :term in :section.', ['term' => $term?->label, 'section' => "{$program->code} {$section->name}"])).' '.$registered['warning']),
+            ]);
+        }
 
         return back();
     }

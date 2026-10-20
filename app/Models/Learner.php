@@ -6,6 +6,8 @@ use App\Enums\LearnerStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\LearnerFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +43,22 @@ class Learner extends Model
         return [
             'status' => LearnerStatus::class,
         ];
+    }
+
+    /**
+     * Student number, or the account's last name, first name or email.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function matching(Builder $query, string $search): void
+    {
+        $query->where(fn ($query) => $query
+            ->where('student_number', 'like', "%{$search}%")
+            ->orWhereHas('user', fn ($user) => $user
+                ->where('last_name', 'like', "%{$search}%")
+                ->orWhere('first_name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")));
     }
 
     /**

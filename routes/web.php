@@ -17,6 +17,7 @@ use App\Http\Controllers\Dean\SectionController;
 use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
 use App\Http\Controllers\Registrar\LearnerController;
+use App\Http\Controllers\Registrar\RegistrationController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
@@ -56,6 +57,11 @@ Route::middleware(['auth', 'verified', 'role:registrar'])->prefix('registrar')->
     Route::put('learners/{learner}', [LearnerController::class, 'update'])->name('learners.update');
     Route::put('learners/{learner}/status', [LearnerController::class, 'status'])->name('learners.status');
     Route::post('learners/{learner}/setup-link', [LearnerController::class, 'setupLink'])->name('learners.setup-link');
+    Route::get('registrations', [RegistrationController::class, 'index'])->name('registrations.index');
+    Route::post('terms/{term}/registrations', [RegistrationController::class, 'store'])->name('registrations.store');
+    Route::put('registrations/{registration}', [RegistrationController::class, 'update'])->name('registrations.update');
+    Route::post('registrations/{registration}/withdraw', [RegistrationController::class, 'withdraw'])->name('registrations.withdraw');
+    Route::delete('registrations/{registration}', [RegistrationController::class, 'destroy'])->name('registrations.destroy');
 });
 
 // Scheduling: each change is authorized through its section (SectionPolicy).

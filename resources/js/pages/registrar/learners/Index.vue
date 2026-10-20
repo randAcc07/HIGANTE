@@ -31,6 +31,8 @@ const props = defineProps<{
     colleges: (Pick<College, 'id' | 'code' | 'name'> & {
         programs: Pick<Program, 'id' | 'college_id' | 'code' | 'name'>[];
     })[];
+    registrationTerms: { id: number; label: string }[];
+    defaultRegistrationTerm: number | null;
     filters: {
         search: string | null;
         college: number | null;
@@ -75,7 +77,11 @@ const statusLabels: Record<LearnerStatus, string> = {
                 title="Learners"
                 description="Admission and student records"
             />
-            <LearnerFormDialog :colleges="colleges">
+            <LearnerFormDialog
+                :colleges="colleges"
+                :registration-terms="registrationTerms"
+                :default-registration-term="defaultRegistrationTerm"
+            >
                 <Button><Plus class="h-4 w-4" /> Admit a learner</Button>
             </LearnerFormDialog>
         </div>

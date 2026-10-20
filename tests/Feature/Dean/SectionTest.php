@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Dean;
 
+use App\Models\AttendanceRecord;
 use App\Models\Batch;
 use App\Models\Enrollment;
 use App\Models\Program;
@@ -126,13 +127,23 @@ class SectionTest extends SchedulingTestCase
         $this->assertSame($free->id, $class->refresh()->teacher_id);
     }
 
-    public function test_a_subject_with_enrolled_learners_stays()
+    public function test_a_subject_with_attendance_stays()
     {
-        Enrollment::factory()->for($this->offering)->create();
+        $enrollment = Enrollment::factory()->for($this->offering)->create();
+        AttendanceRecord::factory()->for($enrollment)->create();
 
         $this->delete(route('dean.offerings.destroy', $this->offering))
-            ->assertInertiaFlash('toast.message', "CS 101 still has 1 enrollment, so it can't be deleted.");
+            ->assertInertiaFlash('toast.message', "CS 101 still has 1 attendance record, so it can't be deleted.");
         $this->assertModelExists($this->offering);
+    }
+
+    public function test_a_subject_without_attendance_is_removed_with_its_enrollments()
+    {
+        $enrollment = Enrollment::factory()->for($this->offering)->create();
+
+        $this->delete(route('dean.offerings.destroy', $this->offering))->assertSessionHasNoErrors();
+        $this->assertModelMissing($this->offering);
+        $this->assertModelMissing($enrollment);
     }
 
     public function test_batches_are_named_uniquely_and_kept_while_used()

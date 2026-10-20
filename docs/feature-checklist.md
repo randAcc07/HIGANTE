@@ -83,7 +83,7 @@ Every feature is done only when:
 - [x] Room capacity and teacher-on-leave warnings when saving (never block)
 - [x] Schedule grid (Vue): Mon–Sat, 07:00–20:00, classes in 30-minute steps; zoom 50% / 100% / 200% / 600% via − / +, Ctrl+scroll or pinch (adapted from LSIMS); lines and labels stay at 30 minutes (hourly at 50%), matching the 30-minute scheduling step. Classes are scheduled on the Timetables page, by view type (section, optionally as one batch sees it; room; teacher) then target: click a slot to add (from a room or teacher, the dialog also asks for the section), a class to edit. Section pages keep subjects and batches. Other colleges' bookings of a room show only as booked
 - [x] A closed term's sections, offerings and schedules are read-only; a class with attendance keeps its day and time and can't be removed
-- [x] Nothing with learners is deleted: sections with registrations, subjects with enrollments, batches with classes or learners
+- [x] Nothing with learners is deleted: sections with registrations, subjects with recorded attendance (feature 7 relaxed this from any enrollment), batches with classes or learners
 
 ## 7. Term registration (registrar)
 
@@ -91,13 +91,14 @@ Learners re-enroll at the registrar's office once per school year; the
 registrar's approval in the system is the enrollment. There is no learner-side
 confirmation (it would duplicate the office visit) and no enrollment window.
 
-- [ ] 1st semester: the registrar works from a list of last year's active learners, year level already raised by one, nobody ticked; ticks and approves them (singly or in batches) as they complete enrollment
-- [ ] 2nd semester: the same list, pre-ticked with everyone registered in the 1st semester of the same school year (withdrawn learners unticked), same year level; the registrar unticks those who left
-- [ ] New learners (freshmen, transferees) are admitted and registered directly
-- [ ] The registrar can override the proposed year level (returnees, irregulars) and mark a registration irregular (no automatic enrollment in the section's subjects)
-- [ ] Approval registers the learner and auto-sections them: the emptiest section of their program and year level with room; otherwise unsectioned for the dean
-- [ ] Regular learners are enrolled in every offering of their section, including offerings the dean adds later
-- [ ] Withdrawal keeps the registration and its history
+- [x] 1st semester: the registrar works from a list of last year's active learners, year level already raised by one (at most 6), nobody ticked; ticks and approves them (singly or the ticked ones on a page) as they complete enrollment. Learners not on the list (returnees, learners admitted without registering) are under "others", at their record's year level
+- [x] 2nd semester: the same list, pre-ticked with everyone registered in the 1st semester of the same school year (withdrawn learners unticked), same year level and irregular flag; the registrar unticks those who left
+- [x] New learners (freshmen, transferees) are admitted and registered directly (the admit form's "Register for" term)
+- [x] The registrar can override the proposed year level (returnees, irregulars) and mark a registration irregular (no automatic enrollment in the section's subjects). Made regular later, the learner gets the section's subjects they lack; made irregular, they keep their subjects for the dean
+- [x] Approval registers the learner and auto-sections them: the emptiest section of their program and year level with room (ties to the first by name); otherwise unsectioned for the dean. A 2nd semester keeps the block: the section named like the learner's 1st-semester one, even past capacity (warned), else the emptiest. The learner record's year level follows their latest registration
+- [x] Regular learners are enrolled in every offering of their section, including offerings the dean adds later (batches are left for the dean). An offering can be removed while none of its enrollments has attendance; its enrollments go with it
+- [x] Withdrawal keeps the registration and its history and drops every class the learner still has (confirmed by the registrar). A registration made by mistake can be undone (removed with its enrollments) until attendance is recorded
+- [x] Registration changes only while the term is upcoming or in session; an ended or closed term's registrations are read-only
 - [ ] Later, if enrollment moves online: learner-side confirmation as a status that feeds the same list
 
 ## 8. Dean placement
