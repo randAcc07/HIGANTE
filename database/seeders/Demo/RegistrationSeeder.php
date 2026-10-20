@@ -16,6 +16,8 @@ use App\Models\SubjectOffering;
 use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
+use App\Registration\TermRegistrar;
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -32,12 +34,14 @@ use Illuminate\Support\Str;
  * Per program, one second-year and one third-year learner are irregular:
  * they skip one of their section's major subjects and take one subject
  * from the year below, in a batch that fits their timetable. Per college,
- * one second year withdrew mid-term, two graduates and one deactivated
- * learner are admitted but not registered.
+ * one second year withdrew mid-term (through the app's own withdrawal),
+ * and two graduates, one deactivated learner and one returnee (back after
+ * a year away, never registered in the demo terms) are admitted but not
+ * registered.
  *
  * Demo logins per college: learner.<college>@ (first year, will carry
  * warnings and excuses), atrisk.<college>@ (first year, will be flagged for
- * dropping) and irregular.<college>@.
+ * dropping), irregular.<college>@ and returnee.<college>@.
  */
 class RegistrationSeeder extends Seeder
 {
@@ -87,7 +91,7 @@ class RegistrationSeeder extends Seeder
                 }
             }
 
-            $this->unregistered($college);
+            $this->unregistered($college, returneeYear: $college->code === 'COE' ? 3 : 2);
         }
     }
 
@@ -155,16 +159,23 @@ class RegistrationSeeder extends Seeder
         }
 
         if ($withdrawn !== null) {
-            $withdrawn->status = RegistrationStatus::Withdrawn;
-            $withdrawn->updated_at = CarbonImmutable::parse(self::WITHDRAWN_ON.' 10:00');
-            $withdrawn->save();
+            $this->withdraw($withdrawn, $registrar);
+        }
+    }
 
-            // The registrar's withdrawal drops every class from that day on.
-            DB::table('enrollments')->where('learner_id', $withdrawn->learner_id)->update([
-                'status' => EnrollmentStatus::Dropped->value,
-                'drop_confirmed_at' => $withdrawn->updated_at,
-                'drop_confirmed_by' => $registrar->id,
-            ]);
+    /**
+     * Withdraws through the app (registration withdrawn, the term's classes
+     * dropped and confirmed by the registrar), as of WITHDRAWN_ON.
+     */
+    private function withdraw(TermRegistration $registration, User $registrar): void
+    {
+        $now = Carbon::getTestNow();
+        Carbon::setTestNow(CarbonImmutable::parse(self::WITHDRAWN_ON.' 10:00'));
+
+        try {
+            app(TermRegistrar::class)->withdraw($registration, $registrar);
+        } finally {
+            Carbon::setTestNow($now);
         }
     }
 
@@ -323,11 +334,16 @@ class RegistrationSeeder extends Seeder
     }
 
     /**
-     * Two graduates and one deactivated learner, admitted but not registered.
+     * Two graduates, one deactivated learner and one returnee, admitted but
+     * not registered.
      */
-    private function unregistered(College $college): void
+    private function unregistered(College $college, int $returneeYear): void
     {
         $program = $college->programs->firstOrFail();
+
+        // Entered a year earlier than their classmates and sat last year out.
+        $entryYear = (int) substr(CampusData::TERM['school_year'], 0, 4) - $returneeYear;
+        $this->admit($college, $college->programs->last() ?? $program, $returneeYear, self::demoEmail('returnee', $college->code), $entryYear);
 
         foreach ([LearnerStatus::Graduated, LearnerStatus::Graduated, LearnerStatus::Inactive] as $status) {
             $learner = $this->admit($college, $program, $status === LearnerStatus::Graduated ? 4 : 2, null, entryYear: $status === LearnerStatus::Graduated ? 2022 : null);

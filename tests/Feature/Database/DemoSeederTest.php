@@ -4,12 +4,16 @@ namespace Tests\Feature\Database;
 
 use App\Enums\EnrollmentStatus;
 use App\Enums\UserRole;
+use App\Models\Learner;
+use App\Models\Term;
+use App\Models\TermRegistration;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -28,7 +32,7 @@ class DemoSeederTest extends TestCase
         $this->seed(DatabaseSeeder::class);
 
         // Fixed logins, one per role and college.
-        foreach (['admin', 'registrar', 'dean.cos', 'teacher.coe', 'learner.coeng', 'atrisk.cos', 'irregular.coe'] as $login) {
+        foreach (['admin', 'registrar', 'dean.cos', 'teacher.coe', 'learner.coeng', 'atrisk.cos', 'irregular.coe', 'returnee.coeng'] as $login) {
             $this->assertTrue(User::where('email', "{$login}@scheduler.test")->exists(), $login);
         }
         $this->assertSame(1, User::where('role', UserRole::Admin)->count());
@@ -111,6 +115,53 @@ class DemoSeederTest extends TestCase
             ->where('users.email', 'atrisk.cos@scheduler.test')
             ->orderBy('enrollments.id')
             ->value('enrollments.status'));
+
+        // Withdrawals match the app: every class dropped, confirmed by the registrar.
+        $this->assertSame(0, DB::table('term_registrations')
+            ->join('enrollments', 'enrollments.learner_id', '=', 'term_registrations.learner_id')
+            ->leftJoin('users', 'users.id', '=', 'enrollments.drop_confirmed_by')
+            ->where('term_registrations.status', 'withdrawn')
+            ->where(fn ($query) => $query->where('enrollments.status', '!=', 'dropped')->orWhere('users.role', '!=', 'registrar'))
+            ->count());
+
+        $this->assertDemoRegistration();
+    }
+
+    /**
+     * The registrar opens on the upcoming 2nd semester: this term's learners
+     * carried over (pre-ticked unless withdrawn), the returnees under
+     * "others", and registering keeps a learner's block together.
+     */
+    private function assertDemoRegistration(): void
+    {
+        $current = Term::where(['school_year' => '2026-2027', 'semester' => 'first'])->sole();
+        $next = Term::where(['school_year' => '2026-2027', 'semester' => 'second'])->sole();
+        $this->actingAs(User::where('email', 'registrar@scheduler.test')->sole());
+
+        // Last school year is on record one year level lower.
+        $this->assertSame(0, TermRegistration::query()
+            ->join('terms', 'terms.id', '=', 'term_registrations.term_id')
+            ->where('terms.school_year', '2025-2026')
+            ->whereNotIn('learner_id', TermRegistration::where('term_id', $current->id)->where('year_level', '>=', 2)->select('learner_id'))
+            ->count());
+
+        $this->get(route('registrar.registrations.index'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('term.id', $next->id)
+                ->where('candidates.total', TermRegistration::where('term_id', $current->id)->count())
+                ->where('candidates.data', fn ($rows) => collect($rows)->every(fn (array $row): bool => $row['ticked'] === ($row['previous']['status'] === 'registered'))));
+
+        $this->get(route('registrar.registrations.index', ['source' => 'others']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('candidates.total', 3)
+                ->where('candidates.data', fn ($rows) => collect($rows)->every(fn (array $row): bool => str_starts_with($row['learner']['user']['email'], 'returnee.'))));
+
+        $learner = Learner::whereHas('user', fn ($user) => $user->where('email', 'learner.cos@scheduler.test'))->sole();
+        $this->post(route('registrar.registrations.store', $next), ['entries' => [['learner_id' => $learner->id, 'year_level' => 1, 'is_irregular' => false]]])
+            ->assertSessionHasNoErrors();
+
+        $sectionName = fn (Term $term): ?string => TermRegistration::with('section')->where(['learner_id' => $learner->id, 'term_id' => $term->id])->sole()->section?->name;
+        $this->assertSame($sectionName($current), $sectionName($next));
     }
 
     public function test_it_refuses_a_database_that_already_has_users()

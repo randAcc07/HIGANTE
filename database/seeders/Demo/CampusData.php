@@ -18,8 +18,21 @@ final class CampusData
     /** The current term. Attendance is generated from its start to yesterday. */
     public const TERM = ['school_year' => '2026-2027', 'semester' => 'first', 'starts_on' => '2026-08-10', 'ends_on' => '2026-12-18'];
 
-    /** Last term, kept as history (term and policy only). */
-    public const PREVIOUS_TERM = ['school_year' => '2025-2026', 'semester' => 'second', 'starts_on' => '2026-01-12', 'ends_on' => '2026-05-22'];
+    /**
+     * Last school year's terms, kept as history: sections and registrations
+     * (one year level lower) for today's 2nd to 4th years, no classes.
+     */
+    public const PAST_TERMS = [
+        ['school_year' => '2025-2026', 'semester' => 'first', 'starts_on' => '2025-08-11', 'ends_on' => '2025-12-19'],
+        ['school_year' => '2025-2026', 'semester' => 'second', 'starts_on' => '2026-01-12', 'ends_on' => '2026-05-22'],
+    ];
+
+    /**
+     * The upcoming term: the current term's sections with a few subjects
+     * each, nobody registered yet, so the registrar can carry the current
+     * term's learners over.
+     */
+    public const NEXT_TERM = ['school_year' => '2026-2027', 'semester' => 'second', 'starts_on' => '2027-01-11', 'ends_on' => '2027-05-21'];
 
     public const EMAIL_DOMAIN = 'scheduler.test';
 
@@ -125,6 +138,16 @@ final class CampusData
         ['PE 1', 'Movement Competency Training', 2, 0, ['kind' => 'pe']],
         ['PE 3', 'Individual and Dual Sports', 2, 0, ['kind' => 'pe']],
         ['NSTP 1', 'National Service Training Program 1', 3, 0, ['kind' => 'nstp']],
+        // 2nd semester
+        ['GE 2', 'Readings in Philippine History', 3, 0],
+        ['GE 3', 'The Contemporary World', 3, 0],
+        ['GE 7', 'Science, Technology and Society', 3, 0],
+        ['GEE 1', 'Living in the IT Era', 3, 0],
+        ['GEE 2', 'Gender and Society', 3, 0],
+        ['GEE 3', 'Philippine Popular Culture', 3, 0],
+        ['PE 2', 'Rhythmic Activities', 2, 0, ['kind' => 'pe']],
+        ['PE 4', 'Team Sports', 2, 0, ['kind' => 'pe']],
+        ['NSTP 2', 'National Service Training Program 2', 3, 0, ['kind' => 'nstp']],
     ];
 
     /** General education codes per year level, first semester. */
@@ -133,6 +156,18 @@ final class CampusData
         2 => ['GE 5', 'GE 6', 'PE 3'],
         3 => ['GE 8'],
         4 => ['GE 9'],
+    ];
+
+    /**
+     * The upcoming 2nd semester's subjects per year level: general
+     * education only, offered without a teacher or schedule yet (the
+     * dean's to fill in).
+     */
+    public const SECOND_SEMESTER_BY_YEAR = [
+        1 => ['GE 2', 'PE 2', 'NSTP 2'],
+        2 => ['GE 3', 'GEE 1', 'PE 4'],
+        3 => ['GE 7', 'GEE 2'],
+        4 => ['GEE 2', 'GEE 3'],
     ];
 
     /**

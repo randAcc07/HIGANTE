@@ -10,7 +10,8 @@ use App\Models\User;
 use Illuminate\Database\Seeder;
 
 /**
- * The previous and current terms, each with the handbook attendance policy,
+ * Last school year's two terms, the current term and the upcoming one, each
+ * with the handbook attendance policy,
  * and the current term's holidays and college events. Runs after the staff,
  * since the admin and deans are the events' authors.
  */
@@ -18,7 +19,7 @@ class TermSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach ([CampusData::PREVIOUS_TERM, CampusData::TERM] as $term) {
+        foreach ([...CampusData::PAST_TERMS, CampusData::TERM, CampusData::NEXT_TERM] as $term) {
             $model = Term::create($term);
             AttendancePolicy::create(['term_id' => $model->id, ...AttendancePolicy::HANDBOOK]);
         }

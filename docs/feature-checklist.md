@@ -41,7 +41,7 @@ Every feature is done only when:
 - [x] Authorization base: `role:` route middleware and role helpers on `UserRole`/`User`. Per-model policies (own college, own classes) arrive with each feature's routes
 - [x] Role-aware navigation (one shared menu file per role) and a dashboard showing role and college
 - [x] Profile page: staff edit their own name; for learners it is read-only
-- [x] Demo data: `composer db:demo` rebuilds the schema (migrate user) and seeds a three-college campus mid-semester (app user): timetables, registrations, attendance, warnings, drop flags, excuses. Logins are printed at the end; password `password`. Extend `database/seeders/Demo/` as features add tables
+- [x] Demo data: `composer db:demo` rebuilds the schema (migrate user) and seeds a three-college campus mid-semester (app user): timetables, registrations, attendance, warnings, drop flags, excuses, last school year's registrations, and an upcoming 2nd semester with sections but nobody registered (for carrying learners over). Logins are printed at the end; password `password`. Extend `database/seeders/Demo/` as features add tables
 
 ## 2. Email change with two-step verification
 

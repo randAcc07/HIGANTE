@@ -7,6 +7,8 @@ use Database\Seeders\Demo\AttendanceSeeder;
 use Database\Seeders\Demo\CatalogSeeder;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Database\Seeders\Demo\FilipinoNames;
+use Database\Seeders\Demo\NextTermSeeder;
+use Database\Seeders\Demo\PastTermSeeder;
 use Database\Seeders\Demo\RegistrationSeeder;
 use Database\Seeders\Demo\SectionSeeder;
 use Database\Seeders\Demo\StaffSeeder;
@@ -20,7 +22,9 @@ use RuntimeException;
 /**
  * Demo data for local development: a three-college campus in the middle of
  * its first semester, with timetables, registrations, attendance, warnings,
- * drop flags and excuses. The same seed gives the same data every run.
+ * drop flags and excuses; last school year's registrations for the record;
+ * and an upcoming 2nd semester with sections but nobody registered yet. The
+ * same seed gives the same data every run.
  *
  * Load it with `composer db:demo`, which rebuilds the schema as the migrate
  * user and then seeds as the app user. (`migrate:fresh --seed` cannot work:
@@ -54,7 +58,9 @@ class DatabaseSeeder extends Seeder
             StaffSeeder::class,
             TermSeeder::class,
             SectionSeeder::class,
+            NextTermSeeder::class,
             RegistrationSeeder::class,
+            PastTermSeeder::class,
             ExcuseSeeder::class,
             AttendanceSeeder::class,
             StandingSeeder::class,
@@ -63,7 +69,7 @@ class DatabaseSeeder extends Seeder
         $this->command->newLine();
         $this->command->info('Demo logins (password: '.StaffSeeder::PASSWORD.')');
         $this->command->table(['Email', 'Role', 'College'], User::with('college')
-            ->where('email', 'regexp', '^(admin|registrar|(dean|teacher|learner|atrisk|irregular)\\.[a-z]+)@')
+            ->where('email', 'regexp', '^(admin|registrar|(dean|teacher|learner|atrisk|irregular|returnee)\\.[a-z]+)@')
             ->orderBy('id')
             ->get()
             ->map(fn (User $user): array => [$user->email, $user->role->label(), $user->college->code ?? '—']));
