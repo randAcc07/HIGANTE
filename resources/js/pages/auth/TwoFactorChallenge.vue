@@ -89,7 +89,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                     <span>or you can </span>
                     <button
                         type="button"
-                        class="text-foreground underline decoration-muted-foreground/50 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current!"
+                        class="text-highlight underline decoration-highlight/40 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current!"
                         @click="() => toggleRecoveryMode(clearErrors)"
                     >
                         {{ authConfigContent.buttonText }}
@@ -121,7 +121,7 @@ const toggleRecoveryMode = (clearErrors: () => void): void => {
                     <span>or you can </span>
                     <button
                         type="button"
-                        class="text-foreground underline decoration-muted-foreground/50 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current!"
+                        class="text-highlight underline decoration-highlight/40 underline-offset-4 transition-colors duration-300 ease-out hover:decoration-current!"
                         @click="() => toggleRecoveryMode(clearErrors)"
                     >
                         {{ authConfigContent.buttonText }}

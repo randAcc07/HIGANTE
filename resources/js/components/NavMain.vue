@@ -28,7 +28,12 @@ const { isCurrentUrl } = useCurrentUrl();
                     :tooltip="item.title"
                 >
                     <Link :href="item.href">
-                        <component :is="item.icon" />
+                        <component
+                            :is="item.icon"
+                            :class="{
+                                'text-highlight': isCurrentUrl(item.href),
+                            }"
+                        />
                         <span>{{ item.title }}</span>
                     </Link>
                 </SidebarMenuButton>

@@ -52,7 +52,15 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                         as-child
                     >
                         <Link :href="item.href">
-                            <component :is="item.icon" class="h-4 w-4" />
+                            <component
+                                :is="item.icon"
+                                class="h-4 w-4"
+                                :class="{
+                                    'text-highlight': isCurrentOrParentUrl(
+                                        item.href,
+                                    ),
+                                }"
+                            />
                             {{ item.title }}
                         </Link>
                     </Button>
