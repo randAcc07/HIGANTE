@@ -2,6 +2,7 @@
 
 namespace Tests\Browser;
 
+use App\Attendance\ClassDays;
 use App\Enums\Semester;
 use App\Models\Batch;
 use App\Models\College;
@@ -38,6 +39,9 @@ final class Campus
     public SubjectOffering $lecture;
 
     public SubjectOffering $lab;
+
+    /** CS 101's Monday class. */
+    public Schedule $lectureClass;
 
     public Room $room;
 
@@ -80,7 +84,7 @@ final class Campus
         $batchA = Batch::factory()->for($campus->lab)->create(['name' => '1-AA']);
         $batchB = Batch::factory()->for($campus->lab)->create(['name' => '1-AB']);
 
-        Schedule::factory()->for($campus->lecture)->slot(1, '08:00', '09:30')->create(['teacher_id' => $campus->teacher->id, 'room_id' => $campus->room->id]);
+        $campus->lectureClass = Schedule::factory()->for($campus->lecture)->slot(1, '08:00', '09:30')->create(['teacher_id' => $campus->teacher->id, 'room_id' => $campus->room->id]);
         Schedule::factory()->for($campus->lab)->for($batchA)->slot(2, '08:00', '11:00')->create(['teacher_id' => $campus->teacher->id, 'room_id' => $campus->lab_room->id]);
         Schedule::factory()->for($campus->lab)->for($batchB)->slot(3, '08:00', '11:00')->create(['teacher_id' => $campus->teacher->id, 'room_id' => $campus->lab_room->id]);
 
@@ -102,13 +106,24 @@ final class Campus
             ]);
 
             if ($sectioned) {
-                Enrollment::factory()->for($campus->lecture)->create(['learner_id' => $learner->id]);
-                Enrollment::factory()->for($campus->lab)->create(['learner_id' => $learner->id]);
+                // Enrolled before the term began, so every meeting lists them.
+                foreach ([$campus->lecture, $campus->lab] as $offering) {
+                    Enrollment::factory()->for($offering)->create(['learner_id' => $learner->id])
+                        ->forceFill(['created_at' => $campus->term->starts_on->subDays(3)])->save();
+                }
             }
         }
 
         $campus->users['learner'] = $campus->registrations[0]->learner->user;
 
         return $campus;
+    }
+
+    /**
+     * The lecture's latest meeting up to today, as "Y-m-d".
+     */
+    public function lastLecture(): string
+    {
+        return app(ClassDays::class)->pastDates($this->lectureClass)[0]->toDateString();
     }
 }

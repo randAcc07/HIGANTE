@@ -32,6 +32,7 @@ Every feature is done only when:
 | Holidays         | Admin enters campus-wide ones; deans enter their own college's                                                                                                                                                  |
 | Mark corrections | Teachers correct their own marks; deans can correct marks in their college; every change is audited. No edit time limit for now                                                                                 |
 | Teacher view     | Teachers see warning and drop status for learners in their own classes                                                                                                                                          |
+| Attendance       | Present unless marked: classes need no "taking"; only late and absent marks are recorded                                                                                                                        |
 | Class period     | One scheduled class on one date counts as one period (Mon and Wed Statics = two a week; a 3-hour lab = one)                                                                                                     |
 | Year levels      | Go up by one at the 1st semester of a new school year; unchanged for the 2nd. No summer term in practice, but the option stays                                                                                  |
 | Learner import   | Single admission first; CSV import later, once a real file format is known                                                                                                                                      |
@@ -116,11 +117,11 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 
 ## 9. Attendance taking (teacher)
 
-- [ ] Teacher's own schedule and today's classes
-- [ ] Class list for a schedule on a date; mark present / late / absent
-- [ ] Correct marks; deans can correct marks in their college; audited
-- [ ] Marks only on real class days (the schedule's weekday, inside the term, not suspended)
-- [ ] A closed term's attendance is read-only
+- [x] Teacher's own schedule and today's classes ("My classes": any day's classes with how many were late or absent, plus the week)
+- [x] Class list for a schedule on a date; mark present / late / absent. Everyone counts as present unless marked otherwise: there is no "taking" step, only late and absent marks are recorded (a mark put back to present keeps its record for the history). A class that didn't happen counts as all present unless someone marks it — accepted, to spare everyone the upkeep. A learner is listed from the day they enrolled in the subject until it was dropped; a batch's class lists only that batch
+- [x] Correct marks; deans can correct marks in their college (the dean's Attendance page: a day's classes by section or teacher, opening the same class list); every new or changed mark gets an audit row
+- [x] Marks only on real class days: the schedule's weekday, inside the term, not suspended (campus-wide or the college's own), and not in the future; any earlier class day can still be taken or corrected (no time limit)
+- [x] A closed term's attendance is read-only; an excused absence (approved excuse) stays locked
 
 ## 10. Absence tracking and drops
 

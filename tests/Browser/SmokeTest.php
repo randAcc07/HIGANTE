@@ -43,7 +43,12 @@ dataset('pages', [
     'dean unsectioned learner' => ['dean', fn (Campus $c) => path('dean.learners.show', $c->registrations[3]), 'No subjects yet.'],
     'dean calendar' => ['dean', fn (Campus $c) => path('calendar.index'), '{term}'],
 
+    'dean attendance' => ['dean', fn (Campus $c) => path('dean.attendance.index', ['term' => $c->term->id, 'date' => $c->lastLecture()]), 'open a class to correct its marks'],
+    'dean class list' => ['dean', fn (Campus $c) => path('attendance.show', ['schedule' => $c->lectureClass, 'date' => $c->lastLecture()]), 'Everyone counts as present unless marked otherwise.'],
+
     // Teacher and learner
+    'teacher classes' => ['teacher', fn (Campus $c) => path('teacher.classes.index', ['date' => $c->lastLecture()]), 'Open a class to take or correct its attendance'],
+    'teacher class list' => ['teacher', fn (Campus $c) => path('attendance.show', ['schedule' => $c->lectureClass, 'date' => $c->lastLecture()]), 'Everyone counts as present unless marked otherwise.'],
     'teacher dashboard' => ['teacher', fn (Campus $c) => path('dashboard'), 'Welcome,'],
     'teacher calendar' => ['teacher', fn (Campus $c) => path('calendar.index'), '{term}'],
     'learner dashboard' => ['learner', fn (Campus $c) => path('dashboard'), 'Welcome,'],

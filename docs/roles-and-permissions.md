@@ -54,17 +54,17 @@ the college and can be offered to any section of its programs.
 | Confirm or dismiss drops flagged at the policy's drop count                                                            | ⏳     |
 | See an at-risk learners list                                                                                           | ⏳     |
 | College-only holidays and suspensions for their own college                                                            | ✅     |
-| Correct a teacher's attendance marks                                                                                   | ❓     |
+| Correct a teacher's attendance marks                                                                                   | ✅     |
 | Reassign a subject's classes to another teacher (e.g. a substitute for a teacher on leave)                             | ✅     |
 
 ## Teacher (own college only)
 
 | Responsibility                                                          | Status |
 | ----------------------------------------------------------------------- | ------ |
-| See own schedule and class lists                                        | ⏳     |
-| Mark present / late / absent per scheduled class, by their own judgment | ⏳     |
-| Correct own marks (every change is audited)                             | ⏳     |
-| Cannot undo an excuse the dean approved (enforced by the database)      | ⏳     |
+| See own schedule and class lists                                        | ✅     |
+| Mark present / late / absent per scheduled class, by their own judgment | ✅     |
+| Correct own marks (every change is audited)                             | ✅     |
+| Cannot undo an excuse the dean approved (enforced by the database)      | ✅     |
 | See learners' warning and drop status in their classes                  | ❓     |
 | Time limit on editing marks after a class                               | ❓     |
 

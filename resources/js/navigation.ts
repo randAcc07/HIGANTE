@@ -1,10 +1,12 @@
 import {
     BookOpen,
     Building2,
+    CalendarCheck,
     CalendarDays,
     CalendarClock,
     CalendarRange,
     ClipboardCheck,
+    ClipboardList,
     DoorOpen,
     GraduationCap,
     LayoutGrid,
@@ -17,11 +19,13 @@ import SubjectController from '@/actions/App/Http/Controllers/Admin/SubjectContr
 import AccountController from '@/actions/App/Http/Controllers/Admin/AccountController';
 import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
+import DeanAttendanceController from '@/actions/App/Http/Controllers/Dean/AttendanceController';
 import DeanLearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
 import RegistrationController from '@/actions/App/Http/Controllers/Registrar/RegistrationController';
+import ClassController from '@/actions/App/Http/Controllers/Teacher/ClassController';
 import { dashboard } from '@/routes';
 import type { NavItem, UserRole } from '@/types';
 
@@ -65,8 +69,19 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             href: DeanLearnerController.index(),
             icon: GraduationCap,
         },
+        {
+            title: 'Attendance',
+            href: DeanAttendanceController.index(),
+            icon: ClipboardList,
+        },
     ],
-    teacher: () => [],
+    teacher: () => [
+        {
+            title: 'My classes',
+            href: ClassController.index(),
+            icon: CalendarCheck,
+        },
+    ],
     learner: () => [],
 };
 

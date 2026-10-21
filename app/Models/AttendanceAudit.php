@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * One change to an attendance mark or its excuse. old_status is NULL for the
- * first mark.
+ * first mark, which replaced the implicit present.
  *
  * @property int $id
  * @property int $attendance_record_id

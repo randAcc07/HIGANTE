@@ -8,8 +8,10 @@ use App\Http\Controllers\Admin\RoomController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\TermController;
 use App\Http\Controllers\Admin\UserEmailController;
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Dean\AttendanceController as DeanAttendanceController;
 use App\Http\Controllers\Dean\BatchController;
 use App\Http\Controllers\Dean\LearnerController as DeanLearnerController;
 use App\Http\Controllers\Dean\OfferingController;
@@ -20,6 +22,7 @@ use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
 use App\Http\Controllers\Registrar\LearnerController;
 use App\Http\Controllers\Registrar\RegistrationController;
+use App\Http\Controllers\Teacher\ClassController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => to_route('dashboard'))->name('home');
@@ -82,12 +85,24 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
     Route::put('sections/{section}/batches', [BatchController::class, 'roster'])->name('batches.roster');
 
     // Placement: authorized through the learner's registration (TermRegistrationPolicy).
+    Route::get('attendance', [DeanAttendanceController::class, 'index'])->name('attendance.index');
     Route::get('learners', [DeanLearnerController::class, 'index'])->name('learners.index');
     Route::get('learners/{registration}', [DeanLearnerController::class, 'show'])->name('learners.show');
     Route::put('learners/{registration}/section', [PlacementController::class, 'section'])->name('learners.section');
     Route::post('learners/{registration}/enrollments', [PlacementController::class, 'enroll'])->name('learners.enroll');
     Route::put('enrollments/{enrollment}', [PlacementController::class, 'batch'])->name('enrollments.update');
     Route::delete('enrollments/{enrollment}', [PlacementController::class, 'remove'])->name('enrollments.destroy');
+});
+
+Route::middleware(['auth', 'verified', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::get('classes', [ClassController::class, 'index'])->name('classes.index');
+});
+
+// A class list on a date: its teacher takes attendance, the dean of its
+// college corrects it (SchedulePolicy).
+Route::middleware(['auth', 'verified', 'role:teacher,dean'])->group(function () {
+    Route::get('attendance/{schedule}/{date}', [AttendanceController::class, 'show'])->where('date', '\d{4}-\d{2}-\d{2}')->name('attendance.show');
+    Route::put('attendance/{schedule}/{date}', [AttendanceController::class, 'update'])->where('date', '\d{4}-\d{2}-\d{2}')->name('attendance.update');
 });
 
 // Account setup links. Signed URLs authorize them; see AccountSetupController.
