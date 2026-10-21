@@ -39,6 +39,21 @@ class DatabaseSeeder extends Seeder
     public const SEED = 20261019;
 
     /**
+     * The shared setup every demo seeder relies on: the fixed random seed, one
+     * name generator (so emails stay unique across seeders), and no real mail.
+     * The notices the app sends while seeding still land in the bell, but
+     * their emails go to the array mailer instead of the log (or a real
+     * server). Call it before running some of the demo seeders on their own.
+     */
+    public static function prepare(): void
+    {
+        config(['mail.default' => 'array']);
+        mt_srand(self::SEED);
+        fake()->seed(self::SEED);
+        app()->instance(FilipinoNames::class, new FilipinoNames);
+    }
+
+    /**
      * Seed the application's database.
      */
     public function run(): void
@@ -51,9 +66,7 @@ class DatabaseSeeder extends Seeder
             throw new RuntimeException('The database already has users. Run `composer db:demo` to rebuild it with demo data.');
         }
 
-        mt_srand(self::SEED);
-        fake()->seed(self::SEED);
-        app()->instance(FilipinoNames::class, new FilipinoNames);
+        self::prepare();
 
         DB::transaction(fn () => $this->call([
             CatalogSeeder::class,

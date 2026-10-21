@@ -10,7 +10,15 @@ use App\Models\Learner;
 use App\Models\Term;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\Demo\AttendanceSeeder;
 use Database\Seeders\Demo\CampusData;
+use Database\Seeders\Demo\CatalogSeeder;
+use Database\Seeders\Demo\CoverSeeder;
+use Database\Seeders\Demo\CurriculumSeeder;
+use Database\Seeders\Demo\RegistrationSeeder;
+use Database\Seeders\Demo\SectionSeeder;
+use Database\Seeders\Demo\StaffSeeder;
+use Database\Seeders\Demo\TermSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -59,13 +67,19 @@ class DemoCalendarShiftTest extends TestCase
     /**
      * A year after the anchor, the demo reads the same relative to today:
      * a term in session with marks up to yesterday, a cover running today,
-     * and learners' numbers following the moved school year.
+     * and learners' numbers following the moved school year. Only the
+     * date-sensitive seeders run; excuses and standings follow the marks
+     * (DemoSeederTest covers them).
      */
     public function test_the_demo_seeds_a_year_later()
     {
         Storage::fake('local');
         $this->travelTo('2027-10-20 08:00');
-        $this->seed(DatabaseSeeder::class);
+        DatabaseSeeder::prepare();
+        $this->seed([
+            CatalogSeeder::class, CurriculumSeeder::class, StaffSeeder::class, TermSeeder::class,
+            SectionSeeder::class, RegistrationSeeder::class, CoverSeeder::class, AttendanceSeeder::class,
+        ]);
 
         $current = CampusData::currentTerm();
         $this->assertSame('2027-2028', $current->school_year);

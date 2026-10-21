@@ -10,6 +10,12 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+// The cron entry runs schedule:run every minute. Without this, each run reads
+// the pause flag from the cache (the database here), which keeps a database
+// that sleeps when idle awake around the clock; due tasks still run. It gives
+// up schedule:pause and schedule:interrupt, which aren't used.
+Schedule::withoutInterruptionPolling();
+
 // Removes expired email change requests (EmailChange::prunable).
 Schedule::command('model:prune')->daily();
 

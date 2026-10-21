@@ -5,16 +5,22 @@ namespace App\Notifications;
 use App\Models\AbsenceExcuse;
 use App\Models\Enrollment;
 use App\Models\ExcuseDecision;
+use App\Notifications\Concerns\InAppWithMail;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
  * An in-app notice about attendance: a warning, a drop flag, a confirmed
  * drop, a reinstatement or a class's excuse decision (to the learner), a
  * learner flagged for dropping (to the dean), or an excuse to decide for a
- * class (to its teacher, or the dean for a class without one). Email comes later, once a mail server exists.
+ * class (to its teacher, or the dean for a class without one). Some are
+ * emailed too (mailSubjects).
  */
-class AttendanceNotice extends Notification
+class AttendanceNotice extends Notification implements ShouldQueue
 {
+    use InAppWithMail, Queueable;
+
     public const WARNING = 'warning';
 
     public const FLAGGED = 'flagged';
@@ -142,18 +148,21 @@ class AttendanceNotice extends Notification
     }
 
     /**
-     * @return list<string>
+     * Emailed too: what changes a learner's standing or needs the dean.
+     * An approved excuse and a teacher's excuse to decide stay in the bell.
+     *
+     * @return array<string, string>
      */
-    public function via(object $notifiable): array
+    protected static function mailSubjects(): array
     {
-        return ['database'];
-    }
-
-    /**
-     * @return array{kind: string, message: string, url: string|null}
-     */
-    public function toArray(object $notifiable): array
-    {
-        return ['kind' => $this->kind, 'message' => $this->message, 'url' => $this->url];
+        return [
+            self::WARNING => __('Attendance warning'),
+            self::FLAGGED => __('Flagged for dropping'),
+            self::DROPPED => __('Dropped from a class'),
+            self::REINSTATED => __('Reinstated in a class'),
+            self::EXCUSE_DECLINED => __('Excuse not approved'),
+            self::EXCUSE_REVOKED => __('Excuse revoked'),
+            self::LEARNER_FLAGGED => __('A learner is flagged for dropping'),
+        ];
     }
 }

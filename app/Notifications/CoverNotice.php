@@ -3,15 +3,20 @@
 namespace App\Notifications;
 
 use App\Models\ClassCover;
+use App\Notifications\Concerns\InAppWithMail;
 use App\Scheduling\ScheduleConflicts;
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 
 /**
- * An in-app notice to a substitute: classes they cover for a teacher, or a
- * cover the dean removed.
+ * A notice to a substitute, in-app and emailed: classes they cover for a
+ * teacher, or a cover the dean removed.
  */
-class CoverNotice extends Notification
+class CoverNotice extends Notification implements ShouldQueue
 {
+    use InAppWithMail, Queueable;
+
     public const ASSIGNED = 'cover_assigned';
 
     public const REMOVED = 'cover_removed';
@@ -55,18 +60,15 @@ class CoverNotice extends Notification
     }
 
     /**
-     * @return list<string>
+     * Both are emailed: the classes aren't on the substitute's own week.
+     *
+     * @return array<string, string>
      */
-    public function via(object $notifiable): array
+    protected static function mailSubjects(): array
     {
-        return ['database'];
-    }
-
-    /**
-     * @return array{kind: string, message: string, url: string|null}
-     */
-    public function toArray(object $notifiable): array
-    {
-        return ['kind' => $this->kind, 'message' => $this->message, 'url' => $this->url];
+        return [
+            self::ASSIGNED => __('Class cover arranged'),
+            self::REMOVED => __('Class cover removed'),
+        ];
     }
 }

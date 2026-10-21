@@ -40,7 +40,29 @@ Both start the same way: provision the database, then `composer setup`
 | Mail      | `MAIL_MAILER=log`: setup links and notices go to the log                                              | A real mailer, or hand setup links over from the copy-link dialog (or the links file after a sheet import)                                                                   |
 | Scheduler | Optional                                                                                              | A cron entry running `php artisan schedule:run` every minute (daily: prunes expired email-change requests, and learner import uploads and setup-link files older than a day) |
 
-Nothing is queued yet, so no queue worker is needed.
+### Mail and the scheduler
+
+Mail needs only a mailer in `.env` (`MAIL_MAILER`, host, credentials,
+`MAIL_FROM_ADDRESS`). What is emailed:
+
+- **Right away** (the person is waiting): account setup links, email-change
+  confirmations and notices, password resets.
+- **After the response**: notices that change a learner's standing (warning,
+  flagged, dropped, reinstated, excuse not approved or revoked), a learner
+  flagged (to the dean), and class cover arranged or removed (to the
+  substitute). Every notice is also in the bell; an approved excuse and a
+  teacher's excuse to decide are in the bell only.
+
+"After the response" is the `deferred` queue connection: the email is sent by
+the same PHP process once the page has been returned, so there is no queue
+worker and nothing polls the database. A failed send is logged and not
+retried; the bell still has the notice.
+
+The scheduler only does daily housekeeping. Its every-minute run is set up
+not to read the cache (`Schedule::withoutInterruptionPolling()`, since the
+cache is the database), so a database that sleeps when idle is only woken by
+real requests and the daily prune. Keep it that way: a polling queue worker,
+or a scheduled task that runs more often, would keep it awake.
 
 ## Admin accounts
 
