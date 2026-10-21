@@ -92,4 +92,6 @@ export type GridBlock = {
     warning?: boolean;
     /** Orders classes that overlap, e.g. by batch name. */
     group?: string;
+    /** Cancelled that day (a dated week): faded and struck through. */
+    cancelled?: boolean;
 };

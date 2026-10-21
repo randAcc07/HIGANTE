@@ -168,3 +168,16 @@ Excuses are decided class by class (reworked after the first build, which had th
 - [x] Optional time limit on teachers changing marks, per term in the attendance policy ("up to N days after a class"; 0 = the day only; empty = no limit, the default). Past it, the class list is read-only for the teacher with the reason; deans can always correct
 - [x] Guardian excuses: closed, no guardian accounts. A parent's letter comes in as a file on the learner's excuse, or the teacher files the excuse for the learner
 - [x] Cover for a date range (a teacher away): the dean's Cover page picks the teacher and dates, lists each of their classes meeting then, and sets a substitute per class (or one for all; a class may be left uncovered). A substitute can't be double-booked (their own classes, or another class they cover then) nor cover their own class. The class keeps its teacher: the substitute sees those meetings under My classes ("Covering for …") and can mark them on those days only, the teacher still can too, and excuses stay with the teacher. The substitute is notified when cover is arranged or removed; removing it keeps the marks made. Duty status is not changed
+
+## Dashboards
+
+The current term sits beside the title on every dashboard (its week while in
+session, "starts in N days" before). Deans, teachers and learners get a main
+panel and side lists; on a phone the sides stack under it.
+
+- [x] A dated week (Mon–Sat, stepped a week at a time within the term): each class on its date, struck through with the holiday or suspension that cancels it, "Covered by …" on a covered class, and each day's calendar events in its header (a suspending one shades the day). Teachers and deans open a held class's list from it
+- [x] Dean: the week of one section (picked by program, then section); sides: excuses waiting in the college (oldest first; "You decide N" for classes without a teacher, and late ones), and learners at risk (flagged first)
+- [x] Teacher: the week of all their classes, plus classes they cover on the days they cover them; sides: holidays and suspensions in the next 30 days that cancel any of their classes, and the excuse decisions waiting on them
+- [x] Learner: the week of their own classes (their batch's labs only); a banner when a class needs attention; sides: holidays and suspensions in the next 30 days that cancel their classes (by their program and year level), and their excuses with status
+- [ ] Admin: upcoming calendar, next-term checklist, accounts awaiting setup (proposed)
+- [ ] Registrar: registration progress per program and year level, learners waiting for the dean, recent admissions (proposed)

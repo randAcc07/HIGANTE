@@ -8,3 +8,4 @@ export * from './placement';
 export * from './attendance';
 export * from './excuse';
 export * from './learner';
+export * from './dashboard';

@@ -135,7 +135,7 @@ class LearnerViewsTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->has('learner.attention', 1)
                 ->where('learner.attention.0.status', 'for_dropping')
-                ->where('learner.pendingExcuses', 1));
+                ->where('learner.excuses.0.status', 'pending'));
 
         $this->actingAs(User::factory()->admin()->create())->get(route('dashboard'))
             ->assertInertia(fn (Assert $page) => $page->where('learner', null));

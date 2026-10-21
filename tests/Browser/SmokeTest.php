@@ -15,6 +15,7 @@ use Tests\Browser\Campus;
 
 dataset('pages', [
     // Admin
+    'dean dashboard' => ['dean', fn (Campus $c) => path('dashboard'), 'Excuses waiting'],
     'admin dashboard' => ['admin', fn (Campus $c) => path('dashboard'), 'Admin · Campus-wide'],
     'admin calendar' => ['admin', fn (Campus $c) => path('calendar.index'), '{term}'],
     'admin accounts' => ['admin', fn (Campus $c) => path('admin.accounts.index'), 'Registrar, dean and teacher accounts are made here'],
@@ -55,13 +56,12 @@ dataset('pages', [
     'teacher classes' => ['teacher', fn (Campus $c) => path('teacher.classes.index', ['date' => $c->lastLecture()]), 'Open a class to take or correct its attendance'],
     'teacher class list' => ['teacher', fn (Campus $c) => path('attendance.show', ['schedule' => $c->lectureClass, 'date' => $c->lastLecture()]), 'Everyone counts as present unless marked otherwise.'],
     'teacher excuses' => ['teacher', fn (Campus $c) => path('teacher.excuses.index'), 'Nothing to decide right now.'],
-    'teacher dashboard' => ['teacher', fn (Campus $c) => path('dashboard'), 'Welcome,'],
+    'teacher dashboard' => ['teacher', fn (Campus $c) => path('dashboard'), 'Excuses to decide'],
     'teacher calendar' => ['teacher', fn (Campus $c) => path('calendar.index'), '{term}'],
-    'learner dashboard' => ['learner', fn (Campus $c) => path('dashboard'), 'Welcome,'],
+    'learner dashboard' => ['learner', fn (Campus $c) => path('dashboard'), 'Your excuses'],
     'learner calendar' => ['learner', fn (Campus $c) => path('calendar.index'), '{term}'],
     'learner classes' => ['learner', fn (Campus $c) => path('learner.classes.index'), 'Excused absences don\'t count.'],
     'learner class' => ['learner', fn (Campus $c) => path('learner.classes.show', Enrollment::where('learner_id', $c->registrations[0]->learner_id)->where('subject_offering_id', $c->lecture->id)->sole()), 'present at every class so far'],
-    'learner dashboard attention' => ['learner', fn (Campus $c) => path('dashboard'), 'Needs your attention'],
     'dean notifications' => ['dean', fn (Campus $c) => path('notifications.index'), 'No notifications yet.'],
     'learner excuses' => ['learner', fn (Campus $c) => path('learner.excuses.index'), 'No excuses yet.'],
     'learner profile' => ['learner', fn (Campus $c) => path('profile.edit'), 'Email address'],

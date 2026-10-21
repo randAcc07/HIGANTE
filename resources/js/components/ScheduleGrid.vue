@@ -12,7 +12,8 @@ import type { GridBlock, Weekday } from '@/types';
  * spot emits `slot` with the `step`-minute slot it falls in (classes are
  * scheduled in those, whatever the zoom); clicking a class emits `block`.
  * Classes that overlap within a day (e.g. two batches' labs) sit side by
- * side. Zoom with the − / + buttons, Ctrl+scroll or a pinch (useGridZoom).
+ * side. With `dayHeads`, it is a dated week: dates and events in the
+ * headers, and cancelled classes faded and struck through. Zoom with the − / + buttons, Ctrl+scroll or a pinch (useGridZoom).
  */
 const props = withDefaults(
     defineProps<{
@@ -24,6 +25,10 @@ const props = withDefaults(
         editable?: boolean;
         /** Shared zoom, when the page shows GridZoomControl in its own toolbar. */
         zoom?: GridZoom;
+        /** A dated week: each day's date and its calendar events (a suspending one shades the day). */
+        dayHeads?: Partial<
+            Record<Weekday, { date: string; events: string[]; off: boolean }>
+        >;
     }>(),
     {
         days: () => [1, 2, 3, 4, 5, 6] as Weekday[],
@@ -32,6 +37,7 @@ const props = withDefaults(
         step: 30,
         editable: false,
         zoom: undefined,
+        dayHeads: undefined,
     },
 );
 
@@ -181,6 +187,23 @@ function pick(day: Weekday, event: MouseEvent): void {
                     class="sticky top-0 z-10 border-b border-l bg-muted px-2 py-1.5 text-center text-xs font-medium"
                 >
                     {{ WEEKDAYS[day] }}
+                    <template v-if="dayHeads?.[day]">
+                        <span class="font-normal text-muted-foreground">
+                            {{ dayHeads[day]?.date }}</span
+                        >
+                        <span
+                            v-for="event in dayHeads[day]?.events"
+                            :key="event"
+                            class="block truncate font-normal"
+                            :class="
+                                dayHeads[day]?.off
+                                    ? 'text-warning-soft-foreground'
+                                    : 'text-muted-foreground'
+                            "
+                            :title="event"
+                            >{{ event }}</span
+                        >
+                    </template>
                 </div>
 
                 <div class="relative" :style="{ height: `${height}px` }">
@@ -197,7 +220,10 @@ function pick(day: Weekday, event: MouseEvent): void {
                     v-for="column in columns"
                     :key="`day-${column.day}`"
                     class="relative border-l"
-                    :class="editable ? 'cursor-cell' : ''"
+                    :class="[
+                        editable ? 'cursor-cell' : '',
+                        dayHeads?.[column.day]?.off ? 'bg-warning-soft/40' : '',
+                    ]"
                     :style="{
                         height: `${height}px`,
                         backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent ${lineSpacing - 1}px, var(--border) ${lineSpacing - 1}px, var(--border) ${lineSpacing}px)`,
@@ -215,6 +241,7 @@ function pick(day: Weekday, event: MouseEvent): void {
                             block.tone === 'busy'
                                 ? 'cursor-default'
                                 : 'hover:brightness-95',
+                            block.cancelled ? 'opacity-50' : '',
                         ]"
                         :style="position(block, lane, lanes)"
                         :title="
@@ -226,7 +253,10 @@ function pick(day: Weekday, event: MouseEvent): void {
                         "
                         @click="block.tone !== 'busy' && emit('block', block)"
                     >
-                        <span class="flex items-center gap-1 font-semibold">
+                        <span
+                            class="flex items-center gap-1 font-semibold"
+                            :class="block.cancelled ? 'line-through' : ''"
+                        >
                             <TriangleAlert
                                 v-if="block.warning"
                                 class="h-3 w-3 shrink-0"

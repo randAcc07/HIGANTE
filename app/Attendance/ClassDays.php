@@ -117,6 +117,28 @@ class ClassDays
     }
 
     /**
+     * Whether a suspension catches the class, on any of its days: the
+     * class's college, start time, program and year level fall inside it.
+     */
+    public static function catches(CalendarEvent $event, Schedule $schedule): bool
+    {
+        $event->loadMissing('programs:id');
+        $schedule->loadMissing('subjectOffering.section.program');
+        $section = $schedule->subjectOffering->section;
+        $start = $schedule->starts_at->format('H:i');
+        $from = self::hhmm($event->suspends_from);
+        $until = self::hhmm($event->suspends_until);
+        $programs = array_map('intval', $event->programs->modelKeys());
+        $years = array_map('intval', $event->year_levels ?? []);
+
+        return $event->suspends_classes
+            && ($event->college_id === null || $event->college_id === $section->program->college_id)
+            && ($from === null || $start >= $from) && ($until === null || $start < $until)
+            && ($programs === [] || in_array($section->program_id, $programs, true))
+            && ($years === [] || in_array($section->year_level, $years, true));
+    }
+
+    /**
      * Campus-wide and college suspensions within the term: date => list of
      * [title, from, until, program ids, year levels].
      *
