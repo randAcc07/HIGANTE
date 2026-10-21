@@ -7,6 +7,7 @@ import {
     CalendarRange,
     ClipboardCheck,
     ClipboardList,
+    TriangleAlert,
     DoorOpen,
     GraduationCap,
     LayoutGrid,
@@ -21,6 +22,7 @@ import TermController from '@/actions/App/Http/Controllers/Admin/TermController'
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
 import DeanAttendanceController from '@/actions/App/Http/Controllers/Dean/AttendanceController';
 import DeanLearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
+import StandingController from '@/actions/App/Http/Controllers/Dean/StandingController';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
@@ -73,6 +75,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             title: 'Attendance',
             href: DeanAttendanceController.index(),
             icon: ClipboardList,
+        },
+        {
+            title: 'At risk',
+            href: StandingController.index(),
+            icon: TriangleAlert,
         },
     ],
     teacher: () => [

@@ -30,18 +30,38 @@ const form = useForm({
     starts_on: props.event?.starts_on ?? '',
     ends_on: props.event?.ends_on ?? '',
     suspends_classes: props.event?.suspends_classes ?? true,
+    suspends_from: props.event?.suspends_from ?? '',
+    suspends_until: props.event?.suspends_until ?? '',
+    memo_number: props.event?.memo_number ?? '',
+    memo: null as File | null,
+    remove_memo: false,
 });
 
+function pickMemo(event: Event): void {
+    form.memo = (event.target as HTMLInputElement).files?.[0] ?? null;
+}
+
 function submit(): void {
+    // A file can't travel in a PUT that PHP reads, so edits are POSTed with
+    // the method spoofed.
     form.transform((data) => ({
         ...data,
         description: data.description || null,
         ends_on: data.ends_on || data.starts_on,
-    })).submit(
+        suspends_from: data.suspends_classes
+            ? data.suspends_from || null
+            : null,
+        suspends_until: data.suspends_classes
+            ? data.suspends_until || null
+            : null,
+        memo_number: data.memo_number || null,
+        ...(props.event ? { _method: 'put' } : {}),
+    })).post(
         props.event
-            ? CalendarController.update(props.event.id)
-            : CalendarController.store(),
+            ? CalendarController.update.url(props.event.id)
+            : CalendarController.store.url(),
         {
+            forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
                 open.value = false;
@@ -122,6 +142,67 @@ function submit(): void {
                             attendance.
                         </span>
                     </span>
+                </Label>
+                <div
+                    v-if="form.suspends_classes"
+                    class="grid gap-2 rounded-lg border p-3"
+                >
+                    <span class="text-sm font-medium">Classes affected</span>
+                    <span class="text-xs text-muted-foreground"
+                        >Leave both empty for whole days. Otherwise, classes
+                        that start from the first time and before the second are
+                        suspended (e.g. from 1:00 PM).</span
+                    >
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="grid gap-2">
+                            <Label for="event-from">Starting from</Label>
+                            <Input
+                                id="event-from"
+                                v-model="form.suspends_from"
+                                type="time"
+                                step="1800"
+                            />
+                            <InputError :message="form.errors.suspends_from" />
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="event-until">Starting before</Label>
+                            <Input
+                                id="event-until"
+                                v-model="form.suspends_until"
+                                type="time"
+                                step="1800"
+                            />
+                            <InputError :message="form.errors.suspends_until" />
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="grid gap-2">
+                        <Label for="event-memo-number">Memo number</Label>
+                        <Input
+                            id="event-memo-number"
+                            v-model="form.memo_number"
+                            placeholder="Memo No. 42, s. 2026"
+                        />
+                        <InputError :message="form.errors.memo_number" />
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="event-memo">Memo (PDF)</Label>
+                        <Input
+                            id="event-memo"
+                            type="file"
+                            accept="application/pdf"
+                            @change="pickMemo"
+                        />
+                        <InputError :message="form.errors.memo" />
+                    </div>
+                </div>
+                <Label
+                    v-if="event?.memo_url && !form.memo"
+                    class="flex items-center gap-2 text-sm font-normal"
+                >
+                    <Checkbox v-model="form.remove_memo" />
+                    Remove the attached memo ({{ event.memo_name }})
                 </Label>
                 <DialogFooter>
                     <Button :disabled="form.processing">Save</Button>

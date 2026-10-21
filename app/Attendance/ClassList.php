@@ -64,7 +64,7 @@ class ClassList
      * excused absence stays as it is (the excuse decides it, not the mark).
      *
      * @param  array<int, AttendanceStatus>  $marks
-     * @return array{created: int, changed: int}
+     * @return array{created: int, changed: int, enrollments: list<int>}
      */
     public function record(Schedule $schedule, CarbonImmutable $date, array $marks, User $by): array
     {
@@ -75,7 +75,7 @@ class ClassList
             throw ValidationException::withMessages(['marks' => __('The class list changed since it was opened. Reload the page and try again.')]);
         }
 
-        $counts = ['created' => 0, 'changed' => 0];
+        $counts = ['created' => 0, 'changed' => 0, 'enrollments' => []];
 
         DB::transaction(function () use ($attendees, $marks, $schedule, $date, $by, &$counts): void {
             $now = now();
@@ -109,6 +109,8 @@ class ClassList
                     $record->update(['status' => $status]);
                     $counts['changed']++;
                 }
+
+                $counts['enrollments'][] = $enrollmentId;
 
                 AttendanceAudit::create([
                     'attendance_record_id' => $record->id,

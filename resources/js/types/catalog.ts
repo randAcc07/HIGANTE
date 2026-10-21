@@ -94,6 +94,12 @@ export type CalendarEvent = {
     /** Y-m-d */
     ends_on: string;
     suspends_classes: boolean;
+    /** "HH:MM": a suspension only catches classes starting in [from, until). */
+    suspends_from: string | null;
+    suspends_until: string | null;
+    memo_number: string | null;
+    memo_name: string | null;
+    memo_url: string | null;
     /** College code, or null for campus-wide. */
     college: string | null;
     can_edit: boolean;

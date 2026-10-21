@@ -2,6 +2,7 @@
 
 namespace App\Registration;
 
+use App\Enums\DropReason;
 use App\Enums\EnrollmentStatus;
 use App\Enums\RegistrationStatus;
 use App\Models\Batch;
@@ -86,6 +87,7 @@ class Placement
                     'flagged_for_drop_at' => null,
                     'drop_confirmed_at' => null,
                     'drop_confirmed_by' => null,
+                    'drop_reason' => null,
                 ])->save();
             } else {
                 Enrollment::create([
@@ -162,6 +164,7 @@ class Placement
             'status' => EnrollmentStatus::Dropped,
             'drop_confirmed_at' => now(),
             'drop_confirmed_by' => $dean->id,
+            'drop_reason' => DropReason::Removed,
         ])->save();
     }
 

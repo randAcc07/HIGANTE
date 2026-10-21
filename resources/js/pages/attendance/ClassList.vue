@@ -22,6 +22,8 @@ const props = defineProps<{
     };
     date: string;
     refusal: string | null;
+    /** The day was suspended after marks were made: shown, not counted. */
+    suspendedAfter: boolean;
     learners: ClassListLearner[];
     previous: string | null;
     next: string | null;
@@ -194,9 +196,13 @@ function recorded(learner: ClassListLearner): string {
             class="rounded-lg border border-info/50 bg-info-soft p-3 text-sm text-info-soft-foreground"
         >
             {{ refusal }}
+            <template v-if="suspendedAfter">
+                These marks were made before the suspension was entered; they
+                are kept on record but no longer count.</template
+            >
         </p>
 
-        <template v-else>
+        <template v-if="!refusal || suspendedAfter">
             <p
                 v-if="closed"
                 class="rounded-lg border p-3 text-sm text-muted-foreground"
@@ -260,6 +266,29 @@ function recorded(learner: ClassListLearner): string {
                             <td class="px-4 py-2">
                                 <div class="font-medium">
                                     {{ learner.name }}
+                                    <Badge
+                                        v-if="
+                                            learner.standing === 'for_dropping'
+                                        "
+                                        variant="destructive"
+                                        class="ml-2"
+                                        >For dropping</Badge
+                                    >
+                                    <Badge
+                                        v-else-if="
+                                            learner.standing === 'dropped'
+                                        "
+                                        variant="secondary"
+                                        class="ml-2"
+                                        >Dropped</Badge
+                                    >
+                                    <Badge
+                                        v-else-if="learner.warning_level"
+                                        variant="outline"
+                                        class="ml-2"
+                                        >Warned at
+                                        {{ learner.warning_level }}</Badge
+                                    >
                                 </div>
                                 <div
                                     class="font-mono text-xs text-muted-foreground"

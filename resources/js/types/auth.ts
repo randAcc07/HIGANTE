@@ -36,3 +36,13 @@ export type TwoFactorConfigContent = {
     description: string;
     buttonText: string;
 };
+
+/** A notice in the header bell. */
+export type AppNotification = {
+    id: string;
+    kind: string | null;
+    message: string;
+    url: string | null;
+    read: boolean;
+    at: string | null;
+};

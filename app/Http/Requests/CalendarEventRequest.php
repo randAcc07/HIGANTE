@@ -24,6 +24,12 @@ class CalendarEventRequest extends FormRequest
             'starts_on' => ['required', 'date'],
             'ends_on' => ['required', 'date', 'after_or_equal:starts_on'],
             'suspends_classes' => ['required', 'boolean'],
+            // A window narrows a suspension to the classes that start in it.
+            'suspends_from' => ['nullable', 'date_format:H:i', 'prohibited_if:suspends_classes,false'],
+            'suspends_until' => ['nullable', 'date_format:H:i', 'prohibited_if:suspends_classes,false', 'after:suspends_from'],
+            'memo_number' => ['nullable', 'string', 'max:60'],
+            'memo' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
+            'remove_memo' => ['boolean'],
         ];
     }
 
@@ -32,6 +38,12 @@ class CalendarEventRequest extends FormRequest
      */
     public function messages(): array
     {
-        return ['ends_on.after_or_equal' => __('The event cannot end before it starts.')];
+        return [
+            'ends_on.after_or_equal' => __('The event cannot end before it starts.'),
+            'suspends_until.after' => __('The suspension must end after it starts.'),
+            'suspends_from.prohibited_if' => __('Only a suspension has class times.'),
+            'suspends_until.prohibited_if' => __('Only a suspension has class times.'),
+            'memo.mimes' => __('The memo must be a PDF.'),
+        ];
     }
 }

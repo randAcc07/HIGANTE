@@ -9,12 +9,19 @@ use Carbon\CarbonImmutable;
 
 /**
  * When a weekly class actually meets: on its weekday, inside its term, and
- * not on a day the campus or its college suspended classes. Attendance can
- * be taken for such a day once it has come (today or earlier).
+ * not suspended by the campus or its college. A suspension covers whole
+ * days, or only the classes that start inside its window ("from 1:00 PM"
+ * leaves a lab that began at noon held). Attendance can be taken for a
+ * meeting once its day has come (today or earlier).
  */
 class ClassDays
 {
-    /** @var array<string, array<string, string>> Suspended dates by "termId:collegeId": date => event title. */
+    /**
+     * Suspensions by "termId:collegeId": date => list of [title, from, until]
+     * ("HH:MM", null = open end; both null = the whole day).
+     *
+     * @var array<string, array<string, list<array{string, string|null, string|null}>>>
+     */
     private array $suspensions = [];
 
     /**
@@ -34,7 +41,7 @@ class ClassDays
             return __(':date is outside :term.', ['date' => $date->format('M j, Y'), 'term' => $term->label]);
         }
 
-        $suspension = $this->suspendedOn($term, $schedule->subjectOffering->section->program->college_id)[$date->toDateString()] ?? null;
+        $suspension = $this->suspension($schedule, $date);
 
         if ($suspension !== null) {
             return __('Classes are suspended on :date (:event).', ['date' => $date->format('M j'), 'event' => $suspension]);
@@ -56,14 +63,13 @@ class ClassDays
     {
         $schedule->loadMissing(['term', 'subjectOffering.section.program']);
         $term = $schedule->term;
-        $suspended = $this->suspendedOn($term, $schedule->subjectOffering->section->program->college_id);
         $last = CarbonImmutable::today()->min($term->ends_on);
         $dates = [];
 
         $day = $term->starts_on->addDays(($schedule->weekday() - $term->starts_on->dayOfWeekIso + 7) % 7);
 
         for (; $day->lte($last); $day = $day->addWeek()) {
-            if (! isset($suspended[$day->toDateString()])) {
+            if ($this->suspension($schedule, $day) === null) {
                 $dates[] = $day;
             }
         }
@@ -72,9 +78,28 @@ class ClassDays
     }
 
     /**
-     * Campus-wide and college suspensions within the term: date => title.
+     * The suspension that cancels the class on that date, by its title, or
+     * null when the class meets (as far as suspensions go).
+     */
+    public function suspension(Schedule $schedule, CarbonImmutable $date): ?string
+    {
+        $schedule->loadMissing(['term', 'subjectOffering.section.program']);
+        $start = $schedule->starts_at->format('H:i');
+
+        foreach ($this->suspendedOn($schedule->term, $schedule->subjectOffering->section->program->college_id)[$date->toDateString()] ?? [] as [$title, $from, $until]) {
+            if (($from === null || $start >= $from) && ($until === null || $start < $until)) {
+                return $title;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Campus-wide and college suspensions within the term: date => list of
+     * [title, from, until].
      *
-     * @return array<string, string>
+     * @return array<string, list<array{string, string|null, string|null}>>
      */
     public function suspendedOn(Term $term, int $collegeId): array
     {
@@ -93,11 +118,21 @@ class ClassDays
             ->get();
 
         foreach ($events as $event) {
+            $window = [$event->title, self::hhmm($event->suspends_from), self::hhmm($event->suspends_until)];
+
             for ($day = $event->starts_on; $day->lte($event->ends_on); $day = $day->addDay()) {
-                $dates[$day->toDateString()] = $event->title;
+                $dates[$day->toDateString()][] = $window;
             }
         }
 
         return $this->suspensions[$key] = $dates;
+    }
+
+    /**
+     * "13:00:00" → "13:00".
+     */
+    private static function hhmm(?string $time): ?string
+    {
+        return $time === null ? null : substr($time, 0, 5);
     }
 }

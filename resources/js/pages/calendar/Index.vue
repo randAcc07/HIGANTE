@@ -9,6 +9,7 @@ import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDateRange, parseDate } from '@/lib/dates';
+import { formatTime } from '@/lib/time';
 import type { CalendarEvent } from '@/types';
 
 defineOptions({
@@ -51,6 +52,23 @@ function showTerm(id: number): void {
         { term: id },
         { preserveScroll: true },
     );
+}
+
+/** "No classes", or the part of the day a partial suspension covers. */
+function suspensionLabel(event: CalendarEvent): string {
+    if (event.suspends_from && event.suspends_until) {
+        return `No classes ${formatTime(event.suspends_from)}–${formatTime(event.suspends_until)}`;
+    }
+
+    if (event.suspends_from) {
+        return `No classes from ${formatTime(event.suspends_from)}`;
+    }
+
+    if (event.suspends_until) {
+        return `No classes before ${formatTime(event.suspends_until)}`;
+    }
+
+    return 'No classes';
 }
 </script>
 
@@ -122,7 +140,7 @@ function showTerm(id: number): void {
                                 v-if="event.suspends_classes"
                                 variant="destructive"
                                 class="ml-2"
-                                >No classes</Badge
+                                >{{ suspensionLabel(event) }}</Badge
                             >
                             <Badge variant="outline" class="ml-2">{{
                                 event.college ?? 'Campus-wide'
@@ -133,6 +151,25 @@ function showTerm(id: number): void {
                             class="text-sm text-muted-foreground"
                         >
                             {{ event.description }}
+                        </p>
+                        <p
+                            v-if="event.memo_number || event.memo_url"
+                            class="text-sm"
+                        >
+                            <a
+                                v-if="event.memo_url"
+                                :href="event.memo_url"
+                                target="_blank"
+                                rel="noopener"
+                                class="text-highlight hover:underline"
+                                >{{
+                                    event.memo_number || 'Memorandum'
+                                }}
+                                (PDF)</a
+                            >
+                            <span v-else class="text-muted-foreground">{{
+                                event.memo_number
+                            }}</span>
                         </p>
                     </div>
                     <div v-if="event.can_edit" class="flex shrink-0 gap-1">

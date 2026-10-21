@@ -10,7 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * A holiday or suspension, campus-wide (no college) or for one college.
+ * A holiday or suspension, campus-wide (no college) or for one college. A
+ * suspension covers whole days unless it has a window: it then suspends the
+ * classes that start at or after suspends_from and before suspends_until
+ * (either end may be open). memo_* is the memorandum that announced it.
  *
  * @property int $id
  * @property int|null $college_id
@@ -19,12 +22,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable $starts_on
  * @property CarbonImmutable $ends_on
  * @property bool $suspends_classes
+ * @property string|null $suspends_from "HH:MM:SS"
+ * @property string|null $suspends_until "HH:MM:SS"
+ * @property string|null $memo_number
+ * @property string|null $memo_path
+ * @property string|null $memo_name
  * @property int|null $created_by
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read College|null $college
  */
-#[Fillable(['college_id', 'title', 'description', 'starts_on', 'ends_on', 'suspends_classes', 'created_by'])]
+// memo_path and memo_name are set only by uploading a memo.
+#[Fillable(['college_id', 'title', 'description', 'starts_on', 'ends_on', 'suspends_classes', 'suspends_from', 'suspends_until', 'memo_number', 'created_by'])]
 class CalendarEvent extends Model
 {
     /** @use HasFactory<CalendarEventFactory> */

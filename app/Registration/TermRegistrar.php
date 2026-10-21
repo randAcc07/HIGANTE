@@ -2,6 +2,7 @@
 
 namespace App\Registration;
 
+use App\Enums\DropReason;
 use App\Enums\EnrollmentStatus;
 use App\Enums\LearnerStatus;
 use App\Enums\RegistrationStatus;
@@ -162,6 +163,7 @@ class TermRegistrar
                     'status' => EnrollmentStatus::Dropped,
                     'drop_confirmed_at' => now(),
                     'drop_confirmed_by' => $registrar->id,
+                    'drop_reason' => DropReason::Withdrawn,
                 ]);
         });
     }

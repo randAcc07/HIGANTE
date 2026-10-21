@@ -125,12 +125,16 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 
 ## 10. Absence tracking and drops
 
-- [ ] Expected class periods per enrollment (schedules across the term, minus suspended days)
-- [ ] Equivalent absences per enrollment: unexcused absences + floor(lates ÷ lates per absence)
-- [ ] Warnings at each warning count, sent once; in-app notifications
-- [ ] Flag for dropping at the drop count; recalculate when marks or excuses change (unless the drop was confirmed)
-- [ ] Dean confirms or dismisses drops; at-risk list per college
-- [ ] Teachers see warning and drop status in their classes
+- [x] Expected class periods per enrollment: held so far and in the whole term, from the day they enrolled to the day it was dropped, minus suspended meetings (shown on the at-risk list)
+- [x] Partial-day suspensions: a suspension may carry an optional from and/or until time (blank = whole day). It catches the classes that start inside the window ("from 1:00 PM" leaves a lab that began at noon held). Class lists, meeting dates and period counts all follow it
+- [x] Suspension memos: a calendar event can record its memorandum number and attach the memo (PDF, 10 MB); the calendar links it for everyone who can see the event
+- [x] Marks on a day that was suspended afterwards (e.g. a typhoon entered the next day) stay stored but don't count; the class list shows them read-only with a note. Lifting the suspension counts them again (adding, changing or deleting a suspension recounts everyone marked in its days)
+- [x] Equivalent absences per enrollment: unexcused absences + floor(lates ÷ lates per absence), under the term's policy (the handbook's when a term has none)
+- [x] Warnings at each warning count, in-app: each newly reached count is notified once; a correction lowers the level quietly, and reaching it again warns again
+- [x] Flag for dropping at the drop count (learner and the college's deans are told); recalculated whenever marks or suspensions change, so corrections lift the flag; a confirmed drop stays until reinstated
+- [x] Dean confirms or dismisses drops on the at-risk list (for dropping / warned / dropped, per section): a dismissal holds until the next equivalent absence; an absence drop can be reinstated (recorded, and held like a dismissal). Drops now record why (absences, withdrawn, removed); only absence drops can be reinstated
+- [x] Teachers see warning and drop status on their class lists
+- [x] A notification bell in the header for every role: unread count, latest notices, mark one or all read
 
 ## 11. Excuses
 
@@ -151,5 +155,6 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 - [ ] Learner CSV import (needs a real file to design against)
 - [ ] Server commands for admin accounts, which no admin can change from the app: e.g. `app:reset-admin <email>` printing a new setup link, plus changing an admin's email and deactivating/reactivating an admin
 - [ ] Copy one subject's batches to the section's other split subjects
-- [ ] Email warnings, once a mail server exists
+- [ ] Suspensions for only some programs or year levels of a college (e.g. 4th years for a job fair), if such memos turn out to be common
+- [ ] Email warnings, once a mail server exists (AttendanceNotice is database-only for now)
 - [ ] Open items from the roles doc: substitutes, guardian excuses, curriculum/prospectus

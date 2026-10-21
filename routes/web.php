@@ -18,8 +18,10 @@ use App\Http\Controllers\Dean\OfferingController;
 use App\Http\Controllers\Dean\PlacementController;
 use App\Http\Controllers\Dean\ScheduleController;
 use App\Http\Controllers\Dean\SectionController;
+use App\Http\Controllers\Dean\StandingController;
 use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Registrar\LearnerController;
 use App\Http\Controllers\Registrar\RegistrationController;
 use App\Http\Controllers\Teacher\ClassController;
@@ -30,6 +32,9 @@ Route::get('/', fn () => to_route('dashboard'))->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
+    Route::get('calendar/events/{event}/memo', [CalendarController::class, 'memo'])->name('calendar.events.memo');
+    Route::post('notifications/read', [NotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
     // Who may change which event is CalendarEventPolicy's call.
     Route::middleware('role:admin,dean')->group(function () {
@@ -86,6 +91,10 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
 
     // Placement: authorized through the learner's registration (TermRegistrationPolicy).
     Route::get('attendance', [DeanAttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('standing', [StandingController::class, 'index'])->name('standing.index');
+    Route::post('enrollments/{enrollment}/drop', [StandingController::class, 'drop'])->name('standing.drop');
+    Route::post('enrollments/{enrollment}/dismiss', [StandingController::class, 'dismiss'])->name('standing.dismiss');
+    Route::post('enrollments/{enrollment}/reinstate', [StandingController::class, 'reinstate'])->name('standing.reinstate');
     Route::get('learners', [DeanLearnerController::class, 'index'])->name('learners.index');
     Route::get('learners/{registration}', [DeanLearnerController::class, 'show'])->name('learners.show');
     Route::put('learners/{registration}/section', [PlacementController::class, 'section'])->name('learners.section');

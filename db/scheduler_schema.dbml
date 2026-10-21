@@ -59,6 +59,12 @@ Enum enrollments_status {
   "dropped"
 }
 
+Enum enrollments_drop_reason {
+  "absences"
+  "withdrawn"
+  "removed"
+}
+
 Enum schedules_mode {
   "onsite"
   "online"
@@ -277,6 +283,11 @@ Table calendar_events {
   starts_on date [not null]
   ends_on date [not null]
   suspends_classes tinyint(1) [not null, default: 1]
+  suspends_from time [null]
+  suspends_until time [null]
+  memo_number varchar(60) [null]
+  memo_path varchar(255) [null]
+  memo_name varchar(255) [null]
   created_by "bigint(20) unsigned" [null]
   created_at timestamp [null]
   updated_at timestamp [null]
@@ -506,13 +517,21 @@ Table enrollments {
   flagged_for_drop_at timestamp [null]
   drop_confirmed_at timestamp [null]
   drop_confirmed_by "bigint(20) unsigned" [null]
+  drop_reason enrollments_drop_reason [null]
+  drop_dismissed_at timestamp [null]
+  drop_dismissed_by "bigint(20) unsigned" [null]
+  drop_dismissed_absences "tinyint(3) unsigned" [null]
+  reinstated_at timestamp [null]
+  reinstated_by "bigint(20) unsigned" [null]
   created_at timestamp [null]
   updated_at timestamp [null]
 
   indexes {
     batch_id [name: 'enrollments_batch_id_foreign']
     drop_confirmed_by [name: 'enrollments_drop_confirmed_by_foreign']
+    drop_dismissed_by [name: 'enrollments_drop_dismissed_by_foreign']
     (learner_id, subject_offering_id) [unique, name: 'enrollments_learner_id_subject_offering_id_unique']
+    reinstated_by [name: 'enrollments_reinstated_by_foreign']
     (subject_offering_id, status) [name: 'enrollments_subject_offering_id_status_index']
   }
 }
@@ -625,7 +644,9 @@ Ref email_audits_user_id_foreign: email_audits.user_id > users.id [delete: casca
 Ref email_changes_user_id_foreign: email_changes.user_id - users.id [delete: cascade]
 Ref enrollments_batch_id_foreign: enrollments.batch_id > batches.id [delete: set null]
 Ref enrollments_drop_confirmed_by_foreign: enrollments.drop_confirmed_by > users.id [delete: set null]
+Ref enrollments_drop_dismissed_by_foreign: enrollments.drop_dismissed_by > users.id [delete: set null]
 Ref enrollments_learner_id_foreign: enrollments.learner_id > learners.id [delete: restrict]
+Ref enrollments_reinstated_by_foreign: enrollments.reinstated_by > users.id [delete: set null]
 Ref enrollments_subject_offering_id_foreign: enrollments.subject_offering_id > subject_offerings.id [delete: restrict]
 Ref learners_program_id_foreign: learners.program_id > programs.id [delete: restrict]
 Ref learners_user_id_foreign: learners.user_id - users.id [delete: cascade]

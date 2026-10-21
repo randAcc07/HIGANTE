@@ -51,8 +51,10 @@ the college and can be offered to any section of its programs.
 | Enroll irregular learners subject by subject                                                                           | ✅     |
 | Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week | ✅     |
 | Approve or reject excuses for their college's learners (`medical` needs at least one file)                             | ⏳     |
-| Confirm or dismiss drops flagged at the policy's drop count                                                            | ⏳     |
-| See an at-risk learners list                                                                                           | ⏳     |
+| Confirm or dismiss drops flagged at the policy's drop count                                                            | ✅     |
+| Reinstate a learner dropped for absences                                                                               | ✅     |
+| Partial-day suspensions and suspension memos (number + PDF) for their own college                                      | ✅     |
+| See an at-risk learners list                                                                                           | ✅     |
 | College-only holidays and suspensions for their own college                                                            | ✅     |
 | Correct a teacher's attendance marks                                                                                   | ✅     |
 | Reassign a subject's classes to another teacher (e.g. a substitute for a teacher on leave)                             | ✅     |
@@ -65,7 +67,7 @@ the college and can be offered to any section of its programs.
 | Mark present / late / absent per scheduled class, by their own judgment | ✅     |
 | Correct own marks (every change is audited)                             | ✅     |
 | Cannot undo an excuse the dean approved (enforced by the database)      | ✅     |
-| See learners' warning and drop status in their classes                  | ❓     |
+| See learners' warning and drop status in their classes                  | ✅     |
 | Time limit on editing marks after a class                               | ❓     |
 
 ## Learner
@@ -74,7 +76,7 @@ the college and can be offered to any section of its programs.
 | --------------------------------------------------------------------------------- | ------ |
 | See own schedule                                                                  | ⏳     |
 | See attendance per class and equivalent absences                                  | ⏳     |
-| Get warnings at the policy's warning counts; get notified when flagged or dropped | ⏳     |
+| Get warnings at the policy's warning counts; get notified when flagged or dropped | ✅     |
 | Submit excuses with any number of files and track their status                    | ⏳     |
 | Whether a guardian can submit excuses too                                         | ❓     |
 
@@ -98,9 +100,9 @@ the college and can be offered to any section of its programs.
 | Reject double-booked rooms and teachers, plus the other database rules                                                                         | ✅     |
 | Place newly registered learners in the emptiest section of their program and year level that has room; leave them for the dean if all are full | ✅     |
 | Enroll section members in every offering of their section, including offerings added later                                                     | ✅     |
-| Count expected class days per offering, skipping holidays and suspensions                                                                      | ⏳     |
-| Calculate equivalent absences; send each warning once                                                                                          | ⏳     |
-| Flag for dropping at the drop count; lower or clear warnings and flags when marks are corrected (unless the dean already confirmed the drop)   | ⏳     |
+| Count expected class days per offering, skipping holidays and suspensions                                                                      | ✅     |
+| Calculate equivalent absences; send each warning once                                                                                          | ✅     |
+| Flag for dropping at the drop count; lower or clear warnings and flags when marks are corrected (unless the dean already confirmed the drop)   | ✅     |
 | Apply an approved excuse to every class in its date range                                                                                      | ⏳     |
 | Catch room, teacher and section/batch schedule conflicts (per-learner conflicts come with enrollment)                                          | ✅     |
 | Refuse enrolling or batching a learner into two classes at once; warn when a class is scheduled over a learner's other class                   | ✅     |

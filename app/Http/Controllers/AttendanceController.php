@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Attendance\ClassDays;
 use App\Attendance\ClassList;
+use App\Attendance\Standing;
 use App\Enums\AttendanceStatus;
+use App\Enums\EnrollmentStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Dean\AttendanceController as DeanAttendanceController;
 use App\Http\Controllers\Teacher\ClassController;
@@ -42,7 +44,13 @@ class AttendanceController extends Controller
         $dates = array_map(fn (CarbonImmutable $d): string => $d->toDateString(), $days->pastDates($schedule));
         $at = array_search($day->toDateString(), $dates, true);
 
-        $learners = $refusal === null ? $list->attendees($schedule, $day)->map(function (Enrollment $enrollment): array {
+        // A day suspended after marks were made keeps them, read-only: they
+        // no longer count (Standing skips suspended meetings).
+        $suspendedAfter = $refusal !== null
+            && $days->suspension($schedule, $day) !== null
+            && AttendanceRecord::where('schedule_id', $schedule->id)->where('class_date', $day->toDateString())->exists();
+
+        $learners = $refusal === null || $suspendedAfter ? $list->attendees($schedule, $day)->map(function (Enrollment $enrollment): array {
             /** @var AttendanceRecord|null $record */
             $record = $enrollment->attendanceRecords->first();
 
@@ -54,6 +62,9 @@ class AttendanceController extends Controller
                 'excused' => $record?->absence_excuse_id !== null,
                 'recorded_by' => $record?->recorder?->full_name,
                 'recorded_at' => $record?->updated_at?->toIso8601String(),
+                // So the teacher sees who is warned or flagged in their class.
+                'standing' => $enrollment->status === EnrollmentStatus::ForDropping ? 'for_dropping' : ($enrollment->status === EnrollmentStatus::Dropped ? 'dropped' : null),
+                'warning_level' => $enrollment->warning_level,
             ];
         })->values() : collect();
 
@@ -72,6 +83,7 @@ class AttendanceController extends Controller
             ],
             'date' => $day->toDateString(),
             'refusal' => $refusal,
+            'suspendedAfter' => $suspendedAfter,
             'learners' => $learners,
             // Neighbouring meeting dates (latest first in $dates).
             'previous' => $at === false ? ($dates[0] ?? null) : ($dates[$at + 1] ?? null),
@@ -85,7 +97,7 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function update(Request $request, Schedule $schedule, string $date, ClassDays $days, ClassList $list): RedirectResponse
+    public function update(Request $request, Schedule $schedule, string $date, ClassDays $days, ClassList $list, Standing $standing): RedirectResponse
     {
         Gate::authorize('takeAttendance', $schedule);
         /** @var User $user */
@@ -111,6 +123,7 @@ class AttendanceController extends Controller
         }
 
         $counts = $list->record($schedule, $day, $marks, $user);
+        $standing->refreshMany($counts['enrollments']);
 
         $saved = $counts['created'] + $counts['changed'];
         Inertia::flash('toast', ['type' => 'success', 'message' => $saved === 0

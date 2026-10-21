@@ -30,4 +30,7 @@ export type ClassListLearner = {
     excused: boolean;
     recorded_by: string | null;
     recorded_at: string | null;
+    standing: 'for_dropping' | 'dropped' | null;
+    /** Highest warning count reached in this class; 0 = none. */
+    warning_level: number;
 };

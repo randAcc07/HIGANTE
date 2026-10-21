@@ -12,6 +12,15 @@ use App\Models\User;
  */
 class CalendarEventPolicy
 {
+    /**
+     * Campus-wide events and the user's own college's (admin and registrar
+     * see all), as on the calendar.
+     */
+    public function view(User $user, CalendarEvent $event): bool
+    {
+        return ! $user->role->belongsToCollege() || $event->college_id === null || $event->college_id === $user->college_id;
+    }
+
     public function create(User $user): bool
     {
         return $user->hasRole(UserRole::Admin, UserRole::Dean);
