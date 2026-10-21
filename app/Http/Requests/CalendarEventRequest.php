@@ -2,8 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\UserRole;
+use App\Models\Program;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 /**
  * Whose calendar an event belongs to is not part of the form: the admin's
@@ -27,6 +30,11 @@ class CalendarEventRequest extends FormRequest
             // A window narrows a suspension to the classes that start in it.
             'suspends_from' => ['nullable', 'date_format:H:i', 'prohibited_if:suspends_classes,false'],
             'suspends_until' => ['nullable', 'date_format:H:i', 'prohibited_if:suspends_classes,false', 'after:suspends_from'],
+            // Narrowing to some programs / year levels (none = everyone in scope).
+            'program_ids' => ['array', 'prohibited_if:suspends_classes,false'],
+            'program_ids.*' => ['integer', 'distinct', Rule::exists(Program::class, 'id')->when($this->user()?->role === UserRole::Dean, fn ($rule) => $rule->where('college_id', $this->user()?->college_id))],
+            'year_levels' => ['array', 'prohibited_if:suspends_classes,false'],
+            'year_levels.*' => ['integer', 'distinct', 'between:1,6'],
             'memo_number' => ['nullable', 'string', 'max:60'],
             'memo' => ['nullable', 'file', 'mimes:pdf', 'max:10240'],
             'remove_memo' => ['boolean'],
@@ -44,6 +52,9 @@ class CalendarEventRequest extends FormRequest
             'suspends_from.prohibited_if' => __('Only a suspension has class times.'),
             'suspends_until.prohibited_if' => __('Only a suspension has class times.'),
             'memo.mimes' => __('The memo must be a PDF.'),
+            'program_ids.*.exists' => __('Choose programs of your college.'),
+            'program_ids.prohibited_if' => __('Only a suspension can be narrowed to programs.'),
+            'year_levels.prohibited_if' => __('Only a suspension can be narrowed to year levels.'),
         ];
     }
 }

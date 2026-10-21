@@ -16,6 +16,7 @@ use App\Models\CalendarEvent;
 use App\Models\Enrollment;
 use App\Models\ExcuseDecision;
 use App\Models\Learner;
+use App\Models\Schedule;
 use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
@@ -95,6 +96,24 @@ class DemoSeederTest extends TestCase
         Storage::disk('local')->assertExists((string) $partial->memo_path);
         $this->assertStringStartsWith(TermSeeder::MEMO_DIRECTORY.'/', (string) $partial->memo_path);
         $this->assertSame('COS Memo No. 2026-031', $partial->memo_number);
+
+        // A suspension narrowed to BSCE 4th years: their classes that day are
+        // off and unmarked, while the rest of the college met and was marked.
+        $narrowed = CalendarEvent::with('programs')->where('title', 'BSCE 4th-year field trip')->sole();
+        $this->assertSame(['BSCE'], $narrowed->programs->pluck('code')->all());
+        $this->assertSame([4], $narrowed->year_levels);
+        $marksThatDay = fn (bool $inScope) => AttendanceRecord::where('class_date', $narrowed->starts_on->toDateString())
+            ->whereHas('schedule.subjectOffering.section', fn ($section) => $section
+                ->whereHas('program', fn ($program) => $program->where('college_id', $narrowed->college_id))
+                ->where(fn ($match) => $inScope
+                    ? $match->where('year_level', 4)->whereHas('program', fn ($program) => $program->where('code', 'BSCE'))
+                    : $match->where('year_level', '!=', 4)->orWhereHas('program', fn ($program) => $program->where('code', '!=', 'BSCE'))))
+            ->count();
+        $this->assertGreaterThan(0, Schedule::whereRaw('WEEKDAY(starts_at) = ?', [$narrowed->starts_on->dayOfWeekIso - 1])
+            ->whereHas('subjectOffering.section', fn ($section) => $section->where('year_level', 4)->whereHas('program', fn ($program) => $program->where('code', 'BSCE')))
+            ->count());
+        $this->assertSame(0, $marksThatDay(true));
+        $this->assertGreaterThan(0, $marksThatDay(false));
 
         // Excuses are decided per class by whoever the app lets decide, and
         // each excuse's status summarizes its classes. An absence points at

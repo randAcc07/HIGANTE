@@ -6,6 +6,7 @@ use App\Attendance\Standing;
 use App\Enums\UserRole;
 use App\Http\Requests\CalendarEventRequest;
 use App\Models\CalendarEvent;
+use App\Models\College;
 use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -33,7 +34,7 @@ class CalendarController extends Controller
         $term = $terms->firstWhere('id', $request->integer('term')) ?? Term::forViewing();
 
         $events = CalendarEvent::query()
-            ->with('college:id,code')
+            ->with(['college:id,code', 'programs:id,code'])
             ->when($user->role->belongsToCollege(), fn ($query) => $query->where(fn ($query) => $query
                 ->whereNull('college_id')
                 ->orWhere('college_id', $user->college_id)))
@@ -47,6 +48,9 @@ class CalendarController extends Controller
                 ...$event->only(['id', 'title', 'description', 'suspends_classes', 'memo_number', 'memo_name']),
                 'suspends_from' => $event->suspends_from === null ? null : substr($event->suspends_from, 0, 5),
                 'suspends_until' => $event->suspends_until === null ? null : substr($event->suspends_until, 0, 5),
+                'program_ids' => $event->programs->modelKeys(),
+                'programs' => $event->programs->sortBy('code')->pluck('code')->values(),
+                'year_levels' => $event->year_levels ?? [],
                 'memo_url' => $event->memo_path === null ? null : route('calendar.events.memo', $event, false),
                 'starts_on' => $event->starts_on->toDateString(),
                 'ends_on' => $event->ends_on->toDateString(),
@@ -66,6 +70,13 @@ class CalendarController extends Controller
             'canCreate' => $user->can('create', CalendarEvent::class),
             // Where a new event goes: the dean's college, or campus-wide.
             'newEventScope' => $user->role === UserRole::Dean ? $user->college?->code : null,
+            // Programs a suspension can be narrowed to: the dean's own
+            // college's, or any (the admin's campus-wide events).
+            'programOptions' => College::query()
+                ->when($user->role === UserRole::Dean, fn ($query) => $query->whereKey($user->college_id))
+                ->with(['programs' => fn ($programs) => $programs->orderBy('code')->select(['id', 'college_id', 'code', 'name'])])
+                ->orderBy('code')
+                ->get(['id', 'code']),
         ]);
     }
 
@@ -81,6 +92,7 @@ class CalendarController extends Controller
             'college_id' => $user->role === UserRole::Dean ? $user->college_id : null,
             'created_by' => $user->id,
         ]);
+        $event->programs()->sync($request->boolean('suspends_classes') ? $request->input('program_ids', []) : []);
         $this->saveMemo($request, $event);
         self::recount($standing, $event);
 
@@ -95,6 +107,7 @@ class CalendarController extends Controller
 
         $before = clone $event;
         $event->update(self::fields($request));
+        $event->programs()->sync($request->boolean('suspends_classes') ? $request->input('program_ids', []) : []);
         $this->saveMemo($request, $event);
         self::recount($standing, $before);
         self::recount($standing, $event);
@@ -137,9 +150,12 @@ class CalendarController extends Controller
     private static function fields(CalendarEventRequest $request): array
     {
         $fields = $request->safe()->only(['title', 'description', 'starts_on', 'ends_on', 'suspends_classes', 'suspends_from', 'suspends_until', 'memo_number']);
+        $years = array_values(array_map('intval', (array) $request->input('year_levels', [])));
+        sort($years);
+        $fields['year_levels'] = $years === [] ? null : $years;
 
         if (! $request->boolean('suspends_classes')) {
-            $fields['suspends_from'] = $fields['suspends_until'] = null;
+            $fields['suspends_from'] = $fields['suspends_until'] = $fields['year_levels'] = null;
         }
 
         return $fields;

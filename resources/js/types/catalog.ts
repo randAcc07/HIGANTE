@@ -97,6 +97,10 @@ export type CalendarEvent = {
     /** "HH:MM": a suspension only catches classes starting in [from, until). */
     suspends_from: string | null;
     suspends_until: string | null;
+    /** Narrowed to sections of these programs / year levels (empty = all). */
+    program_ids: number[];
+    programs: string[];
+    year_levels: number[];
     memo_number: string | null;
     memo_name: string | null;
     memo_url: string | null;

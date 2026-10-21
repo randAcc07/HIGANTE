@@ -8,12 +8,16 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
  * A holiday or suspension, campus-wide (no college) or for one college. A
  * suspension covers whole days unless it has a window: it then suspends the
  * classes that start at or after suspends_from and before suspends_until
- * (either end may be open). memo_* is the memorandum that announced it.
+ * (either end may be open). It can also be narrowed to some programs
+ * and/or year levels: it then cancels only the classes of matching
+ * sections (both together when both are set). memo_* is the memorandum
+ * that announced it.
  *
  * @property int $id
  * @property int|null $college_id
@@ -24,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $suspends_classes
  * @property string|null $suspends_from "HH:MM:SS"
  * @property string|null $suspends_until "HH:MM:SS"
+ * @property list<int>|null $year_levels
  * @property string|null $memo_number
  * @property string|null $memo_path
  * @property string|null $memo_name
@@ -33,7 +38,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read College|null $college
  */
 // memo_path and memo_name are set only by uploading a memo.
-#[Fillable(['college_id', 'title', 'description', 'starts_on', 'ends_on', 'suspends_classes', 'suspends_from', 'suspends_until', 'memo_number', 'created_by'])]
+#[Fillable(['college_id', 'title', 'description', 'starts_on', 'ends_on', 'suspends_classes', 'suspends_from', 'suspends_until', 'year_levels', 'memo_number', 'created_by'])]
 class CalendarEvent extends Model
 {
     /** @use HasFactory<CalendarEventFactory> */
@@ -50,7 +55,18 @@ class CalendarEvent extends Model
             'starts_on' => 'date:Y-m-d',
             'ends_on' => 'date:Y-m-d',
             'suspends_classes' => 'boolean',
+            'year_levels' => 'array',
         ];
+    }
+
+    /**
+     * The programs it is narrowed to (none = all in its scope).
+     *
+     * @return BelongsToMany<Program, $this>
+     */
+    public function programs(): BelongsToMany
+    {
+        return $this->belongsToMany(Program::class);
     }
 
     /**

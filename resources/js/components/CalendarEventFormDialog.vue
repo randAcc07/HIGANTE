@@ -21,6 +21,12 @@ const props = defineProps<{
     event?: CalendarEvent;
     /** College code for a dean's events; null for the admin's campus-wide ones. */
     scope: string | null;
+    /** Programs a suspension can be narrowed to, by college. */
+    programOptions: {
+        id: number;
+        code: string;
+        programs: { id: number; code: string; name: string }[];
+    }[];
 }>();
 
 const open = ref(false);
@@ -32,10 +38,23 @@ const form = useForm({
     suspends_classes: props.event?.suspends_classes ?? true,
     suspends_from: props.event?.suspends_from ?? '',
     suspends_until: props.event?.suspends_until ?? '',
+    program_ids: [...(props.event?.program_ids ?? [])] as number[],
+    year_levels: [...(props.event?.year_levels ?? [])] as number[],
     memo_number: props.event?.memo_number ?? '',
     memo: null as File | null,
     remove_memo: false,
 });
+
+function toggle(
+    list: 'program_ids' | 'year_levels',
+    id: number,
+    on: boolean | 'indeterminate',
+): void {
+    form[list] =
+        on === true
+            ? [...form[list], id]
+            : form[list].filter((value) => value !== id);
+}
 
 function pickMemo(event: Event): void {
     form.memo = (event.target as HTMLInputElement).files?.[0] ?? null;
@@ -54,6 +73,8 @@ function submit(): void {
         suspends_until: data.suspends_classes
             ? data.suspends_until || null
             : null,
+        program_ids: data.suspends_classes ? data.program_ids : [],
+        year_levels: data.suspends_classes ? data.year_levels : [],
         memo_number: data.memo_number || null,
         ...(props.event ? { _method: 'put' } : {}),
     })).post(
@@ -175,6 +196,78 @@ function submit(): void {
                             <InputError :message="form.errors.suspends_until" />
                         </div>
                     </div>
+                    <span class="mt-2 text-sm font-medium"
+                        >Only these year levels</span
+                    >
+                    <span class="text-xs text-muted-foreground"
+                        >None ticked: every year level. By the class's section,
+                        so an irregular learner in another year's class still
+                        has it.</span
+                    >
+                    <div class="flex flex-wrap gap-3">
+                        <Label
+                            v-for="year in 6"
+                            :key="year"
+                            class="flex items-center gap-1 font-normal"
+                        >
+                            <Checkbox
+                                :model-value="form.year_levels.includes(year)"
+                                @update:model-value="
+                                    toggle('year_levels', year, $event)
+                                "
+                            />
+                            Year {{ year }}
+                        </Label>
+                    </div>
+                    <InputError :message="form.errors.year_levels" />
+                    <span class="mt-2 text-sm font-medium"
+                        >Only these programs</span
+                    >
+                    <span class="text-xs text-muted-foreground"
+                        >None ticked: every program{{
+                            scope ? ` of ${scope}` : ' on campus'
+                        }}.</span
+                    >
+                    <div
+                        v-for="college in programOptions"
+                        :key="college.id"
+                        class="space-y-1"
+                    >
+                        <span
+                            v-if="programOptions.length > 1"
+                            class="text-xs text-muted-foreground"
+                            >{{ college.code }}</span
+                        >
+                        <div class="flex flex-wrap gap-3">
+                            <Label
+                                v-for="program in college.programs"
+                                :key="program.id"
+                                class="flex items-center gap-1 font-normal"
+                                :title="program.name"
+                            >
+                                <Checkbox
+                                    :model-value="
+                                        form.program_ids.includes(program.id)
+                                    "
+                                    @update:model-value="
+                                        toggle(
+                                            'program_ids',
+                                            program.id,
+                                            $event,
+                                        )
+                                    "
+                                />
+                                {{ program.code }}
+                            </Label>
+                        </div>
+                    </div>
+                    <InputError :message="form.errors.program_ids" />
+                    <InputError
+                        v-for="(error, key) in form.errors"
+                        v-show="String(key).startsWith('program_ids.')"
+                        :key="key"
+                        :message="error"
+                    />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">

@@ -294,6 +294,7 @@ Table calendar_events {
   suspends_classes tinyint(1) [not null, default: 1]
   suspends_from time [null]
   suspends_until time [null]
+  year_levels json [null, note: 'Year levels whose sections it suspends, e.g. [4]; NULL = all']
   memo_number varchar(60) [null]
   memo_path varchar(255) [null]
   memo_name varchar(255) [null]
@@ -310,6 +311,16 @@ Table calendar_events {
   Note: '''
   CHECK chk_calendar_events_dates: `ends_on` >= `starts_on`
   '''
+}
+
+Table calendar_event_program {
+  calendar_event_id "bigint(20) unsigned" [not null]
+  program_id "bigint(20) unsigned" [not null]
+
+  indexes {
+    program_id [name: 'calendar_event_program_program_id_foreign']
+    (calendar_event_id, program_id) [pk]
+  }
 }
 
 Table email_audits {
@@ -665,6 +676,8 @@ Ref attendance_records_schedule_id_foreign: attendance_records.schedule_id > sch
 Ref batches_subject_offering_id_foreign: batches.subject_offering_id > subject_offerings.id [delete: cascade]
 Ref calendar_events_college_id_foreign: calendar_events.college_id > colleges.id [delete: cascade]
 Ref calendar_events_created_by_foreign: calendar_events.created_by > users.id [delete: set null]
+Ref calendar_event_program_calendar_event_id_foreign: calendar_event_program.calendar_event_id > calendar_events.id [delete: cascade]
+Ref calendar_event_program_program_id_foreign: calendar_event_program.program_id > programs.id [delete: restrict]
 Ref email_audits_changed_by_foreign: email_audits.changed_by > users.id [delete: set null]
 Ref email_audits_user_id_foreign: email_audits.user_id > users.id [delete: cascade]
 Ref email_changes_user_id_foreign: email_changes.user_id - users.id [delete: cascade]

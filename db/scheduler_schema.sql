@@ -191,6 +191,7 @@ CREATE TABLE `calendar_events` (
   `suspends_classes` tinyint(1) NOT NULL DEFAULT 1,
   `suspends_from` time DEFAULT NULL,
   `suspends_until` time DEFAULT NULL,
+  `year_levels` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL COMMENT 'Year levels whose sections it suspends, e.g. [4]; NULL = all' CHECK (json_valid(`year_levels`)),
   `memo_number` varchar(60) DEFAULT NULL,
   `memo_path` varchar(255) DEFAULT NULL,
   `memo_name` varchar(255) DEFAULT NULL,
@@ -204,6 +205,15 @@ CREATE TABLE `calendar_events` (
   CONSTRAINT `calendar_events_college_id_foreign` FOREIGN KEY (`college_id`) REFERENCES `colleges` (`id`) ON DELETE CASCADE,
   CONSTRAINT `calendar_events_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `chk_calendar_events_dates` CHECK (`ends_on` >= `starts_on`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `calendar_event_program` (
+  `calendar_event_id` bigint(20) unsigned NOT NULL,
+  `program_id` bigint(20) unsigned NOT NULL,
+  PRIMARY KEY (`calendar_event_id`,`program_id`),
+  KEY `calendar_event_program_program_id_foreign` (`program_id`),
+  CONSTRAINT `calendar_event_program_calendar_event_id_foreign` FOREIGN KEY (`calendar_event_id`) REFERENCES `calendar_events` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `calendar_event_program_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `email_audits` (

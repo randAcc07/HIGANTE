@@ -27,6 +27,11 @@ const props = defineProps<{
         ends_on: string;
     } | null;
     events: CalendarEvent[];
+    programOptions: {
+        id: number;
+        code: string;
+        programs: { id: number; code: string; name: string }[];
+    }[];
     canCreate: boolean;
     newEventScope: string | null;
 }>();
@@ -54,21 +59,30 @@ function showTerm(id: number): void {
     );
 }
 
-/** "No classes", or the part of the day a partial suspension covers. */
+/** "No classes", narrowed by programs / year levels and part of the day: "No classes for BSCS year 4 from 1:00 PM". */
 function suspensionLabel(event: CalendarEvent): string {
+    const parts = ['No classes'];
+
+    if (event.programs.length || event.year_levels.length) {
+        const years = event.year_levels.length
+            ? `year ${event.year_levels.join(', ')}`
+            : '';
+        parts.push(
+            `for ${[event.programs.join(', '), years].filter(Boolean).join(' ')}`,
+        );
+    }
+
     if (event.suspends_from && event.suspends_until) {
-        return `No classes ${formatTime(event.suspends_from)}–${formatTime(event.suspends_until)}`;
+        parts.push(
+            `${formatTime(event.suspends_from)}–${formatTime(event.suspends_until)}`,
+        );
+    } else if (event.suspends_from) {
+        parts.push(`from ${formatTime(event.suspends_from)}`);
+    } else if (event.suspends_until) {
+        parts.push(`before ${formatTime(event.suspends_until)}`);
     }
 
-    if (event.suspends_from) {
-        return `No classes from ${formatTime(event.suspends_from)}`;
-    }
-
-    if (event.suspends_until) {
-        return `No classes before ${formatTime(event.suspends_until)}`;
-    }
-
-    return 'No classes';
+    return parts.join(' ');
 }
 </script>
 
@@ -108,6 +122,7 @@ function suspensionLabel(event: CalendarEvent): string {
                 <CalendarEventFormDialog
                     v-if="canCreate"
                     :scope="newEventScope"
+                    :program-options="programOptions"
                 >
                     <Button><Plus class="h-4 w-4" /> Add event</Button>
                 </CalendarEventFormDialog>
@@ -176,6 +191,7 @@ function suspensionLabel(event: CalendarEvent): string {
                         <CalendarEventFormDialog
                             :event="event"
                             :scope="newEventScope"
+                            :program-options="programOptions"
                         >
                             <Button variant="ghost" size="sm">
                                 <Pencil class="h-4 w-4" />

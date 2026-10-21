@@ -11,16 +11,19 @@ use Carbon\CarbonImmutable;
  * When a weekly class actually meets: on its weekday, inside its term, and
  * not suspended by the campus or its college. A suspension covers whole
  * days, or only the classes that start inside its window ("from 1:00 PM"
- * leaves a lab that began at noon held). Attendance can be taken for a
+ * leaves a lab that began at noon held), and may be narrowed to sections of
+ * some programs and/or year levels (by the class's section, not each
+ * learner: an irregular in another year's class still has that class). Attendance can be taken for a
  * meeting once its day has come (today or earlier).
  */
 class ClassDays
 {
     /**
-     * Suspensions by "termId:collegeId": date => list of [title, from, until]
-     * ("HH:MM", null = open end; both null = the whole day).
+     * Suspensions by "termId:collegeId": date => list of [title, from, until,
+     * program ids, year levels] ("HH:MM", null = open end; both null = the
+     * whole day; empty lists = every program / year level).
      *
-     * @var array<string, array<string, list<array{string, string|null, string|null}>>>
+     * @var array<string, array<string, list<array{string, string|null, string|null, list<int>, list<int>}>>>
      */
     private array $suspensions = [];
 
@@ -97,10 +100,15 @@ class ClassDays
     public function suspension(Schedule $schedule, CarbonImmutable $date): ?string
     {
         $schedule->loadMissing(['term', 'subjectOffering.section.program']);
+        $section = $schedule->subjectOffering->section;
         $start = $schedule->starts_at->format('H:i');
 
-        foreach ($this->suspendedOn($schedule->term, $schedule->subjectOffering->section->program->college_id)[$date->toDateString()] ?? [] as [$title, $from, $until]) {
-            if (($from === null || $start >= $from) && ($until === null || $start < $until)) {
+        foreach ($this->suspendedOn($schedule->term, $section->program->college_id)[$date->toDateString()] ?? [] as [$title, $from, $until, $programs, $years]) {
+            $inWindow = ($from === null || $start >= $from) && ($until === null || $start < $until);
+            $inScope = ($programs === [] || in_array($section->program_id, $programs, true))
+                && ($years === [] || in_array($section->year_level, $years, true));
+
+            if ($inWindow && $inScope) {
                 return $title;
             }
         }
@@ -110,9 +118,9 @@ class ClassDays
 
     /**
      * Campus-wide and college suspensions within the term: date => list of
-     * [title, from, until].
+     * [title, from, until, program ids, year levels].
      *
-     * @return array<string, list<array{string, string|null, string|null}>>
+     * @return array<string, list<array{string, string|null, string|null, list<int>, list<int>}>>
      */
     public function suspendedOn(Term $term, int $collegeId): array
     {
@@ -124,6 +132,7 @@ class ClassDays
 
         $dates = [];
         $events = CalendarEvent::query()
+            ->with('programs:id')
             ->where('suspends_classes', true)
             ->where(fn ($query) => $query->whereNull('college_id')->orWhere('college_id', $collegeId))
             ->where('starts_on', '<=', $term->ends_on->toDateString())
@@ -131,7 +140,13 @@ class ClassDays
             ->get();
 
         foreach ($events as $event) {
-            $window = [$event->title, self::hhmm($event->suspends_from), self::hhmm($event->suspends_until)];
+            $window = [
+                $event->title,
+                self::hhmm($event->suspends_from),
+                self::hhmm($event->suspends_until),
+                array_values(array_map('intval', $event->programs->modelKeys())),
+                array_map('intval', $event->year_levels ?? []),
+            ];
 
             for ($day = $event->starts_on; $day->lte($event->ends_on); $day = $day->addDay()) {
                 $dates[$day->toDateString()][] = $window;

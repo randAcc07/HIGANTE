@@ -5,6 +5,7 @@ namespace Database\Seeders\Demo;
 use App\Models\AttendancePolicy;
 use App\Models\CalendarEvent;
 use App\Models\College;
+use App\Models\Program;
 use App\Models\Term;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -16,7 +17,7 @@ use Illuminate\Support\Str;
  * Last school year's two terms, the current term and the upcoming one, each
  * with the handbook attendance policy,
  * and the current term's holidays and college events (one suspending only an
- * afternoon, with its memo). Runs after the staff,
+ * afternoon, with its memo; one narrowed to a program's year level). Runs after the staff,
  * since the admin and deans are the events' authors.
  */
 class TermSeeder extends Seeder
@@ -47,6 +48,7 @@ class TermSeeder extends Seeder
                 'ends_on' => $event['ends_on'],
                 'suspends_classes' => $event['suspends_classes'],
                 'suspends_from' => $event['suspends_from'] ?? null,
+                'year_levels' => $event['year_levels'] ?? null,
                 'memo_number' => $event['memo_number'] ?? null,
                 'created_by' => $author->id,
             ]);
@@ -61,6 +63,7 @@ class TermSeeder extends Seeder
             }
 
             $model->save();
+            $model->programs()->sync(Program::whereIn('code', $event['programs'] ?? [])->pluck('id'));
         }
     }
 

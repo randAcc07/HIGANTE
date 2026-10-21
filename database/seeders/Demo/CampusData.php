@@ -367,9 +367,10 @@ final class CampusData
      * Calendar events in the current term. `college` null = campus-wide.
      * A suspension with `suspends_from` covers only the classes starting
      * from then on; `memo_number` comes with a placeholder memo PDF, and
-     * `entered_at` backdates when it was entered.
+     * `entered_at` backdates when it was entered. `programs` (codes) and
+     * `year_levels` narrow a suspension to the sections that match both.
      *
-     * @var list<array{college: string|null, title: string, starts_on: string, ends_on: string, suspends_classes: bool, description?: string, suspends_from?: string, memo_number?: string, entered_at?: string}>
+     * @var list<array{college: string|null, title: string, starts_on: string, ends_on: string, suspends_classes: bool, description?: string, suspends_from?: string, memo_number?: string, entered_at?: string, programs?: list<string>, year_levels?: list<int>}>
      */
     public const CALENDAR = [
         ['college' => null, 'title' => 'Ninoy Aquino Day', 'starts_on' => '2026-08-21', 'ends_on' => '2026-08-21', 'suspends_classes' => true],
@@ -382,6 +383,8 @@ final class CampusData
         // marked (see AttendanceSeeder), so those marks stay but don't count.
         ['college' => 'COS', 'title' => 'Science Fair awarding ceremony', 'starts_on' => '2026-10-09', 'ends_on' => '2026-10-09', 'suspends_classes' => true, 'suspends_from' => '13:00', 'memo_number' => 'COS Memo No. 2026-031', 'entered_at' => '2026-10-09 15:30', 'description' => 'Afternoon classes suspended for the awarding ceremony at the gymnasium.'],
         ['college' => 'COE', 'title' => "World Teachers' Day celebration", 'starts_on' => '2026-10-05', 'ends_on' => '2026-10-05', 'suspends_classes' => true],
+        // Narrowed: only BSCE 4-A's three Tuesday classes are off; the rest of COEng meets.
+        ['college' => 'COEng', 'title' => 'BSCE 4th-year field trip', 'starts_on' => '2026-10-13', 'ends_on' => '2026-10-13', 'suspends_classes' => true, 'programs' => ['BSCE'], 'year_levels' => [4], 'description' => 'Site visit to the provincial bridge project for CE 401 and CE 402.'],
         ['college' => null, 'title' => "All Saints' Day", 'starts_on' => '2026-11-01', 'ends_on' => '2026-11-01', 'suspends_classes' => true],
         ['college' => null, 'title' => "All Souls' Day", 'starts_on' => '2026-11-02', 'ends_on' => '2026-11-02', 'suspends_classes' => true],
         ['college' => 'COS', 'title' => 'Science and Technology Week', 'starts_on' => '2026-11-23', 'ends_on' => '2026-11-27', 'suspends_classes' => false],
