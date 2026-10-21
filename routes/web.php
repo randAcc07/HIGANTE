@@ -23,6 +23,7 @@ use App\Http\Controllers\Dean\StandingController;
 use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
 use App\Http\Controllers\ExcuseDocumentController;
+use App\Http\Controllers\Learner\ClassController as LearnerClassController;
 use App\Http\Controllers\Learner\ExcuseController as LearnerExcuseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Registrar\LearnerController;
@@ -37,6 +38,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
     Route::get('calendar/events/{event}/memo', [CalendarController::class, 'memo'])->name('calendar.events.memo');
     Route::get('excuses/documents/{document}', [ExcuseDocumentController::class, 'show'])->name('excuses.documents.show');
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/read', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
@@ -113,6 +115,8 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
 });
 
 Route::middleware(['auth', 'verified', 'role:learner'])->prefix('learner')->name('learner.')->group(function () {
+    Route::get('classes', [LearnerClassController::class, 'index'])->name('classes.index');
+    Route::get('classes/{enrollment}', [LearnerClassController::class, 'show'])->name('classes.show');
     Route::get('excuses', [LearnerExcuseController::class, 'index'])->name('excuses.index');
     Route::post('excuses', [LearnerExcuseController::class, 'store'])->name('excuses.store');
 });

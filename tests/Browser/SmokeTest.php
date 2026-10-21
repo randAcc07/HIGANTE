@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Enrollment;
 use Tests\Browser\Campus;
 
 /*
@@ -55,6 +56,10 @@ dataset('pages', [
     'teacher calendar' => ['teacher', fn (Campus $c) => path('calendar.index'), '{term}'],
     'learner dashboard' => ['learner', fn (Campus $c) => path('dashboard'), 'Welcome,'],
     'learner calendar' => ['learner', fn (Campus $c) => path('calendar.index'), '{term}'],
+    'learner classes' => ['learner', fn (Campus $c) => path('learner.classes.index'), 'Excused absences don\'t count.'],
+    'learner class' => ['learner', fn (Campus $c) => path('learner.classes.show', Enrollment::where('learner_id', $c->registrations[0]->learner_id)->where('subject_offering_id', $c->lecture->id)->sole()), 'present at every class so far'],
+    'learner dashboard attention' => ['learner', fn (Campus $c) => path('dashboard'), 'Needs your attention'],
+    'dean notifications' => ['dean', fn (Campus $c) => path('notifications.index'), 'No notifications yet.'],
     'learner excuses' => ['learner', fn (Campus $c) => path('learner.excuses.index'), 'No excuses yet.'],
     'learner profile' => ['learner', fn (Campus $c) => path('profile.edit'), 'Email address'],
 ]);

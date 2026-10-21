@@ -7,3 +7,4 @@ export * from './registration';
 export * from './placement';
 export * from './attendance';
 export * from './excuse';
+export * from './learner';

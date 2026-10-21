@@ -28,6 +28,7 @@ import StandingController from '@/actions/App/Http/Controllers/Dean/StandingCont
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
+import LearnerClassController from '@/actions/App/Http/Controllers/Learner/ClassController';
 import LearnerExcuseController from '@/actions/App/Http/Controllers/Learner/ExcuseController';
 import RegistrationController from '@/actions/App/Http/Controllers/Registrar/RegistrationController';
 import ClassController from '@/actions/App/Http/Controllers/Teacher/ClassController';
@@ -98,6 +99,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
         },
     ],
     learner: () => [
+        {
+            title: 'My classes',
+            href: LearnerClassController.index(),
+            icon: CalendarCheck,
+        },
         {
             title: 'Excuses',
             href: LearnerExcuseController.index(),

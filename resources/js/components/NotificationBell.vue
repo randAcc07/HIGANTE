@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { router, usePage } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { Bell } from '@lucide/vue';
 import { computed } from 'vue';
 import NotificationController from '@/actions/App/Http/Controllers/NotificationController';
@@ -112,6 +112,14 @@ function when(at: string | null): string {
             >
                 No notifications yet.
             </p>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem as-child>
+                <Link
+                    :href="NotificationController.index()"
+                    class="justify-center text-sm"
+                    >See all</Link
+                >
+            </DropdownMenuItem>
         </DropdownMenuContent>
     </DropdownMenu>
 </template>

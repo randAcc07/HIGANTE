@@ -75,8 +75,8 @@ the college and can be offered to any section of its programs.
 
 | Responsibility                                                                    | Status |
 | --------------------------------------------------------------------------------- | ------ |
-| See own schedule                                                                  | ⏳     |
-| See attendance per class and equivalent absences                                  | ⏳     |
+| See own schedule                                                                  | ✅     |
+| See attendance per class and equivalent absences                                  | ✅     |
 | Get warnings at the policy's warning counts; get notified when flagged or dropped | ✅     |
 | Submit excuses with any number of files and track their status                    | ✅     |
 | Whether a guardian can submit excuses too                                         | ❓     |

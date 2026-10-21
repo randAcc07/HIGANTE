@@ -146,9 +146,9 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 
 ## 12. Learner views
 
-- [ ] Own weekly schedule
-- [ ] Attendance per class, equivalent absences, warnings and drop status
-- [ ] Notifications
+- [x] Own weekly schedule ("My classes", per registered term, past terms read-only), with their batches' labs
+- [x] Attendance per class, equivalent absences, warnings and drop status: per class the equivalent count of the drop count, absent / late / excused, classes held of the term's total and a standing badge; each class lists the learner's late and absent days and whether each counts (excused, or a day suspended afterwards). Only the mark is shown, not who recorded it. The dashboard lists classes that need attention and excuses awaiting the dean
+- [x] Notifications: a full page for every role (all or unread only, mark read), linked from the bell's "See all"
 
 ## Later
 
