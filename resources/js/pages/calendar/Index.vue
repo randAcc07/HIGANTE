@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { Pencil, Plus } from '@lucide/vue';
-import { computed } from 'vue';
+import { computed, nextTick, onMounted, ref } from 'vue';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
 import CalendarEventFormDialog from '@/components/CalendarEventFormDialog.vue';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
@@ -35,6 +35,24 @@ const props = defineProps<{
     canCreate: boolean;
     newEventScope: string | null;
 }>();
+
+// Opened at one event (?event=ID, from the dashboard): scroll to it and blink it.
+const highlighted = ref<number | null>(null);
+
+onMounted(async () => {
+    const id = Number(new URLSearchParams(window.location.search).get('event'));
+
+    if (!id || !props.events.some((event) => event.id === id)) {
+        return;
+    }
+
+    highlighted.value = id;
+    await nextTick();
+    document
+        .getElementById(`event-${id}`)
+        ?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    window.setTimeout(() => (highlighted.value = null), 2400);
+});
 
 /** Events grouped by the month they start in, in order. */
 const months = computed(() => {
@@ -140,8 +158,15 @@ function suspensionLabel(event: CalendarEvent): string {
             <ul class="divide-y rounded-lg border">
                 <li
                     v-for="event in monthEvents"
+                    :id="`event-${event.id}`"
                     :key="event.id"
-                    class="flex items-start justify-between gap-4 p-4"
+                    class="flex items-start justify-between gap-4 p-4 transition-colors"
+                    :class="
+                        highlighted === event.id
+                            ? 'animate-pulse bg-highlight/10 ring-2 ring-highlight ring-inset'
+                            : ''
+                    "
+                    :data-highlighted="highlighted === event.id || undefined"
                 >
                     <div class="space-y-1">
                         <p class="text-sm text-muted-foreground">

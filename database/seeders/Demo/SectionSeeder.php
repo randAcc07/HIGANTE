@@ -60,17 +60,8 @@ class SectionSeeder extends Seeder
     {
         $term = CampusData::currentTerm();
 
-        $sharedRooms = self::ids(Room::where('building', 'Main Building')->where('is_active', true));
-        $peRooms = self::ids(Room::whereIn('code', ['GYM', 'COURT']));
-
         foreach (College::with('programs')->get() as $college) {
-            $data = CampusData::COLLEGES[$college->code];
-            $teachers = self::ids(Teacher::query()
-                ->where('duty_status', DutyStatus::Active)
-                ->whereHas('user', fn ($user) => $user->where('college_id', $college->id)->where('is_active', true))
-                ->orderBy('id'));
-            $lectureRooms = self::ids(Room::where('building', $data['building'])->where('room_type', RoomType::Lecture));
-            $labRooms = array_map(fn (array $rooms): array => self::ids(Room::whereIn('code', array_keys($rooms))), $data['labs']);
+            [$teachers, $rooms] = $this->resources($college);
             $subjects = Subject::where('college_id', $college->id)->get()->keyBy('code');
 
             foreach ($college->programs as $program) {
@@ -86,16 +77,80 @@ class SectionSeeder extends Seeder
                             'capacity' => $overflowing ? 30 : $year['capacity'],
                         ]);
 
-                        $this->timetable($term, $section, $this->curriculum($program, $yearLevel, $subjects), $teachers, [
-                            'lecture' => $lectureRooms,
-                            'shared' => $sharedRooms,
-                            'pe' => $peRooms,
-                            'labs' => $labRooms,
-                        ]);
+                        foreach ($this->curriculum($program, $yearLevel, $subjects) as ['subject' => $subject, 'options' => $options]) {
+                            $offering = SubjectOffering::create(['section_id' => $section->id, 'subject_id' => $subject->id]);
+
+                            if (! ($options['tba'] ?? false)) {
+                                $this->schedule($term, $section, $offering, $subject, $options, $teachers, $rooms);
+                            }
+                        }
                     }
                 }
             }
         }
+    }
+
+    /**
+     * Give a term's existing subjects in a college a teacher and a
+     * conflict-free timetable, the same way as the current term's (used for
+     * the upcoming term's sections). Use a fresh instance per term: what is
+     * taken is tracked per instance.
+     */
+    public function scheduleOfferings(Term $term, College $college): void
+    {
+        [$teachers, $rooms] = $this->resources($college);
+        $options = [];
+
+        foreach (CampusData::GENERAL_EDUCATION as $subject) {
+            $options[$subject[0]] = self::options($subject);
+        }
+
+        foreach (CampusData::PROGRAMS[$college->code] as $program) {
+            foreach ($program['years'] as $subjects) {
+                foreach ($subjects as $subject) {
+                    $options[$subject[0]] = self::options($subject);
+                }
+            }
+        }
+
+        $sections = Section::where('term_id', $term->id)
+            ->whereRelation('program', 'college_id', $college->id)
+            ->orderBy('id')
+            ->get();
+
+        foreach ($sections as $section) {
+            $offerings = SubjectOffering::with('subject')
+                ->where('section_id', $section->id)
+                ->whereNull('teacher_id')
+                ->orderBy('id')
+                ->get()
+                ->sortByDesc(fn (SubjectOffering $offering): int => self::difficulty($options[$offering->subject->code] ?? []));
+
+            foreach ($offerings as $offering) {
+                $this->schedule($term, $section, $offering, $offering->subject, $options[$offering->subject->code] ?? [], $teachers, $rooms);
+            }
+        }
+    }
+
+    /**
+     * A college's active teachers and the rooms its classes use.
+     *
+     * @return array{list<int>, array{lecture: list<int>, shared: list<int>, pe: list<int>, labs: array<string, list<int>>}}
+     */
+    private function resources(College $college): array
+    {
+        $data = CampusData::COLLEGES[$college->code];
+        $teachers = self::ids(Teacher::query()
+            ->where('duty_status', DutyStatus::Active)
+            ->whereHas('user', fn ($user) => $user->where('college_id', $college->id)->where('is_active', true))
+            ->orderBy('id'));
+
+        return [$teachers, [
+            'lecture' => self::ids(Room::where('building', $data['building'])->where('room_type', RoomType::Lecture)),
+            'shared' => self::ids(Room::where('building', 'Main Building')->where('is_active', true)),
+            'pe' => self::ids(Room::whereIn('code', ['GYM', 'COURT'])),
+            'labs' => array_map(fn (array $rooms): array => self::ids(Room::whereIn('code', array_keys($rooms))), $data['labs']),
+        ]];
     }
 
     /**
@@ -124,6 +179,15 @@ class SectionSeeder extends Seeder
         usort($rows, fn (array $a, array $b): int => self::difficulty($b['options']) <=> self::difficulty($a['options']));
 
         return $rows;
+    }
+
+    /**
+     * @param  array{0: string, 1: string, 2: int, 3: int, 4?: array{kind?: string, lab?: string, tba?: bool}}  $subject
+     * @return array{kind?: string, lab?: string, tba?: bool}
+     */
+    private static function options(array $subject): array
+    {
+        return $subject[4] ?? [];
     }
 
     /**
@@ -157,45 +221,40 @@ class SectionSeeder extends Seeder
     }
 
     /**
-     * @param  list<array{subject: Subject, options: array{kind?: string, lab?: string, tba?: bool}}>  $curriculum
+     * Batches (for a lab subject), a teacher and weekly classes for one
+     * subject offering.
+     *
+     * @param  array{kind?: string, lab?: string, tba?: bool}  $options
      * @param  list<int>  $teachers
      * @param  array{lecture: list<int>, shared: list<int>, pe: list<int>, labs: array<string, list<int>>}  $rooms
      */
-    private function timetable(Term $term, Section $section, array $curriculum, array $teachers, array $rooms): void
+    private function schedule(Term $term, Section $section, SubjectOffering $offering, Subject $subject, array $options, array $teachers, array $rooms): void
     {
-        foreach ($curriculum as ['subject' => $subject, 'options' => $options]) {
-            $offering = SubjectOffering::create(['section_id' => $section->id, 'subject_id' => $subject->id]);
+        $batchIds = [];
 
-            if ($options['tba'] ?? false) {
-                continue;
+        if ((float) $subject->laboratory_units > 0) {
+            foreach (['A', 'B'] as $letter) {
+                $batchIds[] = Batch::create(['subject_offering_id' => $offering->id, 'name' => $section->name.$letter])->id;
             }
+        }
 
-            $batchIds = [];
+        $meetings = $this->meetings($subject, $options, $rooms, $batchIds);
+        [$teacherId, $placements] = $this->place($section, $subject, $meetings, $teachers);
 
-            if ((float) $subject->laboratory_units > 0) {
-                foreach (['A', 'B'] as $letter) {
-                    $batchIds[] = Batch::create(['subject_offering_id' => $offering->id, 'name' => $section->name.$letter])->id;
-                }
-            }
+        $offering->teacher_id = $teacherId;
+        $offering->save();
 
-            $meetings = $this->meetings($subject, $options, $rooms, $batchIds);
-            [$teacherId, $placements] = $this->place($section, $subject, $meetings, $teachers);
-
-            $offering->teacher_id = $teacherId;
-            $offering->save();
-
-            foreach ($placements as $placement) {
-                foreach ($placement['parts'] as $part) {
-                    $schedule = new Schedule([
-                        'subject_offering_id' => $offering->id,
-                        'batch_id' => $placement['meeting']['batch'],
-                        'term_id' => $term->id,
-                        'teacher_id' => $teacherId,
-                        'room_id' => $placement['room'],
-                        'mode' => $placement['meeting']['online'] ? ScheduleMode::Online : ScheduleMode::Onsite,
-                    ]);
-                    $schedule->setSlot($part['day'], self::time($part['start']), self::time($part['end']))->save();
-                }
+        foreach ($placements as $placement) {
+            foreach ($placement['parts'] as $part) {
+                $schedule = new Schedule([
+                    'subject_offering_id' => $offering->id,
+                    'batch_id' => $placement['meeting']['batch'],
+                    'term_id' => $term->id,
+                    'teacher_id' => $teacherId,
+                    'room_id' => $placement['room'],
+                    'mode' => $placement['meeting']['online'] ? ScheduleMode::Online : ScheduleMode::Onsite,
+                ]);
+                $schedule->setSlot($part['day'], self::time($part['start']), self::time($part['end']))->save();
             }
         }
     }

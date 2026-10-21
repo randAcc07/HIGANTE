@@ -9,6 +9,7 @@ use App\Models\Learner;
 use App\Models\Teacher;
 use App\Models\User;
 use App\Notifications\AccountSetup;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -57,6 +58,17 @@ class AccountTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page->has('accounts.data', 1)->where('accounts.data.0.role', 'registrar'));
         $this->get(route('admin.accounts.index', ['college' => $college->id]))
             ->assertInertia(fn (Assert $page) => $page->has('accounts.data', 1));
+    }
+
+    public function test_each_account_shows_when_it_last_signed_in()
+    {
+        User::factory()->registrar()->create(['last_name' => 'Abad', 'last_login_at' => '2026-10-20 08:15:00']);
+        User::factory()->registrar()->create(['last_name' => 'Bautista']);
+
+        $this->get(route('admin.accounts.index', ['role' => 'registrar']))->assertInertia(fn (Assert $page) => $page
+            // Sent with its offset (UTC); the browser shows it in local time.
+            ->where('accounts.data.0.last_login_at', fn (string $at) => CarbonImmutable::parse($at)->equalTo(CarbonImmutable::parse('2026-10-20 08:15:00')))
+            ->where('accounts.data.1.last_login_at', null));
     }
 
     public function test_a_teacher_account_is_made_with_its_profile_and_a_setup_link()

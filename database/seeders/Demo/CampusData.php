@@ -196,6 +196,18 @@ final class CampusData
      */
     public const UNCOPIED_COLLEGE = 'COE';
 
+    /**
+     * How far each other college is with the upcoming term, for the admin's
+     * readiness panel: READY_COLLEGE has a teacher and classes for every
+     * subject; PARTLY_READY_COLLEGE has teachers for most and no classes yet.
+     */
+    public const READY_COLLEGE = 'COEng';
+
+    public const PARTLY_READY_COLLEGE = 'COS';
+
+    /** Learners per college admitted a few days ago for next semester, who haven't signed in yet. */
+    public const NEWLY_IMPORTED_PER_COLLEGE = 2;
+
     /** Days after a class that its teacher may still change marks, in the current term (null = no limit). */
     public const TEACHER_EDIT_DAYS = 7;
 
@@ -393,7 +405,8 @@ final class CampusData
     public const MAX_TEACHER_HOURS = 27;
 
     /**
-     * Calendar events in the current term. `college` null = campus-wide.
+     * Calendar events of the current term (and the enrollment week before
+     * the next). `college` null = campus-wide.
      * A suspension with `suspends_from` covers only the classes starting
      * from then on; `memo_number` comes with a placeholder memo PDF, and
      * `entered_at` backdates when it was entered. `programs` (codes) and
@@ -419,7 +432,14 @@ final class CampusData
         ['college' => 'COS', 'title' => 'Science and Technology Week', 'starts_on' => '2026-11-23', 'ends_on' => '2026-11-27', 'suspends_classes' => false],
         ['college' => null, 'title' => 'Bonifacio Day', 'starts_on' => '2026-11-30', 'ends_on' => '2026-11-30', 'suspends_classes' => true],
         ['college' => null, 'title' => 'Feast of the Immaculate Conception', 'starts_on' => '2026-12-08', 'ends_on' => '2026-12-08', 'suspends_classes' => true],
+        // Coming up in the next month or two.
+        ['college' => 'COE', 'title' => 'Demonstration teaching week', 'starts_on' => '2026-11-09', 'ends_on' => '2026-11-13', 'suspends_classes' => false, 'description' => 'Fourth years give demonstration lessons at the laboratory school; classes continue.'],
+        ['college' => null, 'title' => 'University Foundation Day', 'starts_on' => '2026-11-16', 'ends_on' => '2026-11-16', 'suspends_classes' => true],
+        ['college' => 'COEng', 'title' => 'Board exam review orientation', 'starts_on' => '2026-11-20', 'ends_on' => '2026-11-20', 'suspends_classes' => true, 'suspends_from' => '13:00', 'year_levels' => [4], 'description' => 'Fourth years attend the review center orientation in the afternoon.'],
+        ['college' => 'COS', 'title' => 'Undergraduate research colloquium', 'starts_on' => '2026-12-04', 'ends_on' => '2026-12-04', 'suspends_classes' => true, 'year_levels' => [4], 'description' => 'Fourth years present their theses.'],
+        ['college' => null, 'title' => 'Christmas lantern parade', 'starts_on' => '2026-12-11', 'ends_on' => '2026-12-11', 'suspends_classes' => true, 'suspends_from' => '15:00'],
         ['college' => null, 'title' => 'Final examinations', 'starts_on' => '2026-12-14', 'ends_on' => '2026-12-18', 'suspends_classes' => false],
+        ['college' => null, 'title' => '2nd semester enrollment period', 'starts_on' => '2027-01-04', 'ends_on' => '2027-01-08', 'suspends_classes' => false, 'description' => 'Registration at the registrar\'s office for the 2nd semester.'],
     ];
 
     /**

@@ -45,3 +45,24 @@ export type UpcomingSuspension = {
     until: string | null;
     classes: number;
 };
+
+/** A month of campus events on the admin's dashboard. */
+export type MonthEvents = {
+    /** The month's first day. */
+    first: string;
+    /** "YYYY-MM" of the months around it. */
+    previous: string;
+    next: string;
+    events: {
+        id: number;
+        title: string;
+        starts_on: string;
+        ends_on: string;
+        college: string | null;
+        suspends: boolean;
+        /** The term whose Calendar page lists it. */
+        term_id: number | null;
+    }[];
+    /** Term starts and ends in the month. */
+    marks: { date: string; label: string }[];
+};

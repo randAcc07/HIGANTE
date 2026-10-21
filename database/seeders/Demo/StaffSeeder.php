@@ -71,6 +71,18 @@ class StaffSeeder extends Seeder
     }
 
     /**
+     * A teacher who just joined (temporary staff), with no classes yet.
+     */
+    public function hire(College $college): Teacher
+    {
+        return Teacher::create([
+            'user_id' => $this->user(UserRole::Teacher, $college)->id,
+            'employee_number' => $this->employeeNumber('T'),
+            'duty_status' => DutyStatus::Active,
+        ]);
+    }
+
+    /**
      * A user with a generated name; the email is generated too unless given.
      */
     public function user(UserRole $role, ?College $college, ?string $email = null): User
@@ -99,7 +111,7 @@ class StaffSeeder extends Seeder
     {
         do {
             $number = sprintf('URS-%s-%05d', $employment, mt_rand(0, 99999));
-        } while (isset($this->employeeNumbers[$number]));
+        } while (isset($this->employeeNumbers[$number]) || Teacher::where('employee_number', $number)->exists());
 
         $this->employeeNumbers[$number] = true;
 

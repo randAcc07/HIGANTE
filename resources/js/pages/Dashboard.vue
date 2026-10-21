@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Send } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import AccountController from '@/actions/App/Http/Controllers/Admin/AccountController';
+import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
 import DeanExcuseController from '@/actions/App/Http/Controllers/Dean/ExcuseController';
 import StandingController from '@/actions/App/Http/Controllers/Dean/StandingController';
 import ExcuseDecisionController from '@/actions/App/Http/Controllers/ExcuseDecisionController';
 import ClassController from '@/actions/App/Http/Controllers/Learner/ClassController';
 import ExcuseController from '@/actions/App/Http/Controllers/Learner/ExcuseController';
+import RegistrarLearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
+import RegistrationController from '@/actions/App/Http/Controllers/Registrar/RegistrationController';
 import TeacherExcuseController from '@/actions/App/Http/Controllers/Teacher/ExcuseController';
+import MonthCalendar from '@/components/dashboard/MonthCalendar.vue';
 import SidePanel from '@/components/dashboard/SidePanel.vue';
 import WeekPanel from '@/components/dashboard/WeekPanel.vue';
 import Heading from '@/components/Heading.vue';
+import SetupLinkDialog from '@/components/SetupLinkDialog.vue';
 import StandingBadge from '@/components/learner/StandingBadge.vue';
 import { Badge } from '@/components/ui/badge';
-import { formatDateRange } from '@/lib/dates';
+import { Button } from '@/components/ui/button';
+import { formatDate, formatDateRange } from '@/lib/dates';
 import { lateLabel, reasonLabels, statusLabels } from '@/lib/excuses';
 import { formatTime } from '@/lib/time';
 import { dashboard } from '@/routes';
@@ -22,6 +30,7 @@ import type {
     ExcuseReason,
     ExcuseStatus,
     LearnerClass,
+    MonthEvents,
     Program,
     TermBadge,
     UpcomingSuspension,
@@ -46,6 +55,64 @@ const props = defineProps<{
     term: TermBadge | null;
     /** The school's date (Asia/Manila), not the browser's. */
     today: string;
+    admin: {
+        month: MonthEvents;
+        readiness: {
+            term: { id: number; label: string; starts_on: string };
+            colleges: {
+                id: number;
+                code: string;
+                name: string;
+                programs: number;
+                without_curriculum: number;
+                sections: number;
+                subjects: number;
+                without_teacher: number;
+                unscheduled: number;
+            }[];
+        } | null;
+        awaiting: {
+            id: number;
+            name: string;
+            role: string;
+            college: string | null;
+            added_on: string | null;
+        }[];
+        awaitingCount: number;
+    } | null;
+    registrar: {
+        term: { id: number; label: string; open: boolean } | null;
+        progress: {
+            program_id: number;
+            college: string;
+            program: string;
+            year_level: number;
+            registered: number;
+            waiting: number;
+        }[];
+        unsectioned: {
+            id: number;
+            name: string;
+            program: string;
+            year_level: number;
+        }[];
+        unsectionedCount: number;
+        recent: {
+            id: number;
+            name: string;
+            student_number: string;
+            program: string;
+            admitted_on: string | null;
+        }[];
+        recentCount: number;
+        awaiting: {
+            learner_id: number | null;
+            name: string;
+            program: string | null;
+            added_on: string | null;
+        }[];
+        awaitingCount: number;
+    } | null;
     dean: {
         programs: Pick<Program, 'id' | 'code' | 'name'>[];
         sections: {
@@ -162,6 +229,31 @@ function showSection(id: number | undefined): void {
 function pickProgram(id: number): void {
     program.value = id;
     showSection(programSections.value[0]?.id);
+}
+
+const sending = ref<string | null>(null);
+
+/** Make a new setup link; SetupLinkDialog shows it once to copy (it is emailed too). */
+function sendLink(key: string, url: string): void {
+    sending.value = key;
+    router.post(
+        url,
+        {},
+        { preserveScroll: true, onFinish: () => (sending.value = null) },
+    );
+}
+
+function added(date: string | null): string {
+    return date
+        ? `Added ${formatDate(date, { month: 'short', day: 'numeric' })}`
+        : '';
+}
+
+/** Registered of everyone (registered or still on the list), as a percentage. */
+function share(row: { registered: number; waiting: number }): number {
+    const total = row.registered + row.waiting;
+
+    return total === 0 ? 0 : Math.round((row.registered / total) * 100);
 }
 
 function suspensionWhen(item: UpcomingSuspension): string {
@@ -481,11 +573,315 @@ function suspensionWhen(item: UpcomingSuspension): string {
             </div>
         </div>
 
+        <!-- Admin: a month of campus events, the next term's readiness, staff never signed in. -->
         <div
-            v-else
-            class="rounded-xl border border-sidebar-border/70 p-6 text-sm text-muted-foreground dark:border-sidebar-border"
+            v-else-if="admin"
+            class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]"
         >
-            Your dashboard is coming soon.
+            <section class="min-w-0 rounded-xl border p-4">
+                <MonthCalendar :month="admin.month" :today="today" />
+            </section>
+            <div class="flex flex-col gap-4">
+                <SidePanel
+                    :title="
+                        admin.readiness
+                            ? `Ready for ${admin.readiness.term.label}`
+                            : 'Next term'
+                    "
+                    :href="admin.readiness ? undefined : TermController.index()"
+                    empty="No next term yet. Add it on the Terms page."
+                    :is-empty="!admin.readiness"
+                >
+                    <li
+                        v-for="college in admin.readiness?.colleges"
+                        :key="college.id"
+                        class="px-4 py-2.5 text-sm"
+                    >
+                        <span class="font-medium" :title="college.name">{{
+                            college.code
+                        }}</span>
+                        <span class="text-muted-foreground">
+                            · {{ college.sections }} section{{
+                                college.sections === 1 ? '' : 's'
+                            }}, {{ college.subjects }} subject{{
+                                college.subjects === 1 ? '' : 's'
+                            }}</span
+                        >
+                        <div class="mt-1 flex flex-wrap gap-1">
+                            <Badge
+                                v-if="college.sections === 0"
+                                class="bg-warning-soft text-warning-soft-foreground"
+                                >No sections yet</Badge
+                            >
+                            <Badge
+                                v-if="college.without_teacher"
+                                variant="secondary"
+                                >{{ college.without_teacher }} without a
+                                teacher</Badge
+                            >
+                            <Badge
+                                v-if="college.unscheduled"
+                                variant="secondary"
+                                >{{ college.unscheduled }} not scheduled</Badge
+                            >
+                            <Badge
+                                v-if="college.without_curriculum"
+                                variant="secondary"
+                                >{{ college.without_curriculum }} of
+                                {{ college.programs }} programs without a
+                                curriculum</Badge
+                            >
+                            <Badge
+                                v-if="
+                                    college.sections &&
+                                    !college.without_teacher &&
+                                    !college.unscheduled &&
+                                    !college.without_curriculum
+                                "
+                                class="bg-success-soft text-success-soft-foreground"
+                                >Ready</Badge
+                            >
+                        </div>
+                    </li>
+                </SidePanel>
+                <SidePanel
+                    title="Never signed in"
+                    :count="admin.awaitingCount"
+                    :href="AccountController.index()"
+                    empty="Every staff account has been set up."
+                    :is-empty="admin.awaiting.length === 0"
+                >
+                    <li
+                        v-for="account in admin.awaiting"
+                        :key="account.id"
+                        class="flex items-center justify-between gap-2 px-4 py-2.5 text-sm"
+                    >
+                        <div class="min-w-0">
+                            <span class="font-medium">{{ account.name }}</span>
+                            <div class="text-xs text-muted-foreground">
+                                {{ account.role
+                                }}{{
+                                    account.college
+                                        ? ` · ${account.college}`
+                                        : ''
+                                }}
+                                · {{ added(account.added_on) }}
+                            </div>
+                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            :disabled="sending === `staff-${account.id}`"
+                            :aria-label="`Send ${account.name} a new setup link`"
+                            @click="
+                                sendLink(
+                                    `staff-${account.id}`,
+                                    AccountController.setupLink.url(account.id),
+                                )
+                            "
+                            ><Send class="h-3.5 w-3.5" /> New link</Button
+                        >
+                    </li>
+                </SidePanel>
+            </div>
         </div>
+
+        <!-- Registrar: registration progress, waiting for the dean, admissions, learners never signed in. -->
+        <div
+            v-else-if="registrar"
+            class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]"
+        >
+            <section class="min-w-0 space-y-3 rounded-xl border p-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <h2 class="font-medium">
+                        Registration<template v-if="registrar.term">
+                            for {{ registrar.term.label }}</template
+                        >
+                    </h2>
+                    <Link
+                        v-if="registrar.term"
+                        :href="
+                            RegistrationController.index({
+                                query: { term: registrar.term.id },
+                            })
+                        "
+                        class="text-sm text-highlight hover:underline"
+                        >Open Registration</Link
+                    >
+                </div>
+                <p
+                    v-if="!registrar.progress.length"
+                    class="py-6 text-center text-sm text-muted-foreground"
+                >
+                    Nobody registered or waiting yet.
+                </p>
+                <div v-else class="overflow-x-auto rounded-lg border">
+                    <table class="w-full text-sm">
+                        <thead
+                            class="bg-muted/50 text-left text-muted-foreground"
+                        >
+                            <tr>
+                                <th class="px-3 py-2 font-medium">Program</th>
+                                <th class="px-3 py-2 font-medium">Year</th>
+                                <th class="px-3 py-2 text-right font-medium">
+                                    Registered
+                                </th>
+                                <th
+                                    v-if="registrar.term?.open"
+                                    class="px-3 py-2 text-right font-medium"
+                                >
+                                    Still on the list
+                                </th>
+                                <th
+                                    v-if="registrar.term?.open"
+                                    class="w-40 px-3 py-2 font-medium"
+                                >
+                                    <span class="sr-only">Progress</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="row in registrar.progress"
+                                :key="`${row.program_id}-${row.year_level}`"
+                                class="border-t"
+                            >
+                                <td class="px-3 py-2">
+                                    <span class="font-medium">{{
+                                        row.program
+                                    }}</span>
+                                    <span class="text-muted-foreground">
+                                        · {{ row.college }}</span
+                                    >
+                                </td>
+                                <td class="px-3 py-2">{{ row.year_level }}</td>
+                                <td class="px-3 py-2 text-right">
+                                    {{ row.registered }}
+                                </td>
+                                <td
+                                    v-if="registrar.term?.open"
+                                    class="px-3 py-2 text-right"
+                                    :class="
+                                        row.waiting
+                                            ? ''
+                                            : 'text-muted-foreground'
+                                    "
+                                >
+                                    {{ row.waiting }}
+                                </td>
+                                <td
+                                    v-if="registrar.term?.open"
+                                    class="px-3 py-2"
+                                >
+                                    <div
+                                        class="h-2 overflow-hidden rounded-full bg-muted"
+                                        :title="`${share(row)}% registered`"
+                                    >
+                                        <div
+                                            class="h-full rounded-full bg-primary"
+                                            :style="{ width: `${share(row)}%` }"
+                                        />
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <div class="flex flex-col gap-4">
+                <SidePanel
+                    title="Waiting for the dean"
+                    :count="registrar.unsectionedCount"
+                    :href="
+                        registrar.term
+                            ? RegistrationController.index({
+                                  query: {
+                                      term: registrar.term.id,
+                                      view: 'registered',
+                                      unsectioned: 1,
+                                  },
+                              })
+                            : undefined
+                    "
+                    empty="Everyone registered has a section."
+                    :is-empty="registrar.unsectioned.length === 0"
+                >
+                    <li
+                        v-for="item in registrar.unsectioned"
+                        :key="item.id"
+                        class="px-4 py-2.5 text-sm"
+                    >
+                        <span class="font-medium">{{ item.name }}</span>
+                        <span class="text-muted-foreground">
+                            · {{ item.program }} {{ item.year_level }}</span
+                        >
+                    </li>
+                </SidePanel>
+                <SidePanel
+                    title="Admitted this week"
+                    :count="registrar.recentCount"
+                    :href="RegistrarLearnerController.index()"
+                    empty="Nobody admitted in the last 7 days."
+                    :is-empty="registrar.recent.length === 0"
+                >
+                    <li
+                        v-for="item in registrar.recent"
+                        :key="item.id"
+                        class="px-4 py-2.5 text-sm"
+                    >
+                        <span class="font-medium">{{ item.name }}</span>
+                        <div class="text-xs text-muted-foreground">
+                            {{ item.student_number }} · {{ item.program }} ·
+                            {{
+                                item.admitted_on
+                                    ? formatDate(item.admitted_on, {
+                                          month: 'short',
+                                          day: 'numeric',
+                                      })
+                                    : ''
+                            }}
+                        </div>
+                    </li>
+                </SidePanel>
+                <SidePanel
+                    title="Never signed in"
+                    :count="registrar.awaitingCount"
+                    :href="RegistrarLearnerController.index()"
+                    empty="Every learner has signed in."
+                    :is-empty="registrar.awaiting.length === 0"
+                >
+                    <li
+                        v-for="item in registrar.awaiting"
+                        :key="item.learner_id ?? item.name"
+                        class="flex items-center justify-between gap-2 px-4 py-2.5 text-sm"
+                    >
+                        <div class="min-w-0">
+                            <span class="font-medium">{{ item.name }}</span>
+                            <div class="text-xs text-muted-foreground">
+                                {{ item.program }} · {{ added(item.added_on) }}
+                            </div>
+                        </div>
+                        <Button
+                            v-if="item.learner_id"
+                            variant="outline"
+                            size="sm"
+                            :disabled="sending === `learner-${item.learner_id}`"
+                            :aria-label="`Send ${item.name} a new setup link`"
+                            @click="
+                                sendLink(
+                                    `learner-${item.learner_id}`,
+                                    RegistrarLearnerController.setupLink.url(
+                                        item.learner_id,
+                                    ),
+                                )
+                            "
+                            ><Send class="h-3.5 w-3.5" /> New link</Button
+                        >
+                    </li>
+                </SidePanel>
+            </div>
+        </div>
+
+        <SetupLinkDialog />
     </div>
 </template>

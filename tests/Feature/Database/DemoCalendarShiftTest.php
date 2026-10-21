@@ -89,7 +89,7 @@ class DemoCalendarShiftTest extends TestCase
 
         $this->assertSame('2027-10-19', AttendanceRecord::max('class_date'));
         $this->assertTrue(ClassCover::where('starts_on', '<=', '2027-10-20')->where('ends_on', '>=', '2027-10-20')->exists());
-        $this->assertTrue(CalendarEvent::whereNotNull('suspends_from')->sole()->starts_on->isFriday());
+        $this->assertTrue(CalendarEvent::where('title', 'Science Fair awarding ceremony')->sole()->starts_on->isFriday());
         $this->assertTrue(Learner::where('year_level', 1)->where('student_number', 'like', 'M2027-%')->exists());
     }
 }

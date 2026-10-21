@@ -53,6 +53,18 @@ function identifier(account: Account): string {
         ''
     );
 }
+
+function lastLogin(account: Account): string {
+    return account.last_login_at
+        ? new Date(account.last_login_at).toLocaleString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+          })
+        : 'Never';
+}
 </script>
 
 <template>
@@ -124,6 +136,7 @@ function identifier(account: Account): string {
                         <th class="px-4 py-2 font-medium">Role</th>
                         <th class="px-4 py-2 font-medium">College</th>
                         <th class="px-4 py-2 font-medium">Number</th>
+                        <th class="px-4 py-2 font-medium">Last logged in</th>
                         <th class="px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
@@ -166,6 +179,16 @@ function identifier(account: Account): string {
                         </td>
                         <td class="px-4 py-2 font-mono text-xs">
                             {{ identifier(account) }}
+                        </td>
+                        <td
+                            class="px-4 py-2 whitespace-nowrap"
+                            :class="
+                                account.last_login_at
+                                    ? ''
+                                    : 'text-muted-foreground'
+                            "
+                        >
+                            {{ lastLogin(account) }}
                         </td>
                         <td class="px-4 py-2">
                             <div
@@ -269,7 +292,7 @@ function identifier(account: Account): string {
                     </tr>
                     <tr v-if="accounts.data.length === 0">
                         <td
-                            colspan="5"
+                            colspan="6"
                             class="px-4 py-8 text-center text-muted-foreground"
                         >
                             No accounts match.

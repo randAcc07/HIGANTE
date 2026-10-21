@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use Database\Seeders\Demo\AccountSeeder;
 use Database\Seeders\Demo\AttendanceSeeder;
 use Database\Seeders\Demo\CatalogSeeder;
 use Database\Seeders\Demo\CoverSeeder;
@@ -81,6 +82,7 @@ class DatabaseSeeder extends Seeder
             CoverSeeder::class,
             AttendanceSeeder::class,
             StandingSeeder::class,
+            AccountSeeder::class,
         ]));
 
         $this->command->newLine();

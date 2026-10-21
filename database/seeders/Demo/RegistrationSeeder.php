@@ -34,9 +34,9 @@ use Illuminate\Support\Str;
  * they skip one of their section's major subjects and take one subject
  * from the year below, in a batch that fits their timetable. Per college,
  * one second year withdrew mid-term (through the app's own withdrawal),
- * and two graduates, one deactivated learner and one returnee (back after
- * a year away, never registered in the demo terms) are admitted but not
- * registered.
+ * and two graduates, one deactivated learner, one returnee (back after a
+ * year away, never registered in the demo terms) and the newly imported
+ * first years (for next semester) are admitted but not registered.
  *
  * Demo logins per college: learner.<college>@ (first year, will carry
  * warnings and excuses), atrisk.<college>@ (first year, will be flagged for
@@ -324,19 +324,20 @@ class RegistrationSeeder extends Seeder
     }
 
     /**
-     * Two graduates, one deactivated learner and one returnee, admitted but
-     * not registered.
+     * Two graduates, one deactivated learner, one returnee and the newly
+     * imported learners, admitted but not registered.
      */
     private function unregistered(College $college, int $returneeYear): void
     {
         $program = $college->programs->firstOrFail();
 
+        $thisYear = (int) substr(CampusData::currentTerm()->school_year, 0, 4);
+
         // Entered a year earlier than their classmates and sat last year out.
-        $entryYear = (int) substr(CampusData::currentTerm()->school_year, 0, 4) - $returneeYear;
-        $this->admit($college, $college->programs->last() ?? $program, $returneeYear, self::demoEmail('returnee', $college->code), $entryYear);
+        $this->admit($college, $college->programs->last() ?? $program, $returneeYear, self::demoEmail('returnee', $college->code), $thisYear - $returneeYear);
 
         foreach ([LearnerStatus::Graduated, LearnerStatus::Graduated, LearnerStatus::Inactive] as $status) {
-            $learner = $this->admit($college, $program, $status === LearnerStatus::Graduated ? 4 : 2, null, entryYear: $status === LearnerStatus::Graduated ? 2022 : null);
+            $learner = $this->admit($college, $program, $status === LearnerStatus::Graduated ? 4 : 2, null, entryYear: $status === LearnerStatus::Graduated ? $thisYear - 4 : null);
             $learner->status = $status;
             $learner->save();
 
@@ -344,6 +345,11 @@ class RegistrationSeeder extends Seeder
                 $learner->user->is_active = false;
                 $learner->user->save();
             }
+        }
+        // Admitted (imported) a few days ago for next semester; AccountSeeder
+        // dates them and leaves them never signed in.
+        for ($i = 0; $i < CampusData::NEWLY_IMPORTED_PER_COLLEGE; $i++) {
+            $this->admit($college, $college->programs->last() ?? $program, 1, null, $thisYear);
         }
     }
 

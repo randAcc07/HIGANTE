@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Attendance\Excuses;
 use App\Attendance\Standing;
+use App\Dashboard\AdminPanel;
+use App\Dashboard\RegistrarPanel;
 use App\Dashboard\Suspensions;
 use App\Dashboard\Week;
 use App\Enums\DecisionStatus;
@@ -30,7 +32,8 @@ use Inertia\Response;
 
 /**
  * Each role's dashboard: a main panel (a dated week of classes for deans,
- * teachers and learners) and side lists, under the current term.
+ * teachers and learners; a month of events for the admin; registration
+ * progress for the registrar) and side lists, under the current term.
  */
 class DashboardController extends Controller
 {
@@ -39,7 +42,7 @@ class DashboardController extends Controller
 
     private const SCHEDULE_RELATIONS = ['subjectOffering.subject', 'subjectOffering.section.program', 'batch', 'room', 'teacher.user', 'term'];
 
-    public function __invoke(Request $request, Standing $standing, Week $week, Excuses $excuses): Response
+    public function __invoke(Request $request, Standing $standing, Week $week, Excuses $excuses, AdminPanel $admin, RegistrarPanel $registrar): Response
     {
         /** @var User $user */
         $user = $request->user();
@@ -51,6 +54,8 @@ class DashboardController extends Controller
             'collegeName' => $user->college?->name,
             'term' => $term === null ? null : self::termBadge($term),
             'today' => CarbonImmutable::today()->toDateString(),
+            'admin' => $user->role === UserRole::Admin ? $admin->build($request->string('month')->value() ?: null) : null,
+            'registrar' => $user->role === UserRole::Registrar ? $registrar->build() : null,
             'dean' => $user->role === UserRole::Dean ? $this->deanPanel($request, $user, $term, $monday, $week, $standing, $excuses) : null,
             'teacher' => $user->teacher === null ? null : $this->teacherPanel($user, $term, $monday, $week),
             'learner' => $user->learner === null ? null : $this->learnerPanel($user->learner, $term, $monday, $week, $standing),

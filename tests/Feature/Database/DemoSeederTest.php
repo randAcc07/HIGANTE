@@ -5,6 +5,8 @@ namespace Tests\Feature\Database;
 use App\Attendance\ClassDays;
 use App\Attendance\Excuses;
 use App\Attendance\Standing;
+use App\Dashboard\AdminPanel;
+use App\Dashboard\RegistrarPanel;
 use App\Enums\DecisionStatus;
 use App\Enums\DropReason;
 use App\Enums\EnrollmentStatus;
@@ -33,6 +35,7 @@ use App\Scheduling\CurriculumFill;
 use App\Scheduling\SectionCopy;
 use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\Demo\CampusData;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Database\Seeders\Demo\TermSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -99,7 +102,7 @@ class DemoSeederTest extends TestCase
         $days = app(ClassDays::class);
         $suspendedMarks = AttendanceRecord::with(['schedule.term', 'schedule.subjectOffering.section.program'])->get()
             ->filter(fn (AttendanceRecord $record): bool => $days->suspension($record->schedule, $record->class_date) !== null);
-        $partial = CalendarEvent::whereNotNull('suspends_from')->sole();
+        $partial = CalendarEvent::where('title', 'Science Fair awarding ceremony')->sole();
         $this->assertSame(['Science Fair awarding ceremony'], $suspendedMarks->map(fn (AttendanceRecord $record) => $days->suspension($record->schedule, $record->class_date))->unique()->values()->all());
         $this->assertTrue($suspendedMarks->every(fn (AttendanceRecord $record): bool => $record->created_at < $partial->created_at));
         $this->assertSame(2, $suspendedMarks->pluck('schedule_id')->unique()->count());
@@ -330,6 +333,39 @@ class DemoSeederTest extends TestCase
             }
         }
 
+        // Accounts: made before they last signed in, and nobody in the future.
+        // The never-signed-in lists are short: the new teacher and COE's
+        // teacher on leave; the newly imported learners (also the recent
+        // admissions) and one first year per college.
+        $this->assertSame(0, User::whereColumn('last_login_at', '<', 'created_at')->orWhere('last_login_at', '>', now())->orWhere('created_at', '>', now())->count());
+        $admin = app(AdminPanel::class)->build(null);
+        $this->assertSame(2, $admin['awaitingCount']);
+        $this->assertEqualsCanonicalizing(['COE', 'COEng'], collect($admin['awaiting'])->pluck('college')->all());
+        $registrar = app(RegistrarPanel::class)->build();
+        $this->assertSame(3 * CampusData::NEWLY_IMPORTED_PER_COLLEGE, $registrar['recentCount']);
+        $this->assertSame(3 * CampusData::NEWLY_IMPORTED_PER_COLLEGE + 3, $registrar['awaitingCount']);
+        $this->assertSame(0, Learner::where('created_at', '<', now()->subWeek())->whereDoesntHave('termRegistrations')->where('status', 'active')->whereRelation('user', 'email', 'not like', 'returnee.%')->count());
+
+        // Next term's readiness differs by college: COEng done, COS halfway
+        // (teachers for most, no classes), COE not started.
+        $readiness = collect($admin['readiness']['colleges'] ?? [])->keyBy('code');
+        $this->assertSame($next->id, $admin['readiness']['term']['id'] ?? null);
+        $this->assertSame([0, 0], [$readiness['COEng']['without_teacher'], $readiness['COEng']['unscheduled']]);
+        $this->assertGreaterThan(0, $readiness['COEng']['subjects']);
+        $this->assertGreaterThan(0, $readiness['COS']['without_teacher']);
+        $this->assertLessThan($readiness['COS']['subjects'], $readiness['COS']['without_teacher']);
+        $this->assertSame($readiness['COS']['subjects'], $readiness['COS']['unscheduled']);
+        $this->assertSame(0, $readiness['COE']['sections']);
+        $this->assertSame(0, DB::selectOne(<<<'SQL'
+            SELECT COUNT(*) AS n FROM schedules a JOIN schedules b ON a.id < b.id AND a.term_id = b.term_id
+            WHERE (a.teacher_id = b.teacher_id OR a.room_id = b.room_id) AND a.starts_at < b.ends_at AND b.starts_at < a.ends_at
+            SQL)->n);
+
+        // Events ahead: some in the next two months, in more than one college.
+        $ahead = CalendarEvent::whereBetween('starts_on', [now()->toDateString(), now()->addMonths(2)->toDateString()])->get();
+        $this->assertGreaterThanOrEqual(4, $ahead->count());
+        $this->assertGreaterThanOrEqual(2, $ahead->whereNotNull('college_id')->pluck('college_id')->unique()->count());
+
         $this->assertDemoRegistration();
     }
 
@@ -359,8 +395,8 @@ class DemoSeederTest extends TestCase
 
         $this->get(route('registrar.registrations.index', ['source' => 'others']))
             ->assertInertia(fn (Assert $page) => $page
-                ->where('candidates.total', 3)
-                ->where('candidates.data', fn ($rows) => collect($rows)->every(fn (array $row): bool => str_starts_with($row['learner']['user']['email'], 'returnee.'))));
+                ->where('candidates.total', 3 + 3 * CampusData::NEWLY_IMPORTED_PER_COLLEGE)
+                ->where('candidates.data', fn ($rows) => collect($rows)->every(fn (array $row): bool => str_starts_with($row['learner']['user']['email'], 'returnee.') || $row['learner']['user']['last_login_at'] === null)));
 
         $learner = Learner::whereHas('user', fn ($user) => $user->where('email', 'learner.cos@scheduler.test'))->sole();
         $this->post(route('registrar.registrations.store', $next), ['entries' => [['learner_id' => $learner->id, 'year_level' => 1, 'is_irregular' => false]]])

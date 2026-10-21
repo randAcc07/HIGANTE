@@ -137,6 +137,8 @@ export type Account = {
     suffix: string | null;
     full_name: string;
     email: string;
+    /** When they last signed in; null = never (still waiting on their setup link). */
+    last_login_at: string | null;
     college?: Pick<College, 'id' | 'code'> | null;
     teacher?: {
         id: number;

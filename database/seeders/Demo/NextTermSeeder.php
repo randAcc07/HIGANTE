@@ -2,9 +2,12 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Enums\DutyStatus;
+use App\Models\College;
 use App\Models\Section;
 use App\Models\Subject;
 use App\Models\SubjectOffering;
+use App\Models\Teacher;
 use App\Models\Term;
 use Illuminate\Database\Seeder;
 
@@ -17,7 +20,9 @@ use Illuminate\Database\Seeder;
  * sections yet, so its dean is offered "Copy sections". Nobody is
  * registered, so the registrar's list shows the current term's learners
  * carried over and pre-ticked, and registering them keeps each block in the
- * section copied from theirs.
+ * section copied from theirs. For the admin's readiness panel, READY_COLLEGE
+ * has teachers and classes for everything, PARTLY_READY_COLLEGE teachers for
+ * most and no classes.
  */
 class NextTermSeeder extends Seeder
 {
@@ -51,6 +56,42 @@ class NextTermSeeder extends Seeder
 
             foreach ($subjectIds as $subjectId) {
                 SubjectOffering::create(['section_id' => $copy->id, 'subject_id' => $subjectId]);
+            }
+        }
+
+        $this->prepare($next);
+    }
+
+    /**
+     * How far each college has got: READY_COLLEGE's subjects all have a
+     * teacher and a timetable; PARTLY_READY_COLLEGE's dean has given most
+     * subjects a teacher (every fourth still open) and scheduled none.
+     */
+    private function prepare(Term $next): void
+    {
+        foreach (College::whereIn('code', [CampusData::READY_COLLEGE, CampusData::PARTLY_READY_COLLEGE])->orderBy('id')->get() as $college) {
+            if ($college->code === CampusData::READY_COLLEGE) {
+                app(SectionSeeder::class)->scheduleOfferings($next, $college);
+
+                continue;
+            }
+
+            $teachers = Teacher::query()
+                ->where('duty_status', DutyStatus::Active)
+                ->whereHas('user', fn ($user) => $user->where('college_id', $college->id)->where('is_active', true))
+                ->orderBy('id')
+                ->pluck('id')
+                ->all();
+            $offerings = SubjectOffering::query()
+                ->whereHas('section', fn ($section) => $section->where('term_id', $next->id)->whereRelation('program', 'college_id', $college->id))
+                ->orderBy('id')
+                ->get()
+                ->values();
+
+            foreach ($offerings as $index => $offering) {
+                if ($teachers !== [] && $index % 4 !== 3) {
+                    $offering->update(['teacher_id' => $teachers[$index % count($teachers)]]);
+                }
             }
         }
     }

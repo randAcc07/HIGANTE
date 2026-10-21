@@ -29,6 +29,7 @@ dataset('pages', [
     'appearance' => ['admin', fn (Campus $c) => path('appearance.edit'), 'Appearance'],
 
     // Registrar
+    'registrar dashboard' => ['registrar', fn (Campus $c) => path('dashboard'), 'Waiting for the dean'],
     'registrar learners' => ['registrar', fn (Campus $c) => path('registrar.learners.index'), 'Admission and student records'],
     'registrar list' => ['registrar', fn (Campus $c) => path('registrar.registrations.index', ['term' => $c->term->id]), 'Nobody left to register here.'],
     'registrar others' => ['registrar', fn (Campus $c) => path('registrar.registrations.index', ['term' => $c->term->id, 'source' => 'others']), 'Active learners not on the list'],
