@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { FileText, Plus } from '@lucide/vue';
+import { computed } from 'vue';
 import ExcuseController from '@/actions/App/Http/Controllers/Learner/ExcuseController';
 import DecisionList from '@/components/excuses/DecisionList.vue';
 import Heading from '@/components/Heading.vue';
+import TermPicker from '@/components/TermPicker.vue';
 import ExcuseFormDialog from '@/components/learner/ExcuseFormDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +19,9 @@ defineOptions({
     },
 });
 
-defineProps<{
+const props = defineProps<{
+    terms: { id: number; label: string }[];
+    term: { id: number; label: string } | null;
     excuses: Excuse[];
     reasons: ExcuseReason[];
     maxDays: number;
@@ -34,6 +38,16 @@ const badgeVariant: Record<
     rejected: 'destructive',
     revoked: 'destructive',
 };
+
+const termId = computed({
+    get: () => props.term?.id ?? null,
+    set: (id: number | null) =>
+        router.get(
+            ExcuseController.index.url(),
+            { term: id },
+            { preserveScroll: true },
+        ),
+});
 </script>
 
 <template>
@@ -43,15 +57,18 @@ const badgeVariant: Record<
         <div class="flex flex-wrap items-start justify-between gap-4">
             <Heading
                 title="Excuses"
-                :description="`Ask your teachers to excuse absences, within ${dueWithinDays} days after them, and see how each request was decided`"
+                :description="`${term ? `${term.label} · ` : ''}Ask your teachers to excuse absences, within ${dueWithinDays} days after them, and see how each request was decided`"
             />
-            <ExcuseFormDialog
-                :reasons="reasons"
-                :max-days="maxDays"
-                :due-within-days="dueWithinDays"
-            >
-                <Button><Plus class="h-4 w-4" /> Submit an excuse</Button>
-            </ExcuseFormDialog>
+            <div class="flex flex-wrap gap-2">
+                <TermPicker v-model="termId" :terms="terms" />
+                <ExcuseFormDialog
+                    :reasons="reasons"
+                    :max-days="maxDays"
+                    :due-within-days="dueWithinDays"
+                >
+                    <Button><Plus class="h-4 w-4" /> Submit an excuse</Button>
+                </ExcuseFormDialog>
+            </div>
         </div>
 
         <ul v-if="excuses.length" class="divide-y rounded-lg border">

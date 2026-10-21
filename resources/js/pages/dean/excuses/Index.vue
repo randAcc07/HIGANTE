@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import ExcuseController from '@/actions/App/Http/Controllers/Dean/ExcuseController';
 import Heading from '@/components/Heading.vue';
+import TermPicker from '@/components/TermPicker.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -21,10 +22,17 @@ const props = defineProps<{
         Excuse & { learner: ExcuseLearner; dean_decides: number }
     >;
     counts: Record<ExcuseStatus, number>;
-    filters: { status: ExcuseStatus; search: string | null };
+    filters: {
+        term: number | null;
+        status: ExcuseStatus;
+        search: string | null;
+    };
+    terms: { id: number; label: string }[];
+    term: { id: number; label: string } | null;
 }>();
 
 const filters = useFilters(ExcuseController.index.url(), {
+    term: props.filters.term,
     status: props.filters.status as string | null,
     search: props.filters.search ?? '',
 });
@@ -50,10 +58,13 @@ function decided(excuse: Excuse): string {
     <Head title="Excuses" />
 
     <div class="flex flex-col gap-6 p-4">
-        <Heading
-            title="Excuses"
-            description="Your college's learners' excuses and how each class decided. Teachers decide for their classes; you decide only for classes without a teacher."
-        />
+        <div class="flex flex-wrap items-start justify-between gap-4">
+            <Heading
+                title="Excuses"
+                :description="`${term ? `${term.label} · ` : ''}Your college's learners' excuses and how each class decided. Teachers decide for their classes; you decide only for classes without a teacher.`"
+            />
+            <TermPicker v-model="filters.term" :terms="terms" />
+        </div>
 
         <div class="flex flex-wrap items-center gap-2 border-b">
             <button

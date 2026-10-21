@@ -4,6 +4,7 @@ import { Plus } from '@lucide/vue';
 import ExcuseDecisionController from '@/actions/App/Http/Controllers/ExcuseDecisionController';
 import ExcuseController from '@/actions/App/Http/Controllers/Teacher/ExcuseController';
 import Heading from '@/components/Heading.vue';
+import TermPicker from '@/components/TermPicker.vue';
 import ExcuseFormDialog from '@/components/learner/ExcuseFormDialog.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
@@ -41,7 +42,13 @@ type Row = ExcuseDecision & {
 const props = defineProps<{
     decisions: Paginated<Row>;
     counts: Record<DecisionStatus, number>;
-    filters: { status: DecisionStatus; search: string | null };
+    filters: {
+        term: number | null;
+        status: DecisionStatus;
+        search: string | null;
+    };
+    terms: { id: number; label: string }[];
+    term: { id: number; label: string } | null;
     learners: { id: number; name: string; student_number: string }[];
     reasons: ExcuseReason[];
     maxDays: number;
@@ -49,6 +56,7 @@ const props = defineProps<{
 }>();
 
 const filters = useFilters(ExcuseController.index.url(), {
+    term: props.filters.term,
     status: props.filters.status as string | null,
     search: props.filters.search ?? '',
 });
@@ -67,21 +75,24 @@ const tabLabels: Record<DecisionStatus, string> = {
         <div class="flex flex-wrap items-start justify-between gap-4">
             <Heading
                 title="Excuses"
-                description="Excuses for your classes: decide each for your own class"
+                :description="`${term ? `${term.label} · ` : ''}Excuses for your classes: decide each for your own class`"
             />
-            <ExcuseFormDialog
-                v-if="learners.length"
-                :reasons="reasons"
-                :max-days="maxDays"
-                :due-within-days="dueWithinDays"
-                :learners="learners"
-                :url="ExcuseController.store.url()"
-            >
-                <Button
-                    ><Plus class="h-4 w-4" /> File an excuse for a
-                    learner</Button
+            <div class="flex flex-wrap gap-2">
+                <TermPicker v-model="filters.term" :terms="terms" />
+                <ExcuseFormDialog
+                    v-if="learners.length"
+                    :reasons="reasons"
+                    :max-days="maxDays"
+                    :due-within-days="dueWithinDays"
+                    :learners="learners"
+                    :url="ExcuseController.store.url()"
                 >
-            </ExcuseFormDialog>
+                    <Button
+                        ><Plus class="h-4 w-4" /> File an excuse for a
+                        learner</Button
+                    >
+                </ExcuseFormDialog>
+            </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 border-b">

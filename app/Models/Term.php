@@ -100,9 +100,10 @@ class Term extends Model
     }
 
     /**
-     * The term to open by default where terms are prepared (sections,
-     * schedules, registration): the next upcoming one, else the one in
-     * session.
+     * The term being prepared: the next upcoming one, else the one in
+     * session. Only where that is the stated subject (the registrar's
+     * dashboard panel, the admit form's "Register for"), never as a page's
+     * default term.
      */
     public static function forPreparation(): ?self
     {
@@ -110,13 +111,27 @@ class Term extends Model
     }
 
     /**
-     * The term to open by default where terms are viewed (calendar,
-     * attendance): the one in session, else the next upcoming one, else the
-     * latest to start.
+     * The term every term-scoped page opens on: the one in session, else
+     * the next upcoming one, else the latest to start. Pages that prepare a
+     * term offer a shortcut to the next one (nextTermShortcut).
      */
     public static function forViewing(): ?self
     {
         return static::inSession() ?? static::nextUpcoming() ?? static::orderByDesc('starts_on')->first();
+    }
+
+    /**
+     * For a page that prepares terms (sections, timetables, registration):
+     * the next upcoming term to offer as a shortcut, unless it is the one
+     * shown.
+     *
+     * @return array{id: int, label: string}|null
+     */
+    public static function nextTermShortcut(?self $shown): ?array
+    {
+        $next = static::nextUpcoming();
+
+        return $next === null || $next->id === $shown?->id ? null : ['id' => $next->id, 'label' => $next->label];
     }
 
     /**

@@ -16,6 +16,7 @@ import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import CopySectionsDialog from '@/components/dean/CopySectionsDialog.vue';
 import SectionFormDialog from '@/components/dean/SectionFormDialog.vue';
 import Heading from '@/components/Heading.vue';
+import NextTermButton from '@/components/NextTermButton.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Program, TermPhase } from '@/types';
@@ -60,6 +61,8 @@ const props = defineProps<{
     programs: Pick<Program, 'id' | 'code' | 'name'>[];
     sections: SectionRow[];
     canEdit: boolean;
+    /** The next term, while the page shows another: a shortcut to it. */
+    nextTerm: { id: number; label: string } | null;
     /** The latest earlier term's sections, to copy; null when there are none. */
     copy: CopyOffer | null;
     /** Curriculum subjects the term's sections lack, in all. */
@@ -140,6 +143,11 @@ function showTerm(id: number): void {
                         {{ option.label }} ({{ phaseLabels[option.phase] }})
                     </option>
                 </select>
+                <NextTermButton
+                    v-if="nextTerm"
+                    :term="nextTerm"
+                    @pick="showTerm"
+                />
                 <Button
                     v-if="term && canEdit && curriculumMissing"
                     variant="outline"

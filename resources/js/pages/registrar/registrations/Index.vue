@@ -4,6 +4,7 @@ import { computed, reactive, watch } from 'vue';
 import RegistrationController from '@/actions/App/Http/Controllers/Registrar/RegistrationController';
 import ConfirmActionDialog from '@/components/ConfirmActionDialog.vue';
 import Heading from '@/components/Heading.vue';
+import NextTermButton from '@/components/NextTermButton.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,8 @@ const props = defineProps<{
         status: string | null;
         unsectioned: boolean | null;
     };
+    /** The next term, while the page shows another: a shortcut to it. */
+    nextTerm: { id: number; label: string } | null;
 }>();
 
 const filters = useFilters(RegistrationController.index.url(), {
@@ -194,20 +197,27 @@ function registerOne(learnerId: number): void {
                         : 'No terms yet'
                 "
             />
-            <select
-                v-if="terms.length > 1"
-                v-model="filters.term"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Term"
-            >
-                <option
-                    v-for="option in terms"
-                    :key="option.id"
-                    :value="option.id"
+            <div class="flex flex-wrap gap-2">
+                <select
+                    v-if="terms.length > 1"
+                    v-model="filters.term"
+                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                    aria-label="Term"
                 >
-                    {{ option.label }} ({{ phaseLabels[option.phase] }})
-                </option>
-            </select>
+                    <option
+                        v-for="option in terms"
+                        :key="option.id"
+                        :value="option.id"
+                    >
+                        {{ option.label }} ({{ phaseLabels[option.phase] }})
+                    </option>
+                </select>
+                <NextTermButton
+                    v-if="nextTerm"
+                    :term="nextTerm"
+                    @pick="(id) => (filters.term = id)"
+                />
+            </div>
         </div>
 
         <template v-if="term && counts">

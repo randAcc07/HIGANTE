@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AbsenceExcuse;
 use App\Models\ExcuseDecision;
 use App\Models\Program;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -29,13 +30,19 @@ class ExcuseController extends Controller
         /** @var User $user */
         $user = $request->user();
         $filters = $request->validate([
+            'term' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::enum(ExcuseStatus::class)],
             'search' => ['nullable', 'string', 'max:100'],
-        ]) + ['status' => null, 'search' => null];
+        ]) + ['term' => null, 'status' => null, 'search' => null];
+        $terms = Term::orderByDesc('starts_on')->get();
+        $term = $terms->firstWhere('id', $filters['term']) ?? Term::forViewing();
+        $filters['term'] = $term?->id;
         $filters['status'] ??= ExcuseStatus::Pending->value;
 
         $programIds = Program::where('college_id', $user->college_id)->pluck('id');
-        $inCollege = fn () => AbsenceExcuse::query()->whereHas('learner', fn ($learner) => $learner->whereIn('program_id', $programIds));
+        $inCollege = fn () => AbsenceExcuse::query()
+            ->whereHas('learner', fn ($learner) => $learner->whereIn('program_id', $programIds))
+            ->when($term, fn ($query, Term $term) => $query->duringTerm($term));
 
         $page = $inCollege()
             ->with(['learner.user', 'learner.program:id,code'])
@@ -55,6 +62,8 @@ class ExcuseController extends Controller
         ]);
 
         return Inertia::render('dean/excuses/Index', [
+            'terms' => $terms->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label]),
+            'term' => $term === null ? null : ['id' => $term->id, 'label' => $term->label],
             'excuses' => [...$page->toArray(), 'data' => $rows->values()->all()],
             'counts' => collect(ExcuseStatus::cases())->mapWithKeys(fn (ExcuseStatus $status): array => [$status->value => $inCollege()->where('status', $status)->count()]),
             'filters' => $filters,

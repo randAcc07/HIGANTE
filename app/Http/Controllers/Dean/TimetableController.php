@@ -34,7 +34,7 @@ class TimetableController extends Controller
         $collegeId = (int) $user->college_id;
 
         $terms = Term::orderByDesc('starts_on')->get();
-        $term = $terms->firstWhere('id', $request->integer('term')) ?? Term::forPreparation() ?? Term::forViewing();
+        $term = $terms->firstWhere('id', $request->integer('term')) ?? Term::forViewing();
 
         $sections = $term === null ? collect() : Section::query()
             ->with('program:id,code')
@@ -110,6 +110,8 @@ class TimetableController extends Controller
             ->all();
 
         return Inertia::render('dean/timetables/Index', [
+            // The next term, while another is shown: these pages prepare it.
+            'nextTerm' => Term::nextTermShortcut($term),
             'terms' => $terms->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label]),
             'term' => $term === null ? null : ['id' => $term->id, 'label' => $term->label],
             'sections' => $sections->map(fn (Section $section): array => ['id' => $section->id, 'label' => "{$section->program->code} {$section->name}"]),

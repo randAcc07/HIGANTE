@@ -370,9 +370,10 @@ class DemoSeederTest extends TestCase
     }
 
     /**
-     * The registrar opens on the upcoming 2nd semester: this term's learners
-     * carried over (pre-ticked unless withdrawn), the returnees under
-     * "others", and registering keeps a learner's block together.
+     * The registrar's list for the upcoming 2nd semester shows this term's
+     * learners carried over (pre-ticked unless withdrawn), with the returnees
+     * and the newly imported learners under "others"; registering keeps a
+     * learner's block together.
      */
     private function assertDemoRegistration(): void
     {
@@ -387,13 +388,13 @@ class DemoSeederTest extends TestCase
             ->whereNotIn('learner_id', TermRegistration::where('term_id', $current->id)->where('year_level', '>=', 2)->select('learner_id'))
             ->count());
 
-        $this->get(route('registrar.registrations.index'))
+        $this->get(route('registrar.registrations.index', ['term' => $next->id]))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('term.id', $next->id)
                 ->where('candidates.total', TermRegistration::where('term_id', $current->id)->count())
                 ->where('candidates.data', fn ($rows) => collect($rows)->every(fn (array $row): bool => $row['ticked'] === ($row['previous']['status'] === 'registered'))));
 
-        $this->get(route('registrar.registrations.index', ['source' => 'others']))
+        $this->get(route('registrar.registrations.index', ['term' => $next->id, 'source' => 'others']))
             ->assertInertia(fn (Assert $page) => $page
                 ->where('candidates.total', 3 + 3 * CampusData::NEWLY_IMPORTED_PER_COLLEGE)
                 ->where('candidates.data', fn ($rows) => collect($rows)->every(fn (array $row): bool => str_starts_with($row['learner']['user']['email'], 'returnee.') || $row['learner']['user']['last_login_at'] === null)));

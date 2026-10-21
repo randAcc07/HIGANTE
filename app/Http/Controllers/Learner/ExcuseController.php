@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ExcuseRequest;
 use App\Models\AbsenceExcuse;
 use App\Models\Learner;
+use App\Models\Term;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,10 +26,15 @@ class ExcuseController extends Controller
     public function index(Request $request): Response
     {
         $learner = self::learner($request);
+        $terms = Term::orderByDesc('starts_on')->get();
+        $term = $terms->firstWhere('id', $request->integer('term')) ?? Term::forViewing();
 
         return Inertia::render('learner/excuses/Index', [
+            'terms' => $terms->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label]),
+            'term' => $term === null ? null : ['id' => $term->id, 'label' => $term->label],
             'excuses' => AbsenceExcuse::with('learner')
                 ->where('learner_id', $learner->id)
+                ->when($term, fn ($query, Term $term) => $query->duringTerm($term))
                 ->latest()
                 ->get()
                 ->map(fn (AbsenceExcuse $excuse): array => ExcuseView::excuse($excuse)),

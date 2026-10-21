@@ -49,7 +49,7 @@ class RegistrationController extends Controller
         $filters['source'] ??= 'list';
 
         $terms = Term::orderByDesc('starts_on')->get();
-        $term = $terms->firstWhere('id', $filters['term']) ?? Term::forPreparation() ?? Term::forViewing();
+        $term = $terms->firstWhere('id', $filters['term']) ?? Term::forViewing();
 
         // An ended or closed term has nobody left to register: only its record.
         if ($term !== null && ! TermRegistrar::isOpen($term)) {
@@ -57,6 +57,8 @@ class RegistrationController extends Controller
         }
 
         return Inertia::render('registrar/registrations/Index', [
+            // The next term, while another is shown: these pages prepare it.
+            'nextTerm' => Term::nextTermShortcut($term),
             'terms' => $terms->map(fn (Term $term): array => self::termOption($term)),
             'term' => $term === null ? null : self::termOption($term),
             'canRegister' => $term !== null && TermRegistrar::isOpen($term),

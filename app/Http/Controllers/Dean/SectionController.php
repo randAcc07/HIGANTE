@@ -40,7 +40,7 @@ class SectionController extends Controller
         /** @var User $user */
         $user = $request->user();
         $terms = Term::orderByDesc('starts_on')->get();
-        $term = $terms->firstWhere('id', $request->integer('term')) ?? Term::forPreparation() ?? Term::forViewing();
+        $term = $terms->firstWhere('id', $request->integer('term')) ?? Term::forViewing();
 
         $programs = Program::where('college_id', $user->college_id)->orderBy('code')->get(['id', 'code', 'name']);
 
@@ -59,6 +59,8 @@ class SectionController extends Controller
         $source = $canEdit ? $copier->source($term, (int) $user->college_id) : null;
 
         return Inertia::render('dean/sections/Index', [
+            // The next term, while another is shown: these pages prepare it.
+            'nextTerm' => Term::nextTermShortcut($term),
             'terms' => $terms->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label, 'phase' => $term->phase()->value]),
             'term' => $term === null ? null : ['id' => $term->id, 'label' => $term->label, 'phase' => $term->phase()->value],
             'programs' => $programs,

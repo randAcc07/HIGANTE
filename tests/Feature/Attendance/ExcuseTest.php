@@ -357,4 +357,31 @@ class ExcuseTest extends TestCase
 
         $this->assertSame(AttendanceStatus::Late, AttendanceRecord::sole()->status);
     }
+
+    public function test_each_list_shows_one_term_the_current_by_default()
+    {
+        $this->mark(0, '2026-09-21', 'late');
+        $current = $this->submit();
+        // Last term: an excuse decided in a class the same teacher had then.
+        $last = Term::factory()->create(['starts_on' => '2026-01-12', 'ends_on' => '2026-05-22']);
+        $oldSection = Section::factory()->for($last)->for($this->section->program)->create();
+        $oldOffering = SubjectOffering::factory()->for($oldSection)->create(['teacher_id' => $this->teachers[0]->id]);
+        $old = AbsenceExcuse::factory()->create(['learner_id' => $this->learner->id, 'date_from' => '2026-03-02', 'date_to' => '2026-03-03']);
+        ExcuseDecision::factory()->create(['absence_excuse_id' => $old->id, 'subject_offering_id' => $oldOffering->id]);
+
+        $this->actingAs($this->learner->user)->get(route('learner.excuses.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('term.id', $this->term->id)->has('excuses', 1)->where('excuses.0.id', $current->id));
+        $this->get(route('learner.excuses.index', ['term' => $last->id]))
+            ->assertInertia(fn (Assert $page) => $page->has('excuses', 1)->where('excuses.0.id', $old->id));
+
+        $this->actingAs($this->dean)->get(route('dean.excuses.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('filters.term', $this->term->id)->has('excuses.data', 1)->where('counts.pending', 1));
+        $this->get(route('dean.excuses.index', ['term' => $last->id]))
+            ->assertInertia(fn (Assert $page) => $page->has('excuses.data', 1)->where('excuses.data.0.id', $old->id));
+
+        $this->actingAs($this->teacher(0))->get(route('teacher.excuses.index'))
+            ->assertInertia(fn (Assert $page) => $page->has('decisions.data', 1)->where('decisions.data.0.subject.code', 'CS 101'));
+        $this->get(route('teacher.excuses.index', ['term' => $last->id]))
+            ->assertInertia(fn (Assert $page) => $page->has('decisions.data', 1)->where('counts.pending', 1));
+    }
 }

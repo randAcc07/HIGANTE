@@ -7,6 +7,8 @@ use App\Enums\ExcuseStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\AbsenceExcuseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +41,18 @@ class AbsenceExcuse extends Model
      * ones are still accepted but flagged for the dean.
      */
     public const DUE_WITHIN_DAYS = 7;
+
+    /**
+     * Excuses in a term: their days fall in it (an excuse never spans two,
+     * as it must fit a term the learner is registered for).
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function duringTerm(Builder $query, Term $term): void
+    {
+        $query->where('date_from', '<=', $term->ends_on->toDateString())->where('date_to', '>=', $term->starts_on->toDateString());
+    }
 
     /**
      * How many days past the deadline it was submitted (0 = on time). A

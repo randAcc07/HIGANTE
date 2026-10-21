@@ -37,12 +37,18 @@ class ExcuseController extends Controller
     {
         $teacherId = self::user($request)->teacher->id ?? abort(403);
         $filters = $request->validate([
+            'term' => ['nullable', 'integer'],
             'status' => ['nullable', Rule::enum(DecisionStatus::class)],
             'search' => ['nullable', 'string', 'max:100'],
-        ]) + ['status' => null, 'search' => null];
+        ]) + ['term' => null, 'status' => null, 'search' => null];
+        $terms = Term::orderByDesc('starts_on')->get();
+        $term = $terms->firstWhere('id', $filters['term']) ?? Term::forViewing();
+        $filters['term'] = $term?->id;
         $filters['status'] ??= DecisionStatus::Pending->value;
 
-        $mine = fn (): Builder => Excuses::decidableBy($teacherId);
+        // The term's classes: a decision belongs to its class's term.
+        $mine = fn (): Builder => Excuses::decidableBy($teacherId)
+            ->when($term, fn ($query, Term $term) => $query->whereRelation('subjectOffering.section', 'term_id', $term->id));
 
         $page = $mine()
             ->with(['absenceExcuse.learner.user', 'absenceExcuse.learner.program:id,code', 'absenceExcuse.documents', 'subjectOffering.subject:id,code,title', 'subjectOffering.section.program:id,code', 'decider'])
@@ -70,6 +76,8 @@ class ExcuseController extends Controller
         ]);
 
         return Inertia::render('teacher/excuses/Index', [
+            'terms' => $terms->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label]),
+            'term' => $term === null ? null : ['id' => $term->id, 'label' => $term->label],
             'decisions' => [...$page->toArray(), 'data' => $rows->values()->all()],
             'counts' => collect(DecisionStatus::cases())->mapWithKeys(fn (DecisionStatus $status): array => [$status->value => $mine()->where('status', $status)->count()]),
             'filters' => $filters,

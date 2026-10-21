@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import LearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
 import Heading from '@/components/Heading.vue';
+import NextTermButton from '@/components/NextTermButton.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -53,6 +54,8 @@ const props = defineProps<{
         irregular: boolean | null;
         status: string | null;
     };
+    /** The next term, while the page shows another: a shortcut to it. */
+    nextTerm: { id: number; label: string } | null;
 }>();
 
 const filters = useFilters(LearnerController.index.url(), {
@@ -93,20 +96,27 @@ function showQueue(): void {
                         : 'No terms yet'
                 "
             />
-            <select
-                v-if="terms.length > 1"
-                v-model="filters.term"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Term"
-            >
-                <option
-                    v-for="option in terms"
-                    :key="option.id"
-                    :value="option.id"
+            <div class="flex flex-wrap gap-2">
+                <select
+                    v-if="terms.length > 1"
+                    v-model="filters.term"
+                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                    aria-label="Term"
                 >
-                    {{ option.label }} ({{ phaseLabels[option.phase] }})
-                </option>
-            </select>
+                    <option
+                        v-for="option in terms"
+                        :key="option.id"
+                        :value="option.id"
+                    >
+                        {{ option.label }} ({{ phaseLabels[option.phase] }})
+                    </option>
+                </select>
+                <NextTermButton
+                    v-if="nextTerm"
+                    :term="nextTerm"
+                    @pick="(id) => (filters.term = id)"
+                />
+            </div>
         </div>
 
         <div

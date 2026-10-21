@@ -6,6 +6,7 @@ import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableCo
 import ScheduleFormDialog from '@/components/dean/ScheduleFormDialog.vue';
 import GridZoomControl from '@/components/GridZoomControl.vue';
 import Heading from '@/components/Heading.vue';
+import NextTermButton from '@/components/NextTermButton.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
 import { useGridZoom } from '@/composables/useGridZoom';
 import type {
@@ -40,6 +41,8 @@ const props = defineProps<{
     selected: { view: View; target: number | null; batch: string | null };
     classes: (ClassBlock | BusyBlock)[];
     canEdit: boolean;
+    /** The next term, while the page shows another: a shortcut to it. */
+    nextTerm: { id: number; label: string } | null;
 }>();
 
 const VIEWS: { value: View; label: string }[] = [
@@ -234,6 +237,11 @@ const selectClass =
                     {{ option.label }}
                 </option>
             </select>
+            <NextTermButton
+                v-if="nextTerm"
+                :term="nextTerm"
+                @pick="(id) => show({ term: id, target: null, batch: null })"
+            />
             <select
                 :value="selected.view"
                 :class="selectClass"

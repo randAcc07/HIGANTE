@@ -105,6 +105,7 @@ class DashboardController extends Controller
 
         $pending = AbsenceExcuse::query()
             ->whereHas('learner', fn ($learner) => $learner->whereIn('program_id', $programs->modelKeys()))
+            ->when($term, fn ($query, Term $term) => $query->duringTerm($term))
             ->where('status', ExcuseStatus::Pending);
         $atRisk = $term === null ? null : Enrollment::query()
             ->whereHas('subjectOffering.section', fn ($section) => $section->where('term_id', $term->id)->whereIn('program_id', $programs->modelKeys()))
@@ -179,7 +180,9 @@ class DashboardController extends Controller
             ->whereHas('term', fn (Builder $terms) => self::overlapping($terms, $monday, $saturday))
             ->get();
         $own = $term === null ? new Collection : Schedule::with(self::SCHEDULE_RELATIONS)->where('term_id', $term->id)->where('teacher_id', $teacherId)->get();
-        $pending = Excuses::decidableBy($teacherId)->where('status', DecisionStatus::Pending);
+        $pending = Excuses::decidableBy($teacherId)
+            ->when($term, fn ($query, Term $term) => $query->whereRelation('subjectOffering.section', 'term_id', $term->id))
+            ->where('status', DecisionStatus::Pending);
 
         return [
             'week' => $week->build($schedules, $monday, $term, $user->college_id, $teacherId),
@@ -234,6 +237,7 @@ class DashboardController extends Controller
             'suspensions' => Suspensions::upcoming($current),
             'excuses' => AbsenceExcuse::query()
                 ->where('learner_id', $learner->id)
+                ->when($term, fn ($query, Term $term) => $query->duringTerm($term))
                 ->orderByRaw('status = ? desc', [ExcuseStatus::Pending->value])
                 ->latest()
                 ->limit(self::SIDE_ITEMS)

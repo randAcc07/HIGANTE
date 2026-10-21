@@ -41,7 +41,7 @@ class LearnerController extends Controller
         ]) + ['term' => null, 'search' => null, 'program' => null, 'year' => null, 'section' => null, 'irregular' => null, 'status' => null];
 
         $terms = Term::orderByDesc('starts_on')->get();
-        $term = $terms->firstWhere('id', $filters['term']) ?? Term::forPreparation() ?? Term::forViewing();
+        $term = $terms->firstWhere('id', $filters['term']) ?? Term::forViewing();
         $programs = Program::where('college_id', $user->college_id)->orderBy('code')->get(['id', 'code', 'name']);
         $inCollege = TermRegistration::query()
             ->where('term_registrations.term_id', $term?->id)
@@ -70,6 +70,8 @@ class LearnerController extends Controller
             ->withQueryString();
 
         return Inertia::render('dean/learners/Index', [
+            // The next term, while another is shown: these pages prepare it.
+            'nextTerm' => Term::nextTermShortcut($term),
             'terms' => $terms->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label, 'phase' => $term->phase()->value]),
             'term' => $term === null ? null : ['id' => $term->id, 'label' => $term->label, 'phase' => $term->phase()->value],
             'programs' => $programs,
