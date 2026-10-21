@@ -32,6 +32,7 @@ the college and can be offered to any section of its programs.
 | Responsibility                                                                                                                                                                         | Status |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Admit learners: create the account and student record, set program and year level                                                                                                      | ✅     |
+| Admit learners in bulk from the xlsx template: checked whole first, then imported, optionally registered for a term                                                                    | ✅     |
 | Edit learners' names                                                                                                                                                                   | ✅     |
 | Deactivate and reactivate learner accounts; send new setup links                                                                                                                       | ✅     |
 | Register learners for a term from last year's list (1st semester: tick as each one enrolls; 2nd semester: carried over, untick who left), which places them in a section automatically | ✅     |

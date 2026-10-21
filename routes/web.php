@@ -28,6 +28,7 @@ use App\Http\Controllers\Learner\ClassController as LearnerClassController;
 use App\Http\Controllers\Learner\ExcuseController as LearnerExcuseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Registrar\LearnerController;
+use App\Http\Controllers\Registrar\LearnerImportController;
 use App\Http\Controllers\Registrar\RegistrationController;
 use App\Http\Controllers\Teacher\ClassController;
 use App\Http\Controllers\Teacher\ExcuseController as TeacherExcuseController;
@@ -71,6 +72,10 @@ Route::middleware(['auth', 'verified', 'role:admin'])->prefix('admin')->name('ad
 
 Route::middleware(['auth', 'verified', 'role:registrar'])->prefix('registrar')->name('registrar.')->group(function () {
     Route::get('learners', [LearnerController::class, 'index'])->name('learners.index');
+    Route::get('learners/import/template', [LearnerImportController::class, 'template'])->name('learners.import.template');
+    Route::post('learners/import/check', [LearnerImportController::class, 'check'])->name('learners.import.check');
+    Route::post('learners/import', [LearnerImportController::class, 'store'])->name('learners.import.store');
+    Route::get('learners/import/{token}/links', [LearnerImportController::class, 'links'])->whereUuid('token')->name('learners.import.links');
     Route::post('learners', [LearnerController::class, 'store'])->name('learners.store');
     Route::put('learners/{learner}', [LearnerController::class, 'update'])->name('learners.update');
     Route::put('learners/{learner}/status', [LearnerController::class, 'status'])->name('learners.status');

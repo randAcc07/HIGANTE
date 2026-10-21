@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { KeyRound, Pencil, Plus } from '@lucide/vue';
+import { FileSpreadsheet, KeyRound, Pencil, Plus } from '@lucide/vue';
 import { computed } from 'vue';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
 import ConfirmActionDialog from '@/components/ConfirmActionDialog.vue';
 import Heading from '@/components/Heading.vue';
 import Pagination from '@/components/Pagination.vue';
 import LearnerFormDialog from '@/components/registrar/LearnerFormDialog.vue';
+import LearnerImportDialog from '@/components/registrar/LearnerImportDialog.vue';
 import SetupLinkDialog from '@/components/SetupLinkDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -77,13 +78,21 @@ const statusLabels: Record<LearnerStatus, string> = {
                 title="Learners"
                 description="Admission and student records"
             />
-            <LearnerFormDialog
-                :colleges="colleges"
-                :registration-terms="registrationTerms"
-                :default-registration-term="defaultRegistrationTerm"
-            >
-                <Button><Plus class="h-4 w-4" /> Admit a learner</Button>
-            </LearnerFormDialog>
+            <div class="flex flex-wrap gap-2">
+                <LearnerImportDialog :registration-terms="registrationTerms">
+                    <Button variant="outline"
+                        ><FileSpreadsheet class="h-4 w-4" /> Import from a
+                        sheet</Button
+                    >
+                </LearnerImportDialog>
+                <LearnerFormDialog
+                    :colleges="colleges"
+                    :registration-terms="registrationTerms"
+                    :default-registration-term="defaultRegistrationTerm"
+                >
+                    <Button><Plus class="h-4 w-4" /> Admit a learner</Button>
+                </LearnerFormDialog>
+            </div>
         </div>
 
         <div class="flex flex-wrap gap-3">

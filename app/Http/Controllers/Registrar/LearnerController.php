@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers\Registrar;
 
+use App\Actions\Accounts\AdmitLearner;
 use App\Actions\Accounts\SendAccountSetupLink;
 use App\Enums\LearnerStatus;
-use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Registrar\LearnerRequest;
 use App\Models\College;
@@ -17,8 +17,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -29,7 +27,7 @@ use Inertia\Response;
  */
 class LearnerController extends Controller
 {
-    public function __construct(private SendAccountSetupLink $setupLink, private TermRegistrar $registrar) {}
+    public function __construct(private SendAccountSetupLink $setupLink, private AdmitLearner $admit) {}
 
     public function index(Request $request): Response
     {
@@ -84,26 +82,9 @@ class LearnerController extends Controller
             Gate::authorize('create', [TermRegistration::class, $term]);
         }
 
-        [$learner, $registered] = DB::transaction(function () use ($request, $program, $term, $registrar): array {
-            $account = new User($request->safe()->only(['last_name', 'first_name', 'middle_name', 'suffix', 'email']));
-            $account->forceFill([
-                'role' => UserRole::Learner,
-                'college_id' => $program->college_id,
-                // Nobody knows this password; the setup link replaces it.
-                'password' => Hash::make(Str::random(40)),
-                // The registrar vouches for the address; see SendAccountSetupLink.
-                'email_verified_at' => now(),
-            ])->save();
-
-            $learner = $account->learner()->create([
-                ...$request->safe()->only(['student_number', 'year_level', 'status']),
-                'program_id' => $program->id,
-            ]);
-
-            $registered = $term === null ? null : $this->registrar->register($learner, $term, $learner->year_level, $request->boolean('is_irregular'), $registrar);
-
-            return [$learner, $registered];
-        });
+        /** @var array{last_name: string, first_name: string, middle_name?: string|null, suffix?: string|null, email: string, student_number: string, year_level: int, status: string} $data */
+        $data = $request->safe()->only(['last_name', 'first_name', 'middle_name', 'suffix', 'email', 'student_number', 'year_level', 'status']);
+        ['learner' => $learner, 'registered' => $registered] = DB::transaction(fn (): array => $this->admit->handle($data, $program, $registrar, $term, $request->boolean('is_irregular')));
 
         $this->flashSetupLink($learner->user);
 

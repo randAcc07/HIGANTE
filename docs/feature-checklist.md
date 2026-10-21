@@ -35,7 +35,7 @@ Every feature is done only when:
 | Attendance       | Present unless marked: classes need no "taking"; only late and absent marks are recorded                                                                                                                        |
 | Class period     | One scheduled class on one date counts as one period (Mon and Wed Statics = two a week; a 3-hour lab = one)                                                                                                     |
 | Year levels      | Go up by one at the 1st semester of a new school year; unchanged for the 2nd. No summer term in practice, but the option stays                                                                                  |
-| Learner import   | Single admission first; CSV import later, once a real file format is known                                                                                                                                      |
+| Learner import   | Single admission, or a filled-in xlsx template imported as a whole once every row checks out                                                                                                                    |
 | Notifications    | In-app first; email warnings once a mail server exists                                                                                                                                                          |
 
 ## 1. Foundation
@@ -157,7 +157,7 @@ Excuses are decided class by class (reworked after the first build, which had th
 
 ## Later
 
-- [ ] Learner CSV import (needs a real file to design against)
+- [x] Learner import from an xlsx template (no school file to match, so the registrar fills ours): the template has dropdowns for live program codes, year level, status and Irregular. An upload is checked first, listing every problem by row and column (existing or repeated email and student number included), and nothing is saved until the whole sheet is clean; the import checks again, then admits everyone, optionally registering them for a term picked on upload. Setup links are emailed and offered once as a file; uploads and links files are pruned after a day
 - [x] Server commands for admin accounts, which no admin can change from the app: `app:list-admins`, `app:reset-admin` (prints a setup link; `--send` emails it), `app:admin-email` (audited as `server`), `app:deactivate-admin` (never the last active admin) / `app:reactivate-admin`; each run is logged. See [operations.md](operations.md)
 - [x] Copy one subject's batches to the section's other subjects ("Copy" on a split subject): missing batch names are added (unscheduled), everyone taking both is put in the same-named batch (learners unbatched in the source are left as they are; a target's extra batches stay); refused whole on any lab overlap
 - [x] Suspensions for only some programs and/or year levels (e.g. 4th years for a job fair): by the class's section, not each learner (an irregular in another year's class still has it); both filters apply together, and with the time window. The admin's campus-wide suspensions may pick any college's programs, a dean's only their own

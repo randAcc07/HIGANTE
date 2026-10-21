@@ -22,6 +22,8 @@
         </include>
     </source>
     <php>
+        <!-- The whole suite peaks near 120M, past the CLI default of 128M once a spreadsheet is written. -->
+        <ini name="memory_limit" value="256M"/>
         <env name="APP_ENV" value="testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
