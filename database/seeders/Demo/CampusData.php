@@ -47,7 +47,7 @@ final class CampusData
      */
     public const NEXT_TERM = ['school_year' => '2026-2027', 'semester' => 'second', 'starts_on' => '2027-01-11', 'ends_on' => '2027-05-21'];
 
-    public const EMAIL_DOMAIN = 'scheduler.test';
+    public const EMAIL_DOMAIN = 'higante.test';
 
     /**
      * Colleges keyed by code. `room_prefix` names the college building's

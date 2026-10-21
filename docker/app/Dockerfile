@@ -1,4 +1,4 @@
-# The Scheduler app for local use without PHP or Node on the machine:
+# The HIGANTE app for local use without PHP or Node on the machine:
 # PHP (with the extensions the app needs), Composer and Node in one image.
 # The code is mounted from the checkout; see compose.yaml (profile "app").
 FROM php:8.4-cli-bookworm
@@ -15,11 +15,11 @@ COPY --from=node:22-bookworm-slim /usr/local/lib/node_modules /usr/local/lib/nod
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
-COPY entrypoint.sh /usr/local/bin/scheduler-entrypoint
-RUN chmod +x /usr/local/bin/scheduler-entrypoint
+COPY entrypoint.sh /usr/local/bin/higante-entrypoint
+RUN chmod +x /usr/local/bin/higante-entrypoint
 
 WORKDIR /app
-ENTRYPOINT ["scheduler-entrypoint"]
+ENTRYPOINT ["higante-entrypoint"]
 # PHP's server directly, not `artisan serve`: that passes only a few
 # environment variables on to its workers, dropping compose's DB_HOST.
 # Laravel's router script runs from public/, as `serve` starts it.

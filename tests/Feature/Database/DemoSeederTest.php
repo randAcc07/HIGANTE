@@ -61,7 +61,7 @@ class DemoSeederTest extends TestCase
 
         // Fixed logins, one per role and college.
         foreach (['admin', 'registrar', 'dean.cos', 'teacher.coe', 'learner.coeng', 'atrisk.cos', 'irregular.coe', 'returnee.coeng'] as $login) {
-            $this->assertTrue(User::where('email', "{$login}@scheduler.test")->exists(), $login);
+            $this->assertTrue(User::where('email', "{$login}@higante.test")->exists(), $login);
         }
         $this->assertSame(1, User::where('role', UserRole::Admin)->count());
 
@@ -223,7 +223,7 @@ class DemoSeederTest extends TestCase
 
         // Notices in the header bell for the demo logins, dated in the past and mostly unread.
         foreach (['cos', 'coe', 'coeng'] as $college) {
-            $kinds = fn (string $login) => User::where('email', "{$login}.{$college}@scheduler.test")->sole()->notifications->map(fn ($notice) => $notice->data['kind']);
+            $kinds = fn (string $login) => User::where('email', "{$login}.{$college}@higante.test")->sole()->notifications->map(fn ($notice) => $notice->data['kind']);
             $this->assertContains(AttendanceNotice::WARNING, $kinds('learner'));
             $this->assertContains(AttendanceNotice::FLAGGED, $kinds('atrisk'));
             $this->assertContains(AttendanceNotice::LEARNER_FLAGGED, $kinds('dean'));
@@ -239,7 +239,7 @@ class DemoSeederTest extends TestCase
         $this->assertSame(EnrollmentStatus::ForDropping->value, DB::table('enrollments')
             ->join('learners', 'learners.id', '=', 'enrollments.learner_id')
             ->join('users', 'users.id', '=', 'learners.user_id')
-            ->where('users.email', 'atrisk.cos@scheduler.test')
+            ->where('users.email', 'atrisk.cos@higante.test')
             ->orderBy('enrollments.id')
             ->value('enrollments.status'));
 
@@ -379,7 +379,7 @@ class DemoSeederTest extends TestCase
     {
         $current = Term::where(['school_year' => '2026-2027', 'semester' => 'first'])->sole();
         $next = Term::where(['school_year' => '2026-2027', 'semester' => 'second'])->sole();
-        $this->actingAs(User::where('email', 'registrar@scheduler.test')->sole());
+        $this->actingAs(User::where('email', 'registrar@higante.test')->sole());
 
         // Last school year is on record one year level lower.
         $this->assertSame(0, TermRegistration::query()
@@ -399,7 +399,7 @@ class DemoSeederTest extends TestCase
                 ->where('candidates.total', 3 + 3 * CampusData::NEWLY_IMPORTED_PER_COLLEGE)
                 ->where('candidates.data', fn ($rows) => collect($rows)->every(fn (array $row): bool => str_starts_with($row['learner']['user']['email'], 'returnee.') || $row['learner']['user']['last_login_at'] === null)));
 
-        $learner = Learner::whereHas('user', fn ($user) => $user->where('email', 'learner.cos@scheduler.test'))->sole();
+        $learner = Learner::whereHas('user', fn ($user) => $user->where('email', 'learner.cos@higante.test'))->sole();
         $this->post(route('registrar.registrations.store', $next), ['entries' => [['learner_id' => $learner->id, 'year_level' => 1, 'is_irregular' => false]]])
             ->assertSessionHasNoErrors();
 

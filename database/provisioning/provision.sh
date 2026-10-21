@@ -1,11 +1,11 @@
 #!/bin/sh
 #
-# Prints the SQL that provisions the Scheduler database and its two users.
+# Prints the SQL that provisions the HIGANTE database and its two users.
 # Pipe it into a MariaDB client connected as an administrative user:
 #
-#   DB_DATABASE=scheduler \
-#   DB_USERNAME=scheduler_app DB_PASSWORD='...' \
-#   DB_MIGRATE_USERNAME=scheduler_migrate DB_MIGRATE_PASSWORD='...' \
+#   DB_DATABASE=higante \
+#   DB_USERNAME=higante_app DB_PASSWORD='...' \
+#   DB_MIGRATE_USERNAME=higante_migrate DB_MIGRATE_PASSWORD='...' \
 #   sh database/provisioning/provision.sh | mariadb -uroot -p
 #
 # Optional:

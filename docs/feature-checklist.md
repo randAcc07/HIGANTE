@@ -15,7 +15,7 @@ Every feature is done only when:
   wrong college). Pure frontend logic lives in `resources/js/lib/` with a
   `*.test.ts` next to it (`npm test`).
 - Schema changes ran through `php artisan migrate --database=mariadb_migrate`,
-  and `db/scheduler_schema.sql` / `.dbml` were regenerated.
+  and `db/higante_schema.sql` / `.dbml` were regenerated.
 - `roles-and-permissions.md` reflects what was built.
 
 ## Decisions this plan relies on

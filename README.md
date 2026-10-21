@@ -1,4 +1,4 @@
-# Scheduler
+# HIGANTE
 
 A class scheduling and attendance system for a campus of colleges: sections
 and timetables, term registration, present-by-default attendance with
@@ -44,8 +44,8 @@ Pick one of two ways:
 ### Everything in Docker
 
 ```sh
-git clone https://github.com/randAcc07/HIGANTE.git scheduler
-cd scheduler
+git clone https://github.com/randAcc07/HIGANTE.git higante
+cd higante
 docker compose --profile app up
 ```
 
@@ -66,8 +66,8 @@ only; it is not how the app is served for real.
 ### PHP and Node on your machine
 
 ```sh
-git clone https://github.com/randAcc07/HIGANTE.git scheduler
-cd scheduler
+git clone https://github.com/randAcc07/HIGANTE.git higante
+cd higante
 cp .env.example .env
 docker compose up -d        # MariaDB in Docker, on port 3307 (or see your system below)
 composer setup              # dependencies, key, migrations, Chromium for tests, build
@@ -78,7 +78,7 @@ composer dev                # server, queue, logs and Vite with hot reload
 Open <http://localhost:8000>. `docker compose up -d` without the `app`
 profile starts only MariaDB. On its first start it creates the database, its
 two accounts (see [The database accounts](#the-database-accounts)) and
-`scheduler_test` for the tests.
+`higante_test` for the tests.
 
 #### macOS
 
@@ -99,7 +99,7 @@ lets your macOS user in as an administrator, so no password is needed:
 
 ```sh
 set -a; . ./.env; set +a
-DB_TEST_DATABASE=scheduler_test sh database/provisioning/provision.sh | mariadb
+DB_TEST_DATABASE=higante_test sh database/provisioning/provision.sh | mariadb
 ```
 
 Then set `DB_PORT=3306` in `.env` and skip `docker compose up -d`. Use the
@@ -122,7 +122,7 @@ often ship an older one. Its administrator is reached with `sudo mariadb`:
 
 ```sh
 set -a; . ./.env; set +a
-DB_TEST_DATABASE=scheduler_test sh database/provisioning/provision.sh | sudo mariadb
+DB_TEST_DATABASE=higante_test sh database/provisioning/provision.sh | sudo mariadb
 ```
 
 With Everything in Docker, files the container creates in the checkout
@@ -132,7 +132,7 @@ fixes that if it gets in the way.
 #### Windows
 
 The simplest is Everything in Docker, with Docker Desktop on its WSL 2
-backend. Clone the repository inside WSL (e.g. `~/scheduler`) rather than
+backend. Clone the repository inside WSL (e.g. `~/higante`) rather than
 under `C:\`, which is much faster. For PHP and Node on the machine, use WSL 2
 and follow the Linux notes there. Native Windows (Laravel Herd for PHP,
 MariaDB's installer) also works; run the provisioning script from Git Bash
@@ -156,7 +156,7 @@ composer ci:check           # lint, types, unit tests, Pint, colors, PHPStan, Pe
 composer test:browser       # pages in a real browser (Playwright Chromium)
 ```
 
-Both use the `scheduler_test` database, never your data. `composer setup`
+Both use the `higante_test` database, never your data. `composer setup`
 installs Chromium; run `npx playwright install chromium` yourself if you
 skipped it.
 

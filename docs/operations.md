@@ -1,6 +1,6 @@
 # Operations
 
-How to set up the Scheduler for real use or for a demo, which database
+How to set up HIGANTE for real use or for a demo, which database
 account runs what, and the server commands for admin accounts.
 
 ## Two database accounts
@@ -22,7 +22,7 @@ Commands follow what they touch:
 - **App account** (default connection): `app:create-admin` and the other
   `app:*` admin commands, `db:seed`, `model:prune`.
 - **Either**: `db:snapshot` (reads the structure only; run it after schema
-  changes to refresh `db/scheduler_schema.sql` and `.dbml`).
+  changes to refresh `db/higante_schema.sql` and `.dbml`).
 
 In production, `migrate:fresh`, `migrate:refresh`, `migrate:reset` and
 `db:wipe` are refused (`DB::prohibitDestructiveCommands`), and the demo

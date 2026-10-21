@@ -32,7 +32,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Keep db/scheduler_schema.sql in step with the migrations during local
+     * Keep db/higante_schema.sql in step with the migrations during local
      * development.
      */
     protected function snapshotSchemaAfterMigrations(): void

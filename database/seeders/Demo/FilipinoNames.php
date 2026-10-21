@@ -60,7 +60,7 @@ final class FilipinoNames
     }
 
     /**
-     * "delacruz.johnpaul@scheduler.test", numbered when already taken.
+     * "delacruz.johnpaul@higante.test", numbered when already taken.
      */
     public function email(string $firstName, string $lastName): string
     {
