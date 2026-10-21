@@ -117,7 +117,7 @@ function lastLogin(account: Account): string {
             </NativeSelect>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -126,7 +126,7 @@ function lastLogin(account: Account): string {
                         <th class="px-4 py-2 font-medium">College</th>
                         <th class="px-4 py-2 font-medium">Number</th>
                         <th class="px-4 py-2 font-medium">Last logged in</th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -179,7 +179,7 @@ function lastLogin(account: Account): string {
                         >
                             {{ lastLogin(account) }}
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div
                                 v-if="account.role !== 'admin'"
                                 class="flex justify-end gap-1"

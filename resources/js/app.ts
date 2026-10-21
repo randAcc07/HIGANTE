@@ -4,6 +4,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
+import { tableScroll } from '@/lib/tableScroll';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -27,6 +28,7 @@ void createInertiaApp({
                 }
             },
         });
+        app.directive('table-scroll', tableScroll);
     },
     progress: {
         // Inserted verbatim into Inertia's injected CSS, so theme variables work.

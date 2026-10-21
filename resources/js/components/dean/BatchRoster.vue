@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Pencil } from '@lucide/vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { computed, reactive, ref, watch } from 'vue';
 import BatchController from '@/actions/App/Http/Controllers/Dean/BatchController';
@@ -344,7 +345,7 @@ function onSetAll(row: RosterRow, event: Event): void {
             <p v-for="error in errors" :key="error">{{ error }}</p>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -372,6 +373,9 @@ function onSetAll(row: RosterRow, event: Event): void {
                         >
                             {{ offering.subject.code }}
                         </th>
+                        <th class="table-actions px-4 py-2">
+                            <span class="sr-only">Actions</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -389,17 +393,7 @@ function onSetAll(row: RosterRow, event: Event): void {
                             />
                         </td>
                         <td class="px-4 py-2">
-                            <Link
-                                v-if="row.registration_id"
-                                :href="
-                                    LearnerController.show(row.registration_id)
-                                "
-                                class="font-medium hover:underline"
-                                >{{ row.name }}</Link
-                            >
-                            <span v-else class="font-medium">{{
-                                row.name
-                            }}</span>
+                            <span class="font-medium">{{ row.name }}</span>
                             <Badge
                                 v-if="row.from_section"
                                 variant="outline"
@@ -461,10 +455,34 @@ function onSetAll(row: RosterRow, event: Event): void {
                                 >Not taking</span
                             >
                         </td>
+                        <td class="table-actions px-4 py-2">
+                            <div class="flex justify-end gap-1">
+                                <Button
+                                    v-if="row.registration_id"
+                                    variant="ghost"
+                                    size="sm"
+                                    as-child
+                                    title="Edit learner"
+                                >
+                                    <Link
+                                        :href="
+                                            LearnerController.show(
+                                                row.registration_id,
+                                            )
+                                        "
+                                    >
+                                        <Pencil class="h-4 w-4" />
+                                        <span class="sr-only"
+                                            >Edit learner</span
+                                        >
+                                    </Link>
+                                </Button>
+                            </div>
+                        </td>
                     </tr>
                     <tr v-if="roster.length === 0">
                         <td
-                            :colspan="split.length + 3"
+                            :colspan="split.length + 4"
                             class="px-4 py-8 text-center text-muted-foreground"
                         >
                             Nobody takes the section's subjects yet.
@@ -497,6 +515,7 @@ function onSetAll(row: RosterRow, event: Event): void {
                                 None: {{ unbatched(offering) }}
                             </div>
                         </td>
+                        <td class="table-actions"></td>
                     </tr>
                 </tfoot>
             </table>

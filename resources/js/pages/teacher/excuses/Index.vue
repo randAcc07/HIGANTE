@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { Plus } from '@lucide/vue';
+import { Pencil, Plus } from '@lucide/vue';
 import ExcuseDecisionController from '@/actions/App/Http/Controllers/ExcuseDecisionController';
 import ExcuseController from '@/actions/App/Http/Controllers/Teacher/ExcuseController';
 import Heading from '@/components/Heading.vue';
@@ -119,7 +119,7 @@ const tabLabels: Record<DecisionStatus, string> = {
             aria-label="Search learners"
         />
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -128,6 +128,9 @@ const tabLabels: Record<DecisionStatus, string> = {
                         <th class="px-4 py-2 font-medium">Days</th>
                         <th class="px-4 py-2 font-medium">Reason</th>
                         <th class="px-4 py-2 font-medium">Submitted</th>
+                        <th class="table-actions px-4 py-2">
+                            <span class="sr-only">Actions</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -137,11 +140,9 @@ const tabLabels: Record<DecisionStatus, string> = {
                         class="border-t"
                     >
                         <td class="px-4 py-2">
-                            <Link
-                                :href="ExcuseDecisionController.show(row.id)"
-                                class="font-medium text-highlight hover:underline"
-                                >{{ row.learner.name }}</Link
-                            >
+                            <span class="font-medium">{{
+                                row.learner.name
+                            }}</span>
                             <div class="text-xs text-muted-foreground">
                                 {{ row.learner.student_number }} ·
                                 {{ row.learner.program }}
@@ -184,10 +185,33 @@ const tabLabels: Record<DecisionStatus, string> = {
                                 >{{ lateLabel(row.excuse.days_late) }}</Badge
                             >
                         </td>
+                        <td class="table-actions px-4 py-2">
+                            <div class="flex justify-end gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    as-child
+                                    title="Review excuse"
+                                >
+                                    <Link
+                                        :href="
+                                            ExcuseDecisionController.show(
+                                                row.id,
+                                            )
+                                        "
+                                    >
+                                        <Pencil class="h-4 w-4" />
+                                        <span class="sr-only"
+                                            >Review excuse</span
+                                        >
+                                    </Link>
+                                </Button>
+                            </div>
+                        </td>
                     </tr>
                     <tr v-if="decisions.data.length === 0">
                         <td
-                            colspan="5"
+                            colspan="6"
                             class="px-4 py-8 text-center text-muted-foreground"
                         >
                             {{

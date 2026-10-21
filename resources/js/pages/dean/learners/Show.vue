@@ -270,7 +270,7 @@ function unitsOf(offering: PlacementOffering): string {
                 title="Subjects"
                 :description="`${active.length} subject${active.length === 1 ? '' : 's'} · ${units} units`"
             />
-            <div class="overflow-x-auto rounded-lg border">
+            <div v-table-scroll class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">
                     <thead class="bg-muted/50 text-left text-muted-foreground">
                         <tr>
@@ -280,7 +280,7 @@ function unitsOf(offering: PlacementOffering): string {
                             <th class="px-4 py-2 text-right font-medium">
                                 Units
                             </th>
-                            <th class="px-4 py-2">
+                            <th class="table-actions px-4 py-2">
                                 <span class="sr-only">Actions</span>
                             </th>
                         </tr>
@@ -339,7 +339,7 @@ function unitsOf(offering: PlacementOffering): string {
                             <td class="px-4 py-2 text-right">
                                 {{ unitsOf(enrollment.offering) }}
                             </td>
-                            <td class="px-4 py-2 text-right">
+                            <td class="table-actions px-4 py-2 text-right">
                                 <ConfirmActionDialog
                                     v-if="
                                         canEdit &&

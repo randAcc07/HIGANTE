@@ -189,7 +189,7 @@ function showTerm(id: number): void {
             This term is closed, so its sections are read-only.
         </p>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -204,7 +204,7 @@ function showTerm(id: number): void {
                         <th class="px-4 py-2 text-right font-medium">
                             Subjects
                         </th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -216,12 +216,7 @@ function showTerm(id: number): void {
                         class="border-t"
                     >
                         <td class="px-4 py-2 font-medium">
-                            <Link
-                                :href="SectionController.show(section.id)"
-                                class="underline-offset-4 hover:underline"
-                            >
-                                {{ section.program.code }} {{ section.name }}
-                            </Link>
+                            {{ section.program.code }} {{ section.name }}
                         </td>
                         <td class="px-4 py-2">{{ section.year_level }}</td>
                         <td class="px-4 py-2 text-right">
@@ -243,7 +238,7 @@ function showTerm(id: number): void {
                         <td class="px-4 py-2 text-right">
                             {{ section.subject_offerings_count }}
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div class="flex justify-end gap-1">
                                 <Button
                                     variant="ghost"

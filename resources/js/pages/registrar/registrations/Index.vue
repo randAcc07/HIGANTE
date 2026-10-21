@@ -358,7 +358,7 @@ function registerOne(learnerId: number): void {
                     registering.
                 </p>
 
-                <div class="overflow-x-auto rounded-lg border">
+                <div v-table-scroll class="overflow-x-auto rounded-lg border">
                     <table class="w-full text-sm">
                         <thead
                             class="bg-muted/50 text-left text-muted-foreground"
@@ -377,7 +377,7 @@ function registerOne(learnerId: number): void {
                                 <th class="px-4 py-2 font-medium">Before</th>
                                 <th class="px-4 py-2 font-medium">Year</th>
                                 <th class="px-4 py-2 font-medium">Irregular</th>
-                                <th class="px-4 py-2">
+                                <th class="table-actions px-4 py-2">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
@@ -457,7 +457,7 @@ function registerOne(learnerId: number): void {
                                         :aria-label="`${row.learner.user.full_name} is irregular`"
                                     />
                                 </td>
-                                <td class="px-4 py-2 text-right">
+                                <td class="table-actions px-4 py-2 text-right">
                                     <Button
                                         v-if="canRegister"
                                         variant="ghost"
@@ -499,7 +499,7 @@ function registerOne(learnerId: number): void {
 
             <!-- Registered -->
             <template v-if="registrations">
-                <div class="overflow-x-auto rounded-lg border">
+                <div v-table-scroll class="overflow-x-auto rounded-lg border">
                     <table class="w-full text-sm">
                         <thead
                             class="bg-muted/50 text-left text-muted-foreground"
@@ -512,7 +512,7 @@ function registerOne(learnerId: number): void {
                                 <th class="px-4 py-2 font-medium">
                                     Registered
                                 </th>
-                                <th class="px-4 py-2">
+                                <th class="table-actions px-4 py-2">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
@@ -575,7 +575,7 @@ function registerOne(learnerId: number): void {
                                         >· {{ row.registered_by }}</template
                                     >
                                 </td>
-                                <td class="px-4 py-2">
+                                <td class="table-actions px-4 py-2">
                                     <div
                                         v-if="canRegister"
                                         class="flex justify-end gap-1"

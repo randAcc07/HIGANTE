@@ -160,14 +160,14 @@ function showProgram(id: number): void {
                     >
                 </CurriculumFormDialog>
             </div>
-            <div class="overflow-x-auto rounded-lg border">
+            <div v-table-scroll class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">
                     <thead class="bg-muted/50 text-left text-muted-foreground">
                         <tr>
                             <th class="w-32 px-4 py-2 font-medium">Code</th>
                             <th class="px-4 py-2 font-medium">Title</th>
                             <th class="w-40 px-4 py-2 font-medium">Units</th>
-                            <th class="w-24 px-4 py-2">
+                            <th class="table-actions w-24 px-4 py-2">
                                 <span class="sr-only">Actions</span>
                             </th>
                         </tr>
@@ -185,7 +185,7 @@ function showProgram(id: number): void {
                             <td class="px-4 py-2 whitespace-nowrap">
                                 {{ units(line) }}
                             </td>
-                            <td class="px-4 py-2">
+                            <td class="table-actions px-4 py-2">
                                 <div
                                     v-if="program"
                                     class="flex justify-end gap-1"

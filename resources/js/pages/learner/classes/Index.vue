@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { Eye } from '@lucide/vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ClassController from '@/actions/App/Http/Controllers/Learner/ClassController';
 import Heading from '@/components/Heading.vue';
 import StandingBadge from '@/components/learner/StandingBadge.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
+import { Button } from '@/components/ui/button';
 import { NativeSelect } from '@/components/ui/native-select';
 import type {
     AttendancePolicy,
@@ -135,7 +137,7 @@ const blocks = computed<GridBlock[]>(() => {
                         : ''
                 "
             />
-            <div class="overflow-x-auto rounded-lg border">
+            <div v-table-scroll class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">
                     <thead class="bg-muted/50 text-left text-muted-foreground">
                         <tr>
@@ -145,6 +147,9 @@ const blocks = computed<GridBlock[]>(() => {
                                 Equivalent absences
                             </th>
                             <th class="px-4 py-2 font-medium">Standing</th>
+                            <th class="table-actions px-4 py-2">
+                                <span class="sr-only">Actions</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -158,13 +163,9 @@ const blocks = computed<GridBlock[]>(() => {
                             }"
                         >
                             <td class="px-4 py-2">
-                                <Link
-                                    :href="
-                                        ClassController.show(item.enrollment_id)
-                                    "
-                                    class="font-medium text-highlight hover:underline"
-                                    >{{ item.subject.code }}</Link
-                                >
+                                <span class="font-medium">{{
+                                    item.subject.code
+                                }}</span>
                                 <span class="text-muted-foreground">
                                     · {{ item.section
                                     }}<template v-if="item.batch">
@@ -204,10 +205,33 @@ const blocks = computed<GridBlock[]>(() => {
                             <td class="px-4 py-2">
                                 <StandingBadge :item="item" />
                             </td>
+                            <td class="table-actions px-4 py-2">
+                                <div class="flex justify-end gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        as-child
+                                        title="View class"
+                                    >
+                                        <Link
+                                            :href="
+                                                ClassController.show(
+                                                    item.enrollment_id,
+                                                )
+                                            "
+                                        >
+                                            <Eye class="h-4 w-4" />
+                                            <span class="sr-only"
+                                                >View class</span
+                                            >
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </td>
                         </tr>
                         <tr v-if="classes.length === 0">
                             <td
-                                colspan="4"
+                                colspan="5"
                                 class="px-4 py-8 text-center text-muted-foreground"
                             >
                                 No classes in this term yet.

@@ -165,7 +165,7 @@ function nextBatchName(offering: Offering): string {
                 {{ section.year_level }} this semester.
             </p>
 
-            <div class="overflow-x-auto rounded-lg border">
+            <div v-table-scroll class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">
                     <thead class="bg-muted/50 text-left text-muted-foreground">
                         <tr>
@@ -178,7 +178,7 @@ function nextBatchName(offering: Offering): string {
                             <th class="px-4 py-2 text-right font-medium">
                                 Enrolled
                             </th>
-                            <th class="px-4 py-2">
+                            <th class="table-actions px-4 py-2">
                                 <span class="sr-only">Actions</span>
                             </th>
                         </tr>
@@ -290,7 +290,7 @@ function nextBatchName(offering: Offering): string {
                             <td class="px-4 py-2 text-right">
                                 {{ offering.enrollments_count }}
                             </td>
-                            <td class="px-4 py-2">
+                            <td class="table-actions px-4 py-2">
                                 <div
                                     v-if="canEdit"
                                     class="flex justify-end gap-1"

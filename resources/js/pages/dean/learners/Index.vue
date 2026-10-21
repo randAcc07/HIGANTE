@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Pencil } from '@lucide/vue';
 import { Head, Link } from '@inertiajs/vue3';
 import LearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
 import Heading from '@/components/Heading.vue';
@@ -194,7 +195,7 @@ function showQueue(): void {
         </div>
 
         <template v-if="registrations">
-            <div class="overflow-x-auto rounded-lg border">
+            <div v-table-scroll class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">
                     <thead class="bg-muted/50 text-left text-muted-foreground">
                         <tr>
@@ -205,6 +206,9 @@ function showQueue(): void {
                             <th class="px-4 py-2 text-right font-medium">
                                 Subjects
                             </th>
+                            <th class="table-actions px-4 py-2">
+                                <span class="sr-only">Actions</span>
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
@@ -214,13 +218,10 @@ function showQueue(): void {
                             class="border-t"
                         >
                             <td class="px-4 py-2">
-                                <Link
-                                    :href="LearnerController.show(row.id)"
-                                    class="font-medium hover:underline"
-                                >
+                                <span class="font-medium">
                                     {{ row.learner.user.last_name }},
                                     {{ row.learner.user.first_name }}
-                                </Link>
+                                </span>
                                 <Badge
                                     v-if="row.is_irregular"
                                     variant="outline"
@@ -251,10 +252,31 @@ function showQueue(): void {
                             <td class="px-4 py-2 text-right">
                                 {{ row.subjects_count }}
                             </td>
+                            <td class="table-actions px-4 py-2">
+                                <div class="flex justify-end gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        as-child
+                                        title="Edit learner"
+                                    >
+                                        <Link
+                                            :href="
+                                                LearnerController.show(row.id)
+                                            "
+                                        >
+                                            <Pencil class="h-4 w-4" />
+                                            <span class="sr-only"
+                                                >Edit learner</span
+                                            >
+                                        </Link>
+                                    </Button>
+                                </div>
+                            </td>
                         </tr>
                         <tr v-if="registrations.data.length === 0">
                             <td
-                                colspan="5"
+                                colspan="6"
                                 class="px-4 py-8 text-center text-muted-foreground"
                             >
                                 No learners match.

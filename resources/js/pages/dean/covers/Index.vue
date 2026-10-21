@@ -95,7 +95,7 @@ function showTerm(id: number): void {
             </div>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -103,7 +103,7 @@ function showTerm(id: number): void {
                         <th class="px-4 py-2 font-medium">Class</th>
                         <th class="px-4 py-2 font-medium">Teacher</th>
                         <th class="px-4 py-2 font-medium">Substitute</th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -134,7 +134,7 @@ function showTerm(id: number): void {
                         </td>
                         <td class="px-4 py-2">{{ cover.teacher }}</td>
                         <td class="px-4 py-2">{{ cover.substitute }}</td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div v-if="canEdit" class="flex justify-end">
                                 <ConfirmDeleteDialog
                                     :title="`Remove ${cover.substitute}'s cover?`"

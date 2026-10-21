@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import { ClipboardCheck } from '@lucide/vue';
 import { Link } from '@inertiajs/vue3';
 import AttendanceController from '@/actions/App/Http/Controllers/AttendanceController';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { formatTime } from '@/lib/time';
 import type { DayClass } from '@/types';
 
@@ -16,7 +18,7 @@ defineProps<{
 </script>
 
 <template>
-    <div class="overflow-x-auto rounded-lg border">
+    <div v-table-scroll class="overflow-x-auto rounded-lg border">
         <table class="w-full text-sm">
             <thead class="bg-muted/50 text-left text-muted-foreground">
                 <tr>
@@ -27,6 +29,9 @@ defineProps<{
                         Teacher
                     </th>
                     <th class="px-4 py-2 font-medium">Attendance</th>
+                    <th class="table-actions px-4 py-2">
+                        <span class="sr-only">Actions</span>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -39,20 +44,7 @@ defineProps<{
                         {{ formatTime(item.start) }}–{{ formatTime(item.end) }}
                     </td>
                     <td class="px-4 py-2">
-                        <Link
-                            v-if="!item.refusal"
-                            :href="
-                                AttendanceController.show({
-                                    schedule: item.schedule_id,
-                                    date,
-                                })
-                            "
-                            class="font-medium text-highlight hover:underline"
-                            >{{ item.subject }}</Link
-                        >
-                        <span v-else class="font-medium">{{
-                            item.subject
-                        }}</span>
+                        <span class="font-medium">{{ item.subject }}</span>
                         <span class="text-muted-foreground">
                             · {{ item.section
                             }}<template v-if="item.batch">
@@ -106,10 +98,33 @@ defineProps<{
                             >All {{ item.listed }} present</span
                         >
                     </td>
+                    <td class="table-actions px-4 py-2">
+                        <div class="flex justify-end gap-1">
+                            <Button
+                                v-if="!item.refusal"
+                                variant="ghost"
+                                size="sm"
+                                as-child
+                                title="Take attendance"
+                            >
+                                <Link
+                                    :href="
+                                        AttendanceController.show({
+                                            schedule: item.schedule_id,
+                                            date,
+                                        })
+                                    "
+                                >
+                                    <ClipboardCheck class="h-4 w-4" />
+                                    <span class="sr-only">Take attendance</span>
+                                </Link>
+                            </Button>
+                        </div>
+                    </td>
                 </tr>
                 <tr v-if="classes.length === 0">
                     <td
-                        :colspan="showTeacher ? 5 : 4"
+                        :colspan="showTeacher ? 6 : 5"
                         class="px-4 py-8 text-center text-muted-foreground"
                     >
                         {{ empty }}

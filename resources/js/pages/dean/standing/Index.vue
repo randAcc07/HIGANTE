@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Pencil } from '@lucide/vue';
 import { Head, Link } from '@inertiajs/vue3';
 import LearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
 import StandingController from '@/actions/App/Http/Controllers/Dean/StandingController';
@@ -173,7 +174,7 @@ function breakdown(row: Row): string {
             </NativeSelect>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -183,7 +184,7 @@ function breakdown(row: Row): string {
                             Equivalent absences
                         </th>
                         <th class="px-4 py-2 font-medium">Standing</th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -195,17 +196,7 @@ function breakdown(row: Row): string {
                         class="border-t"
                     >
                         <td class="px-4 py-2">
-                            <Link
-                                v-if="row.registration_id"
-                                :href="
-                                    LearnerController.show(row.registration_id)
-                                "
-                                class="font-medium text-highlight hover:underline"
-                                >{{ row.name }}</Link
-                            >
-                            <span v-else class="font-medium">{{
-                                row.name
-                            }}</span>
+                            <span class="font-medium">{{ row.name }}</span>
                             <div
                                 class="font-mono text-xs text-muted-foreground"
                             >
@@ -273,53 +264,78 @@ function breakdown(row: Row): string {
                                 </div>
                             </template>
                         </td>
-                        <td class="px-4 py-2">
-                            <div
-                                v-if="canDecide"
-                                class="flex justify-end gap-1"
-                            >
-                                <template v-if="row.status === 'for_dropping'">
-                                    <ConfirmActionDialog
-                                        :title="`Drop ${row.full_name} from ${row.subject.code}?`"
-                                        :description="`They have ${row.counts.equivalent} equivalent absences. They leave the class list from today and are told. You can reinstate them later if needed.`"
-                                        confirm-label="Drop"
-                                        destructive
-                                        :url="
-                                            StandingController.drop.url(row.id)
+                        <td class="table-actions px-4 py-2">
+                            <div class="flex justify-end gap-1">
+                                <Button
+                                    v-if="row.registration_id"
+                                    variant="ghost"
+                                    size="sm"
+                                    as-child
+                                    title="Edit learner"
+                                >
+                                    <Link
+                                        :href="
+                                            LearnerController.show(
+                                                row.registration_id,
+                                            )
                                         "
                                     >
-                                        <Button variant="ghost" size="sm"
-                                            >Drop</Button
+                                        <Pencil class="h-4 w-4" />
+                                        <span class="sr-only"
+                                            >Edit learner</span
                                         >
-                                    </ConfirmActionDialog>
+                                    </Link>
+                                </Button>
+                                <template v-if="canDecide">
+                                    <template
+                                        v-if="row.status === 'for_dropping'"
+                                    >
+                                        <ConfirmActionDialog
+                                            :title="`Drop ${row.full_name} from ${row.subject.code}?`"
+                                            :description="`They have ${row.counts.equivalent} equivalent absences. They leave the class list from today and are told. You can reinstate them later if needed.`"
+                                            confirm-label="Drop"
+                                            destructive
+                                            :url="
+                                                StandingController.drop.url(
+                                                    row.id,
+                                                )
+                                            "
+                                        >
+                                            <Button variant="ghost" size="sm"
+                                                >Drop</Button
+                                            >
+                                        </ConfirmActionDialog>
+                                        <ConfirmActionDialog
+                                            :title="`Keep ${row.full_name} in ${row.subject.code}?`"
+                                            description="The flag is lifted. One more equivalent absence flags them again."
+                                            confirm-label="Keep in class"
+                                            :url="
+                                                StandingController.dismiss.url(
+                                                    row.id,
+                                                )
+                                            "
+                                        >
+                                            <Button variant="ghost" size="sm"
+                                                >Dismiss</Button
+                                            >
+                                        </ConfirmActionDialog>
+                                    </template>
                                     <ConfirmActionDialog
-                                        :title="`Keep ${row.full_name} in ${row.subject.code}?`"
-                                        description="The flag is lifted. One more equivalent absence flags them again."
-                                        confirm-label="Keep in class"
+                                        v-else-if="row.status === 'dropped'"
+                                        :title="`Reinstate ${row.full_name} in ${row.subject.code}?`"
+                                        description="They return to the class list and are told. Like a dismissed flag, one more equivalent absence flags them again."
+                                        confirm-label="Reinstate"
                                         :url="
-                                            StandingController.dismiss.url(
+                                            StandingController.reinstate.url(
                                                 row.id,
                                             )
                                         "
                                     >
                                         <Button variant="ghost" size="sm"
-                                            >Dismiss</Button
+                                            >Reinstate</Button
                                         >
                                     </ConfirmActionDialog>
                                 </template>
-                                <ConfirmActionDialog
-                                    v-else-if="row.status === 'dropped'"
-                                    :title="`Reinstate ${row.full_name} in ${row.subject.code}?`"
-                                    description="They return to the class list and are told. Like a dismissed flag, one more equivalent absence flags them again."
-                                    confirm-label="Reinstate"
-                                    :url="
-                                        StandingController.reinstate.url(row.id)
-                                    "
-                                >
-                                    <Button variant="ghost" size="sm"
-                                        >Reinstate</Button
-                                    >
-                                </ConfirmActionDialog>
                             </div>
                         </td>
                     </tr>

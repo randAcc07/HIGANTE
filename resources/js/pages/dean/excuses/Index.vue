@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { Pencil } from '@lucide/vue';
 import { Head, Link } from '@inertiajs/vue3';
 import ExcuseController from '@/actions/App/Http/Controllers/Dean/ExcuseController';
 import Heading from '@/components/Heading.vue';
 import TermPicker from '@/components/TermPicker.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useFilters } from '@/composables/useFilters';
 import { formatDate, formatDateRange } from '@/lib/dates';
@@ -90,7 +92,7 @@ function decided(excuse: Excuse): string {
             aria-label="Search learners"
         />
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -99,6 +101,9 @@ function decided(excuse: Excuse): string {
                         <th class="px-4 py-2 font-medium">Reason</th>
                         <th class="px-4 py-2 font-medium">Classes</th>
                         <th class="px-4 py-2 font-medium">Submitted</th>
+                        <th class="table-actions px-4 py-2">
+                            <span class="sr-only">Actions</span>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -108,11 +113,9 @@ function decided(excuse: Excuse): string {
                         class="border-t"
                     >
                         <td class="px-4 py-2">
-                            <Link
-                                :href="ExcuseController.show(excuse.id)"
-                                class="font-medium text-highlight hover:underline"
-                                >{{ excuse.learner.name }}</Link
-                            >
+                            <span class="font-medium">{{
+                                excuse.learner.name
+                            }}</span>
                             <div class="text-xs text-muted-foreground">
                                 {{ excuse.learner.student_number }} ·
                                 {{ excuse.learner.program }}
@@ -151,10 +154,29 @@ function decided(excuse: Excuse): string {
                                 >{{ lateLabel(excuse.days_late) }}</Badge
                             >
                         </td>
+                        <td class="table-actions px-4 py-2">
+                            <div class="flex justify-end gap-1">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    as-child
+                                    title="Review excuse"
+                                >
+                                    <Link
+                                        :href="ExcuseController.show(excuse.id)"
+                                    >
+                                        <Pencil class="h-4 w-4" />
+                                        <span class="sr-only"
+                                            >Review excuse</span
+                                        >
+                                    </Link>
+                                </Button>
+                            </div>
+                        </td>
                     </tr>
                     <tr v-if="excuses.data.length === 0">
                         <td
-                            colspan="5"
+                            colspan="6"
                             class="px-4 py-8 text-center text-muted-foreground"
                         >
                             No

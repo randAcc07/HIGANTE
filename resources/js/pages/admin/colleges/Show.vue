@@ -36,7 +36,7 @@ setLayoutProps({
             <Heading :title="college.name" :description="college.code" />
             <CollegeFormDialog :college="college">
                 <Button variant="outline"
-                    ><Pencil class="h-4 w-4" /> Edit</Button
+                    ><Pencil class="h-4 w-4" /> Edit College Name</Button
                 >
             </CollegeFormDialog>
         </div>
@@ -82,7 +82,7 @@ setLayoutProps({
             </ProgramFormDialog>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -94,7 +94,7 @@ setLayoutProps({
                         <th class="px-4 py-2 text-right font-medium">
                             Sections
                         </th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -115,7 +115,7 @@ setLayoutProps({
                         <td class="px-4 py-2 text-right">
                             {{ program.sections_count }}
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div class="flex justify-end gap-1">
                                 <ProgramFormDialog
                                     :college-id="college.id"

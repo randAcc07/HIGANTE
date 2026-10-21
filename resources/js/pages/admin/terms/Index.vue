@@ -75,7 +75,7 @@ function policySummary(policy: AttendancePolicy | null | undefined): string {
             </TermFormDialog>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -88,7 +88,7 @@ function policySummary(policy: AttendancePolicy | null | undefined): string {
                         <th class="px-4 py-2 text-right font-medium">
                             Registered
                         </th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -116,7 +116,7 @@ function policySummary(policy: AttendancePolicy | null | undefined): string {
                         <td class="px-4 py-2 text-right">
                             {{ term.term_registrations_count }}
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div class="flex justify-end gap-1">
                                 <Button
                                     v-if="term.phase === 'ended'"

@@ -32,6 +32,7 @@ declare module '@inertiajs/core' {
 declare module 'vue' {
     interface GlobalDirectives {
         vFocus: Directive<HTMLElement, boolean | undefined>;
+        vTableScroll: Directive<HTMLElement>;
     }
 
     interface ComponentCustomProperties {

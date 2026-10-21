@@ -145,7 +145,7 @@ const statusLabels: Record<LearnerStatus, string> = {
             </NativeSelect>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -154,7 +154,7 @@ const statusLabels: Record<LearnerStatus, string> = {
                         <th class="px-4 py-2 font-medium">Program</th>
                         <th class="px-4 py-2 font-medium">Year</th>
                         <th class="px-4 py-2 font-medium">Status</th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -193,7 +193,7 @@ const statusLabels: Record<LearnerStatus, string> = {
                         <td class="px-4 py-2">
                             {{ statusLabels[learner.status] }}
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div class="flex justify-end gap-1">
                                 <LearnerFormDialog
                                     :colleges="colleges"

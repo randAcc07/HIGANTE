@@ -33,7 +33,7 @@ defineProps<{
             </CollegeFormDialog>
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -46,7 +46,7 @@ defineProps<{
                             Subjects
                         </th>
                         <th class="px-4 py-2 text-right font-medium">Staff</th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -58,11 +58,7 @@ defineProps<{
                         class="border-t"
                     >
                         <td class="px-4 py-2 font-medium">
-                            <Link
-                                :href="CollegeController.show(college.id)"
-                                class="underline-offset-4 hover:underline"
-                                >{{ college.code }}</Link
-                            >
+                            {{ college.code }}
                         </td>
                         <td class="px-4 py-2">{{ college.name }}</td>
                         <td class="px-4 py-2 text-right">
@@ -74,14 +70,25 @@ defineProps<{
                         <td class="px-4 py-2 text-right">
                             {{ college.staff_count }}
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div class="flex justify-end gap-1">
-                                <CollegeFormDialog :college="college">
-                                    <Button variant="ghost" size="sm">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    as-child
+                                    title="Edit college"
+                                >
+                                    <Link
+                                        :href="
+                                            CollegeController.show(college.id)
+                                        "
+                                    >
                                         <Pencil class="h-4 w-4" />
-                                        <span class="sr-only">Edit</span>
-                                    </Button>
-                                </CollegeFormDialog>
+                                        <span class="sr-only"
+                                            >Edit college</span
+                                        >
+                                    </Link>
+                                </Button>
                                 <ConfirmDeleteDialog
                                     :title="`Delete ${college.code}?`"
                                     description="Only a college with no programs, subjects, accounts or calendar events can be deleted."

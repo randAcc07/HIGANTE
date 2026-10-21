@@ -170,6 +170,7 @@
     --event-8-foreground: oklch(25.7% 0.09 281.288);
     --event-busy-border: oklch(87% 0 0);
     --event-busy-stripe: rgb(0 0 0 / 0.05);
+    --edge-shadow: rgb(0 0 0 / 0.08);
     --border: hsl(0 0% 92.8%);
     --input: hsl(0 0% 89.8%);
     --ring: #567c3e;
@@ -241,6 +242,7 @@
     --event-8-foreground: oklch(93% 0.034 272.788);
     --event-busy-border: oklch(37.1% 0 0);
     --event-busy-stripe: rgb(0 0 0 / 0.05);
+    --edge-shadow: rgb(255 255 255 / 0.06);
     --border: hsl(0 0% 14.9%);
     --input: hsl(0 0% 14.9%);
     --ring: #bbdb9b;
@@ -271,5 +273,46 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/*
+  Row actions stay reachable on narrow screens: the actions column is pinned
+  to the table's right edge, and casts a shadow over the columns scrolling
+  beneath it until they are scrolled fully into view (v-table-scroll sets
+  data-scroll-more on the wrapper).
+*/
+@layer components {
+    .table-actions {
+        position: sticky;
+        right: 0;
+        z-index: 1;
+        background-color: var(--background);
+    }
+
+    /* Opaque versions of the header and footer's bg-muted/50. */
+    thead .table-actions,
+    tfoot .table-actions {
+        background-color: color-mix(
+            in oklab,
+            var(--muted) 50%,
+            var(--background)
+        );
+    }
+
+    .table-actions::before {
+        content: '';
+        position: absolute;
+        inset-block: 0;
+        right: 100%;
+        width: 1.5rem;
+        pointer-events: none;
+        background: linear-gradient(to left, var(--edge-shadow), transparent);
+        opacity: 0;
+        transition: opacity 150ms;
+    }
+
+    [data-scroll-more] .table-actions::before {
+        opacity: 1;
     }
 }

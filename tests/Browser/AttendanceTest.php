@@ -17,7 +17,7 @@ it('takes attendance and corrects a mark', function () {
 
     $page = visit(path('teacher.classes.index', ['date' => $date]))
         ->assertSee('All 3 present')
-        ->click('CS 101')
+        ->click('tr:has-text("CS 101") a[title="Take attendance"]')
         ->assertSee('Everyone counts as present unless marked otherwise.')
         ->assertSee('Present: 3')
         ->click('[aria-label="Cruz, '.$cruz->first_name.'\'s mark"] >> text=Late')

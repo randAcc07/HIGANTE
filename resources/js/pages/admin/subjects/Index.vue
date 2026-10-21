@@ -78,7 +78,7 @@ function units(subject: Subject): string {
             />
         </div>
 
-        <div class="overflow-x-auto rounded-lg border">
+        <div v-table-scroll class="overflow-x-auto rounded-lg border">
             <table class="w-full text-sm">
                 <thead class="bg-muted/50 text-left text-muted-foreground">
                     <tr>
@@ -89,7 +89,7 @@ function units(subject: Subject): string {
                         <th class="px-4 py-2 text-right font-medium">
                             Offerings
                         </th>
-                        <th class="px-4 py-2">
+                        <th class="table-actions px-4 py-2">
                             <span class="sr-only">Actions</span>
                         </th>
                     </tr>
@@ -113,7 +113,7 @@ function units(subject: Subject): string {
                         <td class="px-4 py-2 text-right">
                             {{ subject.offerings_count }}
                         </td>
-                        <td class="px-4 py-2">
+                        <td class="table-actions px-4 py-2">
                             <div class="flex justify-end gap-1">
                                 <SubjectFormDialog
                                     :colleges="colleges"
