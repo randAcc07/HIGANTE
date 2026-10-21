@@ -45,6 +45,7 @@ dataset('pages', [
 
     'dean attendance' => ['dean', fn (Campus $c) => path('dean.attendance.index', ['term' => $c->term->id, 'date' => $c->lastLecture()]), 'open a class to correct its marks'],
     'dean at risk' => ['dean', fn (Campus $c) => path('dean.standing.index', ['term' => $c->term->id]), 'Nobody here: no warnings or drops match.'],
+    'dean excuses' => ['dean', fn (Campus $c) => path('dean.excuses.index'), 'No pending excuses.'],
     'dean class list' => ['dean', fn (Campus $c) => path('attendance.show', ['schedule' => $c->lectureClass, 'date' => $c->lastLecture()]), 'Everyone counts as present unless marked otherwise.'],
 
     // Teacher and learner
@@ -54,6 +55,7 @@ dataset('pages', [
     'teacher calendar' => ['teacher', fn (Campus $c) => path('calendar.index'), '{term}'],
     'learner dashboard' => ['learner', fn (Campus $c) => path('dashboard'), 'Welcome,'],
     'learner calendar' => ['learner', fn (Campus $c) => path('calendar.index'), '{term}'],
+    'learner excuses' => ['learner', fn (Campus $c) => path('learner.excuses.index'), 'No excuses yet.'],
     'learner profile' => ['learner', fn (Campus $c) => path('profile.edit'), 'Email address'],
 ]);
 

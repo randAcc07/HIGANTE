@@ -9,6 +9,16 @@ enum ExcuseReason: string
     case SchoolActivity = 'school_activity';
     case Other = 'other';
 
+    public function label(): string
+    {
+        return match ($this) {
+            self::Medical => __('medical certificate'),
+            self::Illness => __('illness'),
+            self::SchoolActivity => __('school activity'),
+            self::Other => __('other'),
+        };
+    }
+
     /**
      * A medical excuse cannot be approved without at least one document
      * (the physician-signed certificate the handbook asks for).

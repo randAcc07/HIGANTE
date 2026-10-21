@@ -50,7 +50,8 @@ the college and can be offered to any section of its programs.
 | Copy one subject's batches to the section's other split subjects                                                       | ⏳     |
 | Enroll irregular learners subject by subject                                                                           | ✅     |
 | Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week | ✅     |
-| Approve or reject excuses for their college's learners (`medical` needs at least one file)                             | ⏳     |
+| Approve or reject excuses for their college's learners (`medical` needs at least one file)                             | ✅     |
+| Revoke an approved excuse (its absences count again)                                                                   | ✅     |
 | Confirm or dismiss drops flagged at the policy's drop count                                                            | ✅     |
 | Reinstate a learner dropped for absences                                                                               | ✅     |
 | Partial-day suspensions and suspension memos (number + PDF) for their own college                                      | ✅     |
@@ -77,7 +78,7 @@ the college and can be offered to any section of its programs.
 | See own schedule                                                                  | ⏳     |
 | See attendance per class and equivalent absences                                  | ⏳     |
 | Get warnings at the policy's warning counts; get notified when flagged or dropped | ✅     |
-| Submit excuses with any number of files and track their status                    | ⏳     |
+| Submit excuses with any number of files and track their status                    | ✅     |
 | Whether a guardian can submit excuses too                                         | ❓     |
 
 ## All users
@@ -103,6 +104,6 @@ the college and can be offered to any section of its programs.
 | Count expected class days per offering, skipping holidays and suspensions                                                                      | ✅     |
 | Calculate equivalent absences; send each warning once                                                                                          | ✅     |
 | Flag for dropping at the drop count; lower or clear warnings and flags when marks are corrected (unless the dean already confirmed the drop)   | ✅     |
-| Apply an approved excuse to every class in its date range                                                                                      | ⏳     |
+| Apply an approved excuse to every class in its date range                                                                                      | ✅     |
 | Catch room, teacher and section/batch schedule conflicts (per-learner conflicts come with enrollment)                                          | ✅     |
 | Refuse enrolling or batching a learner into two classes at once; warn when a class is scheduled over a learner's other class                   | ✅     |

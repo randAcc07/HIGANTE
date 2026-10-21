@@ -2,13 +2,14 @@
 
 namespace App\Notifications;
 
+use App\Models\AbsenceExcuse;
 use App\Models\Enrollment;
 use Illuminate\Notifications\Notification;
 
 /**
- * An in-app notice about attendance standing: a warning, a drop flag, a
- * confirmed drop or a reinstatement (to the learner), or a learner flagged
- * for dropping (to the dean). Email comes later, once a mail server exists.
+ * An in-app notice about attendance: a warning, a drop flag, a confirmed
+ * drop, a reinstatement or an excuse decision (to the learner), or a learner
+ * flagged for dropping or a new excuse to review (to the dean). Email comes later, once a mail server exists.
  */
 class AttendanceNotice extends Notification
 {
@@ -21,6 +22,14 @@ class AttendanceNotice extends Notification
     public const REINSTATED = 'reinstated';
 
     public const LEARNER_FLAGGED = 'learner_flagged';
+
+    public const EXCUSE_SUBMITTED = 'excuse_submitted';
+
+    public const EXCUSE_APPROVED = 'excuse_approved';
+
+    public const EXCUSE_REJECTED = 'excuse_rejected';
+
+    public const EXCUSE_REVOKED = 'excuse_revoked';
 
     public function __construct(public string $kind, public string $message, public ?string $url = null) {}
 
@@ -61,6 +70,50 @@ class AttendanceNotice extends Notification
     public static function reinstated(Enrollment $enrollment): self
     {
         return new self(self::REINSTATED, __('You have been reinstated in :class.', ['class' => self::className($enrollment)]));
+    }
+
+    /**
+     * To the dean, linking to the excuse to review.
+     */
+    public static function excuseSubmitted(AbsenceExcuse $excuse): self
+    {
+        $excuse->loadMissing('learner.user');
+
+        return new self(
+            self::EXCUSE_SUBMITTED,
+            __(':name submitted an excuse (:reason) for :days.', ['name' => $excuse->learner->user->full_name, 'reason' => $excuse->reason->label(), 'days' => self::days($excuse)]),
+            route('dean.excuses.show', $excuse, false),
+        );
+    }
+
+    public static function excuseApproved(AbsenceExcuse $excuse): self
+    {
+        return new self(self::EXCUSE_APPROVED, __('Your excuse for :days was approved; your absences on those days are excused.', ['days' => self::days($excuse)]), route('learner.excuses.index', [], false));
+    }
+
+    public static function excuseRejected(AbsenceExcuse $excuse): self
+    {
+        return new self(self::EXCUSE_REJECTED, __('Your excuse for :days was not approved: :remarks', ['days' => self::days($excuse), 'remarks' => $excuse->review_remarks]), route('learner.excuses.index', [], false));
+    }
+
+    public static function excuseRevoked(AbsenceExcuse $excuse): self
+    {
+        return new self(self::EXCUSE_REVOKED, __('Your approved excuse for :days was revoked, so those absences count again: :remarks', ['days' => self::days($excuse), 'remarks' => $excuse->revoke_remarks]), route('learner.excuses.index', [], false));
+    }
+
+    /**
+     * "Oct 5", "Oct 5–9" or "Oct 30–Nov 2".
+     */
+    public static function days(AbsenceExcuse $excuse): string
+    {
+        $from = $excuse->date_from;
+        $to = $excuse->date_to;
+
+        if ($from->isSameDay($to)) {
+            return $from->format('M j');
+        }
+
+        return $from->format('M j').'–'.($from->isSameMonth($to) ? $to->format('j') : $to->format('M j'));
     }
 
     /**

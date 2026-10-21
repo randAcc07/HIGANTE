@@ -27,15 +27,36 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $reviewed_by
  * @property CarbonImmutable|null $reviewed_at
  * @property string|null $review_remarks
+ * @property CarbonImmutable|null $revoked_at
+ * @property int|null $revoked_by
+ * @property string|null $revoke_remarks
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Learner $learner
  */
-#[Fillable(['learner_id', 'date_from', 'date_to', 'reason', 'remarks', 'status', 'submitted_by', 'reviewed_by', 'reviewed_at', 'review_remarks'])]
+#[Fillable(['learner_id', 'date_from', 'date_to', 'reason', 'remarks', 'status', 'submitted_by', 'reviewed_by', 'reviewed_at', 'review_remarks', 'revoked_at', 'revoked_by', 'revoke_remarks'])]
 class AbsenceExcuse extends Model
 {
     /** @use HasFactory<AbsenceExcuseFactory> */
     use HasFactory;
+
+    /**
+     * An excuse is due within this many days after its last day; later
+     * ones are still accepted but flagged for the dean.
+     */
+    public const DUE_WITHIN_DAYS = 7;
+
+    /**
+     * How many days past the deadline it was submitted (0 = on time). A
+     * not-yet-saved excuse counts as submitted today.
+     */
+    public function daysLate(): int
+    {
+        $due = $this->date_to->addDays(self::DUE_WITHIN_DAYS);
+        $submitted = ($this->created_at ?? CarbonImmutable::now())->startOfDay();
+
+        return max(0, (int) $due->diffInDays($submitted, false));
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -50,6 +71,7 @@ class AbsenceExcuse extends Model
             'reason' => ExcuseReason::class,
             'status' => ExcuseStatus::class,
             'reviewed_at' => 'datetime',
+            'revoked_at' => 'datetime',
         ];
     }
 

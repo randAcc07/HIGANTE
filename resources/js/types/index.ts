@@ -6,3 +6,4 @@ export * from './ui';
 export * from './registration';
 export * from './placement';
 export * from './attendance';
+export * from './excuse';

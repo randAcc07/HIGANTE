@@ -40,6 +40,7 @@ Enum absence_excuses_status {
   "pending"
   "approved"
   "rejected"
+  "revoked"
 }
 
 Enum teachers_duty_status {
@@ -364,12 +365,16 @@ Table absence_excuses {
   reviewed_by "bigint(20) unsigned" [null]
   reviewed_at timestamp [null]
   review_remarks text [null]
+  revoked_at timestamp [null]
+  revoked_by "bigint(20) unsigned" [null]
+  revoke_remarks text [null]
   created_at timestamp [null]
   updated_at timestamp [null]
 
   indexes {
     (learner_id, status) [name: 'absence_excuses_learner_id_status_index']
     reviewed_by [name: 'absence_excuses_reviewed_by_foreign']
+    revoked_by [name: 'absence_excuses_revoked_by_foreign']
     submitted_by [name: 'absence_excuses_submitted_by_foreign']
   }
 
@@ -626,6 +631,7 @@ Table term_registrations {
 
 Ref absence_excuses_learner_id_foreign: absence_excuses.learner_id > learners.id [delete: restrict]
 Ref absence_excuses_reviewed_by_foreign: absence_excuses.reviewed_by > users.id [delete: set null]
+Ref absence_excuses_revoked_by_foreign: absence_excuses.revoked_by > users.id [delete: set null]
 Ref absence_excuses_submitted_by_foreign: absence_excuses.submitted_by > users.id [delete: set null]
 Ref absence_excuse_documents_absence_excuse_id_foreign: absence_excuse_documents.absence_excuse_id > absence_excuses.id [delete: cascade]
 Ref absence_excuse_documents_uploaded_by_foreign: absence_excuse_documents.uploaded_by > users.id [delete: set null]

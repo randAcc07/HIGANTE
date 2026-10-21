@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { addDays, isoWeekday } from './days';
+import { addDays, daysBetween, isoWeekday } from './days';
 
 describe('day helpers', () => {
     it('steps across month and year ends', () => {
@@ -13,5 +13,12 @@ describe('day helpers', () => {
         expect(isoWeekday('2026-10-19')).toBe(1);
         expect(isoWeekday('2026-10-24')).toBe(6);
         expect(isoWeekday('2026-10-25')).toBe(7);
+    });
+
+    it('counts whole days between dates, across a clock change', () => {
+        expect(daysBetween('2026-10-20', '2026-10-27')).toBe(7);
+        expect(daysBetween('2026-10-27', '2026-10-20')).toBe(-7);
+        // The test zone (America/Los_Angeles) leaves summer time on Nov 1.
+        expect(daysBetween('2026-10-31', '2026-11-02')).toBe(2);
     });
 });

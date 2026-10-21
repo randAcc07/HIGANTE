@@ -13,6 +13,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dean\AttendanceController as DeanAttendanceController;
 use App\Http\Controllers\Dean\BatchController;
+use App\Http\Controllers\Dean\ExcuseController as DeanExcuseController;
 use App\Http\Controllers\Dean\LearnerController as DeanLearnerController;
 use App\Http\Controllers\Dean\OfferingController;
 use App\Http\Controllers\Dean\PlacementController;
@@ -21,6 +22,8 @@ use App\Http\Controllers\Dean\SectionController;
 use App\Http\Controllers\Dean\StandingController;
 use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
+use App\Http\Controllers\ExcuseDocumentController;
+use App\Http\Controllers\Learner\ExcuseController as LearnerExcuseController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Registrar\LearnerController;
 use App\Http\Controllers\Registrar\RegistrationController;
@@ -33,6 +36,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar.index');
     Route::get('calendar/events/{event}/memo', [CalendarController::class, 'memo'])->name('calendar.events.memo');
+    Route::get('excuses/documents/{document}', [ExcuseDocumentController::class, 'show'])->name('excuses.documents.show');
     Route::post('notifications/read', [NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::post('notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
@@ -91,6 +95,11 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
 
     // Placement: authorized through the learner's registration (TermRegistrationPolicy).
     Route::get('attendance', [DeanAttendanceController::class, 'index'])->name('attendance.index');
+    Route::get('excuses', [DeanExcuseController::class, 'index'])->name('excuses.index');
+    Route::get('excuses/{excuse}', [DeanExcuseController::class, 'show'])->name('excuses.show');
+    Route::post('excuses/{excuse}/approve', [DeanExcuseController::class, 'approve'])->name('excuses.approve');
+    Route::post('excuses/{excuse}/reject', [DeanExcuseController::class, 'reject'])->name('excuses.reject');
+    Route::post('excuses/{excuse}/revoke', [DeanExcuseController::class, 'revoke'])->name('excuses.revoke');
     Route::get('standing', [StandingController::class, 'index'])->name('standing.index');
     Route::post('enrollments/{enrollment}/drop', [StandingController::class, 'drop'])->name('standing.drop');
     Route::post('enrollments/{enrollment}/dismiss', [StandingController::class, 'dismiss'])->name('standing.dismiss');
@@ -101,6 +110,11 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
     Route::post('learners/{registration}/enrollments', [PlacementController::class, 'enroll'])->name('learners.enroll');
     Route::put('enrollments/{enrollment}', [PlacementController::class, 'batch'])->name('enrollments.update');
     Route::delete('enrollments/{enrollment}', [PlacementController::class, 'remove'])->name('enrollments.destroy');
+});
+
+Route::middleware(['auth', 'verified', 'role:learner'])->prefix('learner')->name('learner.')->group(function () {
+    Route::get('excuses', [LearnerExcuseController::class, 'index'])->name('excuses.index');
+    Route::post('excuses', [LearnerExcuseController::class, 'store'])->name('excuses.store');
 });
 
 Route::middleware(['auth', 'verified', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {

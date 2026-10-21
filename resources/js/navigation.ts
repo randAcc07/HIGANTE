@@ -9,6 +9,7 @@ import {
     ClipboardList,
     TriangleAlert,
     DoorOpen,
+    FileCheck,
     GraduationCap,
     LayoutGrid,
     LayoutList,
@@ -21,11 +22,13 @@ import AccountController from '@/actions/App/Http/Controllers/Admin/AccountContr
 import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
 import DeanAttendanceController from '@/actions/App/Http/Controllers/Dean/AttendanceController';
+import DeanExcuseController from '@/actions/App/Http/Controllers/Dean/ExcuseController';
 import DeanLearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
 import StandingController from '@/actions/App/Http/Controllers/Dean/StandingController';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import LearnerController from '@/actions/App/Http/Controllers/Registrar/LearnerController';
+import LearnerExcuseController from '@/actions/App/Http/Controllers/Learner/ExcuseController';
 import RegistrationController from '@/actions/App/Http/Controllers/Registrar/RegistrationController';
 import ClassController from '@/actions/App/Http/Controllers/Teacher/ClassController';
 import { dashboard } from '@/routes';
@@ -81,6 +84,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             href: StandingController.index(),
             icon: TriangleAlert,
         },
+        {
+            title: 'Excuses',
+            href: DeanExcuseController.index(),
+            icon: FileCheck,
+        },
     ],
     teacher: () => [
         {
@@ -89,7 +97,13 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             icon: CalendarCheck,
         },
     ],
-    learner: () => [],
+    learner: () => [
+        {
+            title: 'Excuses',
+            href: LearnerExcuseController.index(),
+            icon: FileCheck,
+        },
+    ],
 };
 
 export function mainNavigation(role: UserRole | undefined): NavItem[] {

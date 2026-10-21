@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Who a class meets with on a date, and recording their marks. Everyone on
+ * Who a class meets with on a date, and recording their marks (an absence
+ * on a day an approved excuse covers is excused right away). Everyone on
  * the list counts as present unless marked otherwise: only exceptions (late,
  * absent) are recorded, and a mark put back to present keeps its record so
  * its history stays. A learner is on the list from the day they enrolled in
@@ -24,6 +25,8 @@ use Illuminate\Validation\ValidationException;
  */
 class ClassList
 {
+    public function __construct(private Excuses $excuses) {}
+
     /**
      * The enrollments on the class list, by last name, with the day's records.
      *
@@ -119,6 +122,9 @@ class ClassList
                     'new_status' => $status,
                     'changed_at' => $now,
                 ]);
+
+                // An absence on a day an approved excuse covers is excused.
+                $this->excuses->linkIfCovered($record, $by);
             }
         });
 
