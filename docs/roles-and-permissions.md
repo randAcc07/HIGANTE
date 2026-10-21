@@ -14,18 +14,18 @@ the college and can be offered to any section of its programs.
 
 ## Admin (campus-wide)
 
-| Responsibility                                                                                                               | Status |
-| ---------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Create the first admin account (`php artisan app:create-admin`)                                                              | ✅     |
-| Manage colleges and their programs                                                                                           | ✅     |
-| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                  | ✅     |
-| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                               | ✅     |
-| Manage subjects (each owned by one college)                                                                                  | ✅     |
-| Create registrar, dean and teacher accounts                                                                                  | ✅     |
-| Admin accounts: made and kept on the server (`php artisan app:create-admin`); no admin controls another admin's account      | ✅     |
-| Deactivate and reactivate registrar, dean and teacher accounts                                                               | ✅     |
-| Edit registrar, dean and teacher names and teacher details; change anyone's email but an admin's directly (for lost inboxes) | ✅     |
-| Campus-wide holidays and class suspensions                                                                                   | ✅     |
+| Responsibility                                                                                                                                                                                                        | Status |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Create the first admin account (`php artisan app:create-admin`)                                                                                                                                                       | ✅     |
+| Manage colleges and their programs                                                                                                                                                                                    | ✅     |
+| Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                                                                                                           | ✅     |
+| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                                                                                                                        | ✅     |
+| Manage subjects (each owned by one college)                                                                                                                                                                           | ✅     |
+| Create registrar, dean and teacher accounts                                                                                                                                                                           | ✅     |
+| Admin accounts: made and kept on the server (`app:create-admin`, `app:reset-admin`, `app:admin-email`, `app:deactivate-admin` / `app:reactivate-admin`, see operations.md); no admin controls another admin's account | ✅     |
+| Deactivate and reactivate registrar, dean and teacher accounts                                                                                                                                                        | ✅     |
+| Edit registrar, dean and teacher names and teacher details; change anyone's email but an admin's directly (for lost inboxes)                                                                                          | ✅     |
+| Campus-wide holidays and class suspensions                                                                                                                                                                            | ✅     |
 
 ## Registrar (campus-wide)
 

@@ -20,6 +20,7 @@ Enum users_role {
 Enum email_audits_method {
   "self_service"
   "admin"
+  "server"
 }
 
 Enum learners_status {

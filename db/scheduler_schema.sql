@@ -221,7 +221,7 @@ CREATE TABLE `email_audits` (
   `user_id` bigint(20) unsigned NOT NULL,
   `old_email` varchar(255) NOT NULL,
   `new_email` varchar(255) NOT NULL,
-  `method` enum('self_service','admin') NOT NULL,
+  `method` enum('self_service','admin','server') NOT NULL,
   `changed_by` bigint(20) unsigned DEFAULT NULL,
   `reason` varchar(255) DEFAULT NULL,
   `changed_at` timestamp NOT NULL DEFAULT current_timestamp(),

@@ -18,14 +18,20 @@ class SendAccountSetupLink
 {
     public const LIFETIME_DAYS = 7;
 
-    public function handle(User $user): string
+    /**
+     * $notify: false only makes the link (the server's app:reset-admin, for
+     * an admin whose inbox may be the problem).
+     */
+    public function handle(User $user, bool $notify = true): string
     {
         $url = URL::temporarySignedRoute('account-setup.show', now()->addDays(self::LIFETIME_DAYS), [
             'user' => $user->id,
             'key' => self::fingerprint($user),
         ]);
 
-        $user->notify(new AccountSetup($url));
+        if ($notify) {
+            $user->notify(new AccountSetup($url));
+        }
 
         return $url;
     }

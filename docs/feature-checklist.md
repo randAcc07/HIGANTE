@@ -158,7 +158,7 @@ Excuses are decided class by class (reworked after the first build, which had th
 ## Later
 
 - [ ] Learner CSV import (needs a real file to design against)
-- [ ] Server commands for admin accounts, which no admin can change from the app: e.g. `app:reset-admin <email>` printing a new setup link, plus changing an admin's email and deactivating/reactivating an admin
+- [x] Server commands for admin accounts, which no admin can change from the app: `app:list-admins`, `app:reset-admin` (prints a setup link; `--send` emails it), `app:admin-email` (audited as `server`), `app:deactivate-admin` (never the last active admin) / `app:reactivate-admin`; each run is logged. See [operations.md](operations.md)
 - [x] Copy one subject's batches to the section's other subjects ("Copy" on a split subject): missing batch names are added (unscheduled), everyone taking both is put in the same-named batch (learners unbatched in the source are left as they are; a target's extra batches stay); refused whole on any lab overlap
 - [x] Suspensions for only some programs and/or year levels (e.g. 4th years for a job fair): by the class's section, not each learner (an irregular in another year's class still has it); both filters apply together, and with the time window. The admin's campus-wide suspensions may pick any college's programs, a dean's only their own
 - [ ] Email warnings, once a mail server exists (AttendanceNotice is database-only for now)

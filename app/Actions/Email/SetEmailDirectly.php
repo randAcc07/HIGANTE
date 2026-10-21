@@ -15,7 +15,11 @@ use Illuminate\Support\Facades\Notification;
  */
 class SetEmailDirectly
 {
-    public function handle(User $user, string $newEmail, User $admin, string $reason): void
+    /**
+     * $admin is null when the change is made on the server (an admin's own
+     * account, which no admin can change in the app).
+     */
+    public function handle(User $user, string $newEmail, ?User $admin, string $reason): void
     {
         $oldEmail = $user->email;
 
@@ -25,8 +29,8 @@ class SetEmailDirectly
             $user->emailAudits()->create([
                 'old_email' => $oldEmail,
                 'new_email' => $newEmail,
-                'method' => EmailChangeMethod::Admin,
-                'changed_by' => $admin->id,
+                'method' => $admin === null ? EmailChangeMethod::Server : EmailChangeMethod::Admin,
+                'changed_by' => $admin?->id,
                 'reason' => $reason,
                 'changed_at' => now(),
             ]);
