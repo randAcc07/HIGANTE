@@ -60,7 +60,8 @@ the college and can be offered to any section of its programs.
 | See an at-risk learners list                                                                                                    | ✅     |
 | College-only holidays and suspensions for their own college                                                                     | ✅     |
 | Correct a teacher's attendance marks                                                                                            | ✅     |
-| Reassign a subject's classes to another teacher (e.g. a substitute for a teacher on leave)                                      | ✅     |
+| Reassign a subject's classes to another teacher for good                                                                        | ✅     |
+| Arrange cover for a teacher away: a substitute per class for a range of dates, never double-booked                              | ✅     |
 
 ## Teacher (own college only)
 
@@ -69,6 +70,7 @@ the college and can be offered to any section of its programs.
 | See own schedule and class lists                                                                                                     | ✅     |
 | Mark present / late / absent per scheduled class, by their own judgment                                                              | ✅     |
 | Correct own marks (every change is audited)                                                                                          | ✅     |
+| Mark the classes they cover as a substitute, on those days only (excuses stay with the class's teacher)                              | ✅     |
 | Decide excuses for their own classes (approve / not approve / revoke; `medical` needs a file); file one for a learner in their class | ✅     |
 | An excused absence stays locked on the class list (the excuse decides it)                                                            | ✅     |
 | See learners' warning and drop status in their classes                                                                               | ✅     |

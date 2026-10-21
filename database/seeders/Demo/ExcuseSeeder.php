@@ -83,7 +83,7 @@ class ExcuseSeeder extends Seeder
             foreach (self::PLANS as $index => $plan) {
                 $from = $this->classDay($lastClassDay->subWeeks($plan['weeksAgo']), $suspended, self::weekdaysWith($learners[$index], $plan['classes'] ?? 1));
 
-                if ($from === null || $from->lt(CarbonImmutable::parse(CampusData::TERM['starts_on']))) {
+                if ($from === null || $from->lt(CampusData::date(CampusData::TERM['starts_on']))) {
                     continue;
                 }
 

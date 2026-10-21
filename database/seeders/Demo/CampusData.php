@@ -3,6 +3,9 @@
 namespace Database\Seeders\Demo;
 
 use App\Enums\RoomType;
+use App\Models\Term;
+use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 
 /**
  * The fixed shape of the demo campus: colleges, programs, first-semester
@@ -12,10 +15,20 @@ use App\Enums\RoomType;
  * Subject units decide how a subject is timetabled (see SectionSeeder):
  * 3 lecture units meet twice a week for 1.5 hours, 2 lecture units once for
  * 2 hours, and each laboratory unit is one 3-hour lab per batch.
+ *
+ * Dates here are written for the week of ANCHOR. Seeded in another week,
+ * every fixed date (terms, calendar events, registration and withdrawal)
+ * moves by the same whole number of weeks, so weekdays and the gaps between
+ * things stay as written and the demo always sits at the same point of its
+ * term relative to today. Read them through date() and term(), and find the
+ * seeded terms with currentTerm() / nextTerm().
  */
 final class CampusData
 {
-    /** The current term. Attendance is generated from its start to yesterday. */
+    /** The Monday of the week the dates below were written for. */
+    public const ANCHOR = '2026-10-19';
+
+    /** The current term, as written (see term()). Attendance runs from its start to yesterday. */
     public const TERM = ['school_year' => '2026-2027', 'semester' => 'first', 'starts_on' => '2026-08-10', 'ends_on' => '2026-12-18'];
 
     /**
@@ -408,4 +421,65 @@ final class CampusData
         ['college' => null, 'title' => 'Feast of the Immaculate Conception', 'starts_on' => '2026-12-08', 'ends_on' => '2026-12-08', 'suspends_classes' => true],
         ['college' => null, 'title' => 'Final examinations', 'starts_on' => '2026-12-14', 'ends_on' => '2026-12-18', 'suspends_classes' => false],
     ];
+
+    /**
+     * Whole weeks from ANCHOR's week to this week (negative before it).
+     */
+    public static function weeksShifted(): int
+    {
+        $thisWeek = CarbonImmutable::today()->startOfWeek(CarbonInterface::MONDAY);
+
+        return (int) round(CarbonImmutable::parse(self::ANCHOR)->diffInDays($thisWeek) / 7);
+    }
+
+    /**
+     * A date (or date and time) written here, moved to this week's frame.
+     */
+    public static function date(string $written): CarbonImmutable
+    {
+        return CarbonImmutable::parse($written)->addWeeks(self::weeksShifted());
+    }
+
+    /**
+     * A term written here, with its dates moved and its school year label
+     * following once the move is half a year or more (all labels together,
+     * so last year, this year and next keep their order).
+     *
+     * @param  array{school_year: string, semester: string, starts_on: string, ends_on: string}  $term
+     * @return array{school_year: string, semester: string, starts_on: string, ends_on: string}
+     */
+    public static function term(array $term): array
+    {
+        $years = (int) round(self::weeksShifted() * 7 / 365.2425);
+        [$from, $to] = array_map('intval', explode('-', $term['school_year']));
+
+        return [
+            'school_year' => ($from + $years).'-'.($to + $years),
+            'semester' => $term['semester'],
+            'starts_on' => self::date($term['starts_on'])->toDateString(),
+            'ends_on' => self::date($term['ends_on'])->toDateString(),
+        ];
+    }
+
+    /** The seeded current term (TERM). */
+    public static function currentTerm(): Term
+    {
+        return self::seeded(self::TERM);
+    }
+
+    /** The seeded upcoming term (NEXT_TERM). */
+    public static function nextTerm(): Term
+    {
+        return self::seeded(self::NEXT_TERM);
+    }
+
+    /**
+     * @param  array{school_year: string, semester: string, starts_on: string, ends_on: string}  $term
+     */
+    private static function seeded(array $term): Term
+    {
+        $moved = self::term($term);
+
+        return Term::where('school_year', $moved['school_year'])->where('semester', $moved['semester'])->sole();
+    }
 }

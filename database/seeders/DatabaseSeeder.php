@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Database\Seeders\Demo\AttendanceSeeder;
 use Database\Seeders\Demo\CatalogSeeder;
+use Database\Seeders\Demo\CoverSeeder;
 use Database\Seeders\Demo\CurriculumSeeder;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Database\Seeders\Demo\FilipinoNames;
@@ -64,6 +65,7 @@ class DatabaseSeeder extends Seeder
             RegistrationSeeder::class,
             PastTermSeeder::class,
             ExcuseSeeder::class,
+            CoverSeeder::class,
             AttendanceSeeder::class,
             StandingSeeder::class,
         ]));

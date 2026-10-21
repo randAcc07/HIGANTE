@@ -10,6 +10,10 @@ export type DayClass = {
     batch: string | null;
     room: string | null;
     teacher: string;
+    /** The substitute covering it that day, if any. */
+    cover: string | null;
+    /** Whether the viewer is the one covering it (for its teacher). */
+    covering: boolean;
     start: string;
     end: string;
     /** Why attendance can't be taken that day (suspended, not yet), if so. */

@@ -547,6 +547,24 @@ CREATE TABLE `attendance_audits` (
   CONSTRAINT `attendance_audits_changed_by_foreign` FOREIGN KEY (`changed_by`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `class_covers` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `schedule_id` bigint(20) unsigned NOT NULL,
+  `substitute_id` bigint(20) unsigned NOT NULL,
+  `starts_on` date NOT NULL,
+  `ends_on` date NOT NULL,
+  `created_by` bigint(20) unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `class_covers_created_by_foreign` (`created_by`),
+  KEY `class_covers_schedule_id_starts_on_index` (`schedule_id`,`starts_on`),
+  KEY `class_covers_substitute_id_starts_on_ends_on_index` (`substitute_id`,`starts_on`,`ends_on`),
+  CONSTRAINT `class_covers_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `class_covers_schedule_id_foreign` FOREIGN KEY (`schedule_id`) REFERENCES `schedules` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `class_covers_substitute_id_foreign` FOREIGN KEY (`substitute_id`) REFERENCES `teachers` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `term_registrations` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `learner_id` bigint(20) unsigned NOT NULL,

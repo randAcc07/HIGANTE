@@ -30,6 +30,10 @@ const props = defineProps<{
     canEdit: boolean;
     /** Why the teacher can no longer change this day (the term's limit), or null. */
     teacherLock: string | null;
+    /** The substitute covering the class that day, if any. */
+    cover: { substitute: string; range: string } | null;
+    /** Whether the viewer is that substitute. */
+    covering: boolean;
     closed: boolean;
     back: string;
     backLabel: string;
@@ -192,6 +196,20 @@ function recorded(learner: ClassListLearner): string {
                 </Button>
             </div>
         </div>
+
+        <p
+            v-if="cover"
+            class="rounded-lg border p-3 text-sm text-muted-foreground"
+        >
+            <template v-if="covering"
+                >You cover this class for {{ schedule.teacher }} on
+                {{ cover.range }}. Excuses stay with them.</template
+            >
+            <template v-else
+                >{{ cover.substitute }} covers this class on
+                {{ cover.range }}.</template
+            >
+        </p>
 
         <p
             v-if="refusal"

@@ -27,10 +27,8 @@ class PastTermSeeder extends Seeder
 {
     public function run(): void
     {
-        $current = Term::where('school_year', CampusData::TERM['school_year'])
-            ->where('semester', CampusData::TERM['semester'])
-            ->sole();
-        $terms = Term::where('school_year', CampusData::PAST_TERMS[0]['school_year'])->orderBy('starts_on')->get();
+        $current = CampusData::currentTerm();
+        $terms = Term::where('school_year', CampusData::term(CampusData::PAST_TERMS[0])['school_year'])->orderBy('starts_on')->get();
         $registrar = User::where('role', UserRole::Registrar)->sole();
 
         $learners = TermRegistration::query()

@@ -4,6 +4,7 @@ namespace App\Attendance;
 
 use App\Enums\AttendanceStatus;
 use App\Models\AttendanceRecord;
+use App\Models\ClassCover;
 use App\Models\Schedule;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
@@ -19,9 +20,10 @@ class DaySheet
 
     /**
      * @param  Builder<Schedule>  $schedules
+     * @param  int|null  $viewer  the teacher looking, to flag classes they cover
      * @return list<array<string, mixed>>
      */
-    public function rows(Builder $schedules, CarbonImmutable $date): array
+    public function rows(Builder $schedules, CarbonImmutable $date, ?int $viewer = null): array
     {
         $classes = $schedules
             ->with(['subjectOffering.subject:id,code,title', 'subjectOffering.section.program:id,college_id,code', 'batch:id,name', 'room', 'teacher.user', 'term'])
@@ -40,7 +42,13 @@ class DaySheet
             ->get()
             ->groupBy('schedule_id');
 
-        return array_values($classes->map(function (Schedule $schedule) use ($date, $marked): array {
+        $covers = ClassCover::with('substitute.user')
+            ->whereIn('schedule_id', $classes->modelKeys())
+            ->onDate($date)
+            ->get()
+            ->keyBy('schedule_id');
+
+        return array_values($classes->map(function (Schedule $schedule) use ($date, $marked, $covers, $viewer): array {
             $offering = $schedule->subjectOffering;
             $refusal = $this->days->refusal($schedule, $date);
 
@@ -52,6 +60,9 @@ class DaySheet
                 'batch' => $schedule->batch?->name,
                 'room' => $schedule->room?->label,
                 'teacher' => $schedule->teacher->user->full_name,
+                // The substitute covering it that day, if any, and whether that's the viewer.
+                'cover' => $covers->has($schedule->id) ? $covers[$schedule->id]->substitute->user->full_name : null,
+                'covering' => $viewer !== null && $schedule->teacher_id !== $viewer,
                 'start' => $schedule->starts_at->format('H:i'),
                 'end' => $schedule->ends_at->format('H:i'),
                 // Why it can't be taken that day (suspended, not yet), if so.

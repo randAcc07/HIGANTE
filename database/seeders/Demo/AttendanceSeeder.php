@@ -7,6 +7,7 @@ use App\Enums\AttendanceStatus;
 use App\Enums\DecisionStatus;
 use App\Models\AbsenceExcuse;
 use App\Models\CalendarEvent;
+use App\Models\ClassCover;
 use App\Models\College;
 use App\Models\Enrollment;
 use App\Models\ExcuseDecision;
@@ -34,7 +35,8 @@ use Illuminate\Support\Facades\DB;
  * absences in the classes where it was approved are linked to it.
  *
  * Every record gets its first-mark audit row; corrected ones (a few by the
- * dean, the rest by the teacher) get a second.
+ * dean, the rest by the teacher) get a second. On a covered meeting the
+ * substitute marked and corrected instead of the teacher.
  */
 class AttendanceSeeder extends Seeder
 {
@@ -61,6 +63,21 @@ class AttendanceSeeder extends Seeder
     private array $rows = [];
 
     /**
+     * Substitutes' user ids per schedule: [from, to, user id].
+     *
+     * @var array<int, list<array{string, string, int}>>
+     */
+    private array $covers = [];
+
+    /**
+     * Covered meetings so far: "schedule id|date" => [schedule, date, first
+     * enrollment id, marks written].
+     *
+     * @var array<string, array{Schedule, CarbonImmutable, int, int}>
+     */
+    private array $coveredMeetings = [];
+
+    /**
      * Marks changed after the fact: [enrollment id, schedule id, date, first status, changed by, changed at].
      *
      * @var list<array{int, int, string, AttendanceStatus, int, CarbonImmutable}>
@@ -69,7 +86,7 @@ class AttendanceSeeder extends Seeder
 
     public static function lastClassDay(): CarbonImmutable
     {
-        return CarbonImmutable::yesterday()->min(CarbonImmutable::parse(CampusData::TERM['ends_on']));
+        return CarbonImmutable::yesterday()->min(CampusData::date(CampusData::TERM['ends_on']));
     }
 
     /**
@@ -96,13 +113,15 @@ class AttendanceSeeder extends Seeder
 
     public function run(ClassDays $days): void
     {
-        $term = Term::where('school_year', CampusData::TERM['school_year'])
-            ->where('semester', CampusData::TERM['semester'])
-            ->sole();
+        $term = CampusData::currentTerm();
         $first = $term->starts_on;
         $last = self::lastClassDay();
 
         $excusedDays = $this->excusedDays();
+
+        foreach (ClassCover::with('substitute')->orderBy('id')->get() as $cover) {
+            $this->covers[$cover->schedule_id][] = [$cover->starts_on->toDateString(), $cover->ends_on->toDateString(), $cover->substitute->user_id];
+        }
         $scripts = $this->scripts();
         $marked = $this->markedBeforeSuspension($term);
 
@@ -152,6 +171,7 @@ class AttendanceSeeder extends Seeder
             }
         }
 
+        $this->markCoveredMeetings();
         $this->flush();
         $this->audit();
         $this->linkDecidedExcuses();
@@ -210,6 +230,13 @@ class AttendanceSeeder extends Seeder
                 };
             }
 
+            $teacher = $this->teacherOn($schedule, $day);
+            $covered = $teacher !== $schedule->teacher->user_id ? "{$schedule->id}|{$day->toDateString()}" : null;
+
+            if ($covered !== null) {
+                $this->coveredMeetings[$covered] ??= [$schedule, $day, $enrollment->id, 0];
+            }
+
             // Present is the default: nothing is written unless it was marked otherwise first.
             if ($firstStatus === AttendanceStatus::Present) {
                 continue;
@@ -220,8 +247,12 @@ class AttendanceSeeder extends Seeder
 
             if ($firstStatus !== $status) {
                 $updatedAt = $day->addDay()->setTime(mt_rand(7, 11), mt_rand(0, 59))->min(CarbonImmutable::now());
-                $changer = mt_rand(1, 4) === 1 ? $dean->id : $schedule->teacher->user_id;
+                $changer = mt_rand(1, 4) === 1 ? $dean->id : $teacher;
                 $this->corrections[] = [$enrollment->id, $schedule->id, $day->toDateString(), $firstStatus, $changer, $updatedAt];
+            }
+
+            if ($covered !== null) {
+                $this->coveredMeetings[$covered][3]++;
             }
 
             $this->rows[] = [
@@ -229,7 +260,7 @@ class AttendanceSeeder extends Seeder
                 'schedule_id' => $schedule->id,
                 'class_date' => $day->toDateString(),
                 'status' => $status->value,
-                'recorded_by' => $schedule->teacher->user_id,
+                'recorded_by' => $teacher,
                 'created_at' => $markedAt,
                 'updated_at' => $updatedAt,
             ];
@@ -238,6 +269,43 @@ class AttendanceSeeder extends Seeder
                 $this->flush();
             }
         }
+    }
+
+    /**
+     * A covered meeting where everyone was present would show no sign of
+     * the substitute: there, its first learner was marked late.
+     */
+    private function markCoveredMeetings(): void
+    {
+        foreach ($this->coveredMeetings as [$schedule, $day, $enrollmentId, $marks]) {
+            if ($marks === 0) {
+                $markedAt = $day->setTimeFrom($schedule->ends_at)->subMinutes(mt_rand(0, 40));
+                $this->rows[] = [
+                    'enrollment_id' => $enrollmentId,
+                    'schedule_id' => $schedule->id,
+                    'class_date' => $day->toDateString(),
+                    'status' => AttendanceStatus::Late->value,
+                    'recorded_by' => $this->teacherOn($schedule, $day),
+                    'created_at' => $markedAt,
+                    'updated_at' => $markedAt,
+                ];
+            }
+        }
+    }
+
+    /**
+     * Who took the class that day: its substitute when it was covered, else
+     * its teacher (user ids).
+     */
+    private function teacherOn(Schedule $schedule, CarbonImmutable $day): int
+    {
+        foreach ($this->covers[$schedule->id] ?? [] as [$from, $to, $userId]) {
+            if ($day->toDateString() >= $from && $day->toDateString() <= $to) {
+                return $userId;
+            }
+        }
+
+        return $schedule->teacher->user_id;
     }
 
     private function flush(): void

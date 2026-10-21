@@ -62,6 +62,18 @@ defineProps<{
                         <div class="text-xs text-muted-foreground">
                             {{ item.title }}
                         </div>
+                        <Badge
+                            v-if="item.covering"
+                            variant="secondary"
+                            class="mt-1 bg-info-soft text-info-soft-foreground"
+                            >Covering for {{ item.teacher }}</Badge
+                        >
+                        <div
+                            v-else-if="item.cover"
+                            class="text-xs text-muted-foreground"
+                        >
+                            Covered by {{ item.cover }}
+                        </div>
                     </td>
                     <td class="px-4 py-2">{{ item.room ?? 'Online' }}</td>
                     <td v-if="showTeacher" class="px-4 py-2">

@@ -14,6 +14,7 @@ use App\Models\AttendanceRecord;
 use App\Models\Enrollment;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Scheduling\Covers;
 use App\Scheduling\ScheduleConflicts;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
@@ -35,14 +36,20 @@ class AttendanceController extends Controller
     // route keeps its controller instance, and ClassDays caches suspensions.
     public function show(Request $request, Schedule $schedule, string $date, ClassDays $days, ClassList $list): Response
     {
-        Gate::authorize('viewAttendance', $schedule);
         /** @var User $user */
         $user = $request->user();
         $day = self::date($date);
+        Gate::authorize('viewAttendance', [$schedule, $day]);
         $schedule->load(['subjectOffering.subject', 'subjectOffering.section.program', 'batch', 'room', 'teacher.user', 'term']);
         $refusal = $days->refusal($schedule, $day);
         $teacherLock = self::teacherLock($user, $schedule, $day);
-        $dates = array_map(fn (CarbonImmutable $d): string => $d->toDateString(), $days->pastDates($schedule));
+        $cover = Covers::on($schedule, $day);
+        // A substitute steps only through the days they cover.
+        $covering = $user->teacher !== null && $schedule->teacher_id !== $user->teacher->id;
+        $dates = array_values(array_map(
+            fn (CarbonImmutable $d): string => $d->toDateString(),
+            array_filter($days->pastDates($schedule), fn (CarbonImmutable $d): bool => ! $covering || Gate::allows('viewAttendance', [$schedule, $d])),
+        ));
         $at = array_search($day->toDateString(), $dates, true);
 
         // A day suspended after marks were made keeps them, read-only: they
@@ -89,7 +96,10 @@ class AttendanceController extends Controller
             // Neighbouring meeting dates (latest first in $dates).
             'previous' => $at === false ? ($dates[0] ?? null) : ($dates[$at + 1] ?? null),
             'next' => $at === false || $at === 0 ? null : $dates[$at - 1],
-            'canEdit' => $refusal === null && Gate::allows('takeAttendance', $schedule) && $teacherLock === null,
+            'canEdit' => $refusal === null && Gate::allows('takeAttendance', [$schedule, $day]) && $teacherLock === null,
+            // Who covers the class that day, if anyone; you, when covering is true.
+            'cover' => $cover === null ? null : ['substitute' => $cover->substitute->user->full_name, 'range' => $cover->range()],
+            'covering' => $covering,
             'teacherLock' => $teacherLock,
             'closed' => $schedule->term->isClosed(),
             'backLabel' => $user->role === UserRole::Dean ? __('Attendance') : __('My classes'),
@@ -101,10 +111,10 @@ class AttendanceController extends Controller
 
     public function update(Request $request, Schedule $schedule, string $date, ClassDays $days, ClassList $list, Standing $standing): RedirectResponse
     {
-        Gate::authorize('takeAttendance', $schedule);
         /** @var User $user */
         $user = $request->user();
         $day = self::date($date);
+        Gate::authorize('takeAttendance', [$schedule, $day]);
 
         $refusal = $days->refusal($schedule, $day) ?? self::teacherLock($user, $schedule, $day);
 

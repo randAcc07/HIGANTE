@@ -13,6 +13,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dean\AttendanceController as DeanAttendanceController;
 use App\Http\Controllers\Dean\BatchController;
+use App\Http\Controllers\Dean\CoverController;
 use App\Http\Controllers\Dean\CurriculumController;
 use App\Http\Controllers\Dean\ExcuseController as DeanExcuseController;
 use App\Http\Controllers\Dean\LearnerController as DeanLearnerController;
@@ -109,6 +110,9 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
     Route::put('schedules/{schedule}', [ScheduleController::class, 'update'])->name('schedules.update');
     Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
     Route::get('timetables', [TimetableController::class, 'index'])->name('timetables.index');
+    Route::get('covers', [CoverController::class, 'index'])->name('covers.index');
+    Route::post('covers', [CoverController::class, 'store'])->name('covers.store');
+    Route::delete('covers/{cover}', [CoverController::class, 'destroy'])->name('covers.destroy');
     Route::put('sections/{section}/batches', [BatchController::class, 'roster'])->name('batches.roster');
     Route::post('offerings/{offering}/batches/copy', [BatchController::class, 'copy'])->name('batches.copy');
 

@@ -65,9 +65,7 @@ class RegistrationSeeder extends Seeder
 
     public function run(): void
     {
-        $term = Term::where('school_year', CampusData::TERM['school_year'])
-            ->where('semester', CampusData::TERM['semester'])
-            ->sole();
+        $term = CampusData::currentTerm();
         $registrar = User::where('role', UserRole::Registrar)->sole();
 
         foreach (Schedule::where('term_id', $term->id)->get() as $schedule) {
@@ -139,7 +137,7 @@ class RegistrationSeeder extends Seeder
                 'status' => RegistrationStatus::Registered,
                 'registered_by' => $registrar->id,
             ]);
-            $registeredAt = CarbonImmutable::parse('2026-08-03 08:00')->addDays(mt_rand(0, 4))->addMinutes(mt_rand(0, 8 * 60));
+            $registeredAt = CampusData::date('2026-08-03 08:00')->addDays(mt_rand(0, 4))->addMinutes(mt_rand(0, 8 * 60));
             $registration->created_at = $registeredAt;
             $registration->updated_at = $registeredAt;
             $registration->save();
@@ -168,7 +166,7 @@ class RegistrationSeeder extends Seeder
      */
     private function withdraw(TermRegistration $registration, User $registrar): void
     {
-        Clock::at(CarbonImmutable::parse(self::WITHDRAWN_ON.' 10:00'), fn () => app(TermRegistrar::class)->withdraw($registration, $registrar));
+        Clock::at(CampusData::date(self::WITHDRAWN_ON.' 10:00'), fn () => app(TermRegistrar::class)->withdraw($registration, $registrar));
     }
 
     /**
@@ -189,7 +187,7 @@ class RegistrationSeeder extends Seeder
         }
 
         $rows = [];
-        $now = CarbonImmutable::parse('2026-08-07 17:00');
+        $now = CampusData::date('2026-08-07 17:00');
 
         foreach ($offerings as $offering) {
             $enrolled = array_values(array_filter($learnerIds, fn (int $id): bool => ($skipped[$id] ?? null) !== $offering->id));
@@ -334,7 +332,7 @@ class RegistrationSeeder extends Seeder
         $program = $college->programs->firstOrFail();
 
         // Entered a year earlier than their classmates and sat last year out.
-        $entryYear = (int) substr(CampusData::TERM['school_year'], 0, 4) - $returneeYear;
+        $entryYear = (int) substr(CampusData::currentTerm()->school_year, 0, 4) - $returneeYear;
         $this->admit($college, $college->programs->last() ?? $program, $returneeYear, self::demoEmail('returnee', $college->code), $entryYear);
 
         foreach ([LearnerStatus::Graduated, LearnerStatus::Graduated, LearnerStatus::Inactive] as $status) {
@@ -351,7 +349,7 @@ class RegistrationSeeder extends Seeder
 
     private function admit(College $college, Program $program, int $yearLevel, ?string $email, ?int $entryYear = null): Learner
     {
-        $entryYear ??= (int) substr(CampusData::TERM['school_year'], 0, 4) - ($yearLevel - 1);
+        $entryYear ??= (int) substr(CampusData::currentTerm()->school_year, 0, 4) - ($yearLevel - 1);
         $user = $this->staff->user(UserRole::Learner, $college, $email);
 
         $learner = new Learner;

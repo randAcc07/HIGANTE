@@ -15,6 +15,7 @@ use App\Models\AbsenceExcuse;
 use App\Models\AttendancePolicy;
 use App\Models\AttendanceRecord;
 use App\Models\CalendarEvent;
+use App\Models\ClassCover;
 use App\Models\College;
 use App\Models\CurriculumSubject;
 use App\Models\Enrollment;
@@ -26,9 +27,11 @@ use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
 use App\Notifications\AttendanceNotice;
+use App\Notifications\CoverNotice;
 use App\Registration\TermRegistrar;
 use App\Scheduling\CurriculumFill;
 use App\Scheduling\SectionCopy;
+use Carbon\CarbonImmutable;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Database\Seeders\Demo\TermSeeder;
@@ -287,6 +290,45 @@ class DemoSeederTest extends TestCase
         $this->assertFalse(Section::where('term_id', $next->id)->whereRelation('program', 'college_id', $coe->id)->exists());
         $this->assertSame($current->id, app(SectionCopy::class)->source($next, $coe->id)?->id);
         $this->assertSame(Section::where('term_id', $current->id)->whereRelation('program', 'college_id', $coe->id)->count(), count(app(SectionCopy::class)->proposals($current, $next, $coe->id)));
+
+        // Covers: one running today, one that ended last week, one ahead, each
+        // arranged by the college's dean for a substitute of that college who
+        // is free then (no class of their own, no other cover, at that hour),
+        // and told so. Marks on a covered meeting are the substitute's.
+        $covers = ClassCover::with(['schedule.subjectOffering.section.program', 'substitute.user'])->get();
+        $today = CarbonImmutable::today();
+        $this->assertTrue($covers->contains(fn (ClassCover $cover): bool => $cover->starts_on->lte($today) && $cover->ends_on->gte($today)));
+        $this->assertTrue($covers->contains(fn (ClassCover $cover): bool => $cover->ends_on->lt($today->startOfWeek()) && $cover->ends_on->gte($today->startOfWeek()->subWeek())));
+        $this->assertTrue($covers->contains(fn (ClassCover $cover): bool => $cover->starts_on->gt($today)));
+
+        foreach ($covers as $cover) {
+            $schedule = $cover->schedule;
+            $collegeId = $schedule->subjectOffering->section->program->college_id;
+            $this->assertSame($collegeId, $cover->substitute->user->college_id);
+            $dean = User::findOrFail($cover->created_by);
+            $this->assertSame([UserRole::Dean, $collegeId], [$dean->role, $dean->college_id]);
+            $this->assertNotSame($schedule->teacher_id, $cover->substitute_id);
+            $busy = Schedule::where('term_id', $schedule->term_id)
+                ->where('teacher_id', $cover->substitute_id)
+                ->where('starts_at', '<', $schedule->ends_at)
+                ->where('ends_at', '>', $schedule->starts_at)
+                ->exists();
+            $doubled = ClassCover::where('substitute_id', $cover->substitute_id)
+                ->where('id', '!=', $cover->id)
+                ->where('starts_on', '<=', $cover->ends_on)
+                ->where('ends_on', '>=', $cover->starts_on)
+                ->whereHas('schedule', fn ($other) => $other->where('starts_at', '<', $schedule->ends_at)->where('ends_at', '>', $schedule->starts_at))
+                ->exists();
+            $this->assertFalse($busy || $doubled, "cover {$cover->id}");
+            $this->assertTrue(DB::table('notifications')->where('notifiable_id', $cover->substitute->user_id)->where('data->kind', CoverNotice::ASSIGNED)->exists());
+
+            $marks = AttendanceRecord::where('schedule_id', $schedule->id)->whereBetween('class_date', [$cover->starts_on->toDateString(), $cover->ends_on->toDateString()]);
+            $this->assertSame(0, (clone $marks)->where('recorded_by', '!=', $cover->substitute->user_id)->count(), "cover {$cover->id}");
+
+            if ($cover->ends_on->lt($today)) {
+                $this->assertGreaterThan(0, $marks->count(), "cover {$cover->id}");
+            }
+        }
 
         $this->assertDemoRegistration();
     }

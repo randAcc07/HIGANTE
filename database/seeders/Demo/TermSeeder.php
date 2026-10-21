@@ -28,7 +28,7 @@ class TermSeeder extends Seeder
     public function run(): void
     {
         foreach ([...CampusData::PAST_TERMS, CampusData::TERM, CampusData::NEXT_TERM] as $term) {
-            $model = Term::create($term);
+            $model = Term::create(CampusData::term($term));
             AttendancePolicy::create([
                 'term_id' => $model->id,
                 ...AttendancePolicy::HANDBOOK,
@@ -50,8 +50,8 @@ class TermSeeder extends Seeder
                 'college_id' => $collegeId,
                 'title' => $event['title'],
                 'description' => $event['description'] ?? null,
-                'starts_on' => $event['starts_on'],
-                'ends_on' => $event['ends_on'],
+                'starts_on' => CampusData::date($event['starts_on']),
+                'ends_on' => CampusData::date($event['ends_on']),
                 'suspends_classes' => $event['suspends_classes'],
                 'suspends_from' => $event['suspends_from'] ?? null,
                 'year_levels' => $event['year_levels'] ?? null,
@@ -60,12 +60,12 @@ class TermSeeder extends Seeder
             ]);
 
             if (isset($event['entered_at'])) {
-                $model->created_at = CarbonImmutable::parse($event['entered_at']);
+                $model->created_at = CampusData::date($event['entered_at']);
                 $model->updated_at = $model->created_at;
             }
 
             if (isset($event['memo_number'])) {
-                $this->attachMemo($model, $event['memo_number'], $event['title'], $event['starts_on']);
+                $this->attachMemo($model, $event['memo_number'], $event['title'], CampusData::date($event['starts_on']));
             }
 
             $model->save();
@@ -77,7 +77,7 @@ class TermSeeder extends Seeder
      * A placeholder memo PDF on the local disk. The directory is shared with
      * any other demo database (dev and test); files are only ever overwritten.
      */
-    private function attachMemo(CalendarEvent $event, string $number, string $title, string $date): void
+    private function attachMemo(CalendarEvent $event, string $number, string $title, CarbonImmutable $date): void
     {
         $name = Str::slug($number).'.pdf';
         $path = self::MEMO_DIRECTORY.'/'.$name;

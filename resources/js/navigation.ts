@@ -1,4 +1,5 @@
 import {
+    ArrowRightLeft,
     BookOpen,
     Building2,
     CalendarCheck,
@@ -22,6 +23,7 @@ import SubjectController from '@/actions/App/Http/Controllers/Admin/SubjectContr
 import AccountController from '@/actions/App/Http/Controllers/Admin/AccountController';
 import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
+import CoverController from '@/actions/App/Http/Controllers/Dean/CoverController';
 import CurriculumController from '@/actions/App/Http/Controllers/Dean/CurriculumController';
 import DeanAttendanceController from '@/actions/App/Http/Controllers/Dean/AttendanceController';
 import DeanExcuseController from '@/actions/App/Http/Controllers/Dean/ExcuseController';
@@ -72,6 +74,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             title: 'Timetables',
             href: TimetableController.index(),
             icon: CalendarClock,
+        },
+        {
+            title: 'Cover',
+            href: CoverController.index(),
+            icon: ArrowRightLeft,
         },
         {
             title: 'Curriculum',

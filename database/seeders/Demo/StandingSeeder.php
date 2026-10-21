@@ -45,9 +45,7 @@ class StandingSeeder extends Seeder
 {
     public function run(): void
     {
-        $term = Term::where('school_year', CampusData::TERM['school_year'])
-            ->where('semester', CampusData::TERM['semester'])
-            ->sole();
+        $term = CampusData::currentTerm();
 
         $this->removeOneSubject($term);
         $this->replay($term);

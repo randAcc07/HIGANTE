@@ -668,6 +668,23 @@ Table attendance_audits {
   }
 }
 
+Table class_covers {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  schedule_id "bigint(20) unsigned" [not null]
+  substitute_id "bigint(20) unsigned" [not null]
+  starts_on date [not null]
+  ends_on date [not null]
+  created_by "bigint(20) unsigned" [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    created_by [name: 'class_covers_created_by_foreign']
+    (schedule_id, starts_on) [name: 'class_covers_schedule_id_starts_on_index']
+    (substitute_id, starts_on, ends_on) [name: 'class_covers_substitute_id_starts_on_ends_on_index']
+  }
+}
+
 Table term_registrations {
   id "bigint(20) unsigned" [pk, increment, not null]
   learner_id "bigint(20) unsigned" [not null]
@@ -704,6 +721,9 @@ Ref calendar_events_college_id_foreign: calendar_events.college_id > colleges.id
 Ref calendar_events_created_by_foreign: calendar_events.created_by > users.id [delete: set null]
 Ref calendar_event_program_calendar_event_id_foreign: calendar_event_program.calendar_event_id > calendar_events.id [delete: cascade]
 Ref calendar_event_program_program_id_foreign: calendar_event_program.program_id > programs.id [delete: restrict]
+Ref class_covers_created_by_foreign: class_covers.created_by > users.id [delete: set null]
+Ref class_covers_schedule_id_foreign: class_covers.schedule_id > schedules.id [delete: cascade]
+Ref class_covers_substitute_id_foreign: class_covers.substitute_id > teachers.id [delete: restrict]
 Ref curriculum_subjects_program_id_foreign: curriculum_subjects.program_id > programs.id [delete: cascade]
 Ref curriculum_subjects_subject_id_foreign: curriculum_subjects.subject_id > subjects.id [delete: restrict]
 Ref email_audits_changed_by_foreign: email_audits.changed_by > users.id [delete: set null]

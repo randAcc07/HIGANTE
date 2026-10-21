@@ -23,12 +23,8 @@ class NextTermSeeder extends Seeder
 {
     public function run(): void
     {
-        $current = Term::where('school_year', CampusData::TERM['school_year'])
-            ->where('semester', CampusData::TERM['semester'])
-            ->sole();
-        $next = Term::where('school_year', CampusData::NEXT_TERM['school_year'])
-            ->where('semester', CampusData::NEXT_TERM['semester'])
-            ->sole();
+        $current = CampusData::currentTerm();
+        $next = CampusData::nextTerm();
 
         $sections = Section::with('program.college')
             ->where('term_id', $current->id)
