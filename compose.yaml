@@ -12,7 +12,7 @@ services:
             DB_MIGRATE_PASSWORD: ${DB_MIGRATE_PASSWORD:-migrate-secret}
             DB_TEST_DATABASE: scheduler_test
         ports:
-            - '${DB_PORT:-3306}:3306'
+            - '${DB_PORT:-3307}:3306'
         volumes:
             - mariadb-data:/var/lib/mysql
             - ./database/provisioning:/provisioning:ro
@@ -22,5 +22,28 @@ services:
             interval: 5s
             retries: 20
 
+    # The app itself, for a machine without PHP or Node:
+    #   docker compose --profile app up
+    # Without the profile, only MariaDB starts (PHP and Node on the machine).
+    app:
+        profiles: [app]
+        build: ./docker/app
+        depends_on:
+            mariadb:
+                condition: service_healthy
+        environment:
+            # Inside the network the database is "mariadb" on 3306, whatever .env says.
+            DB_HOST: mariadb
+            DB_PORT: 3306
+            APP_URL: http://localhost:${APP_PORT:-8000}
+        ports:
+            - '${APP_PORT:-8000}:8000'
+        volumes:
+            - .:/app
+            - app-vendor:/app/vendor
+            - app-node-modules:/app/node_modules
+
 volumes:
     mariadb-data:
+    app-vendor:
+    app-node-modules:

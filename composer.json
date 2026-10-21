@@ -48,9 +48,10 @@
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
+            "@php -r \"preg_match('/^APP_KEY=.+/m', file_get_contents('.env')) || passthru(PHP_BINARY.' artisan key:generate --ansi');\"",
             "@php artisan migrate --database=mariadb_migrate --force",
             "npm install",
+            "npx playwright install chromium",
             "npm run build"
         ],
         "db:demo": [
