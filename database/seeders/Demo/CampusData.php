@@ -365,8 +365,11 @@ final class CampusData
 
     /**
      * Calendar events in the current term. `college` null = campus-wide.
+     * A suspension with `suspends_from` covers only the classes starting
+     * from then on; `memo_number` comes with a placeholder memo PDF, and
+     * `entered_at` backdates when it was entered.
      *
-     * @var list<array{college: string|null, title: string, starts_on: string, ends_on: string, suspends_classes: bool, description?: string}>
+     * @var list<array{college: string|null, title: string, starts_on: string, ends_on: string, suspends_classes: bool, description?: string, suspends_from?: string, memo_number?: string, entered_at?: string}>
      */
     public const CALENDAR = [
         ['college' => null, 'title' => 'Ninoy Aquino Day', 'starts_on' => '2026-08-21', 'ends_on' => '2026-08-21', 'suspends_classes' => true],
@@ -375,6 +378,9 @@ final class CampusData
         ['college' => 'COEng', 'title' => 'Engineering Week culminating day', 'starts_on' => '2026-09-18', 'ends_on' => '2026-09-18', 'suspends_classes' => true],
         ['college' => null, 'title' => 'Class suspension: Typhoon Signal No. 2', 'starts_on' => '2026-09-24', 'ends_on' => '2026-09-24', 'suspends_classes' => true, 'description' => 'Classes at all levels suspended by the provincial government.'],
         ['college' => null, 'title' => 'Midterm examinations', 'starts_on' => '2026-09-28', 'ends_on' => '2026-10-03', 'suspends_classes' => false],
+        // Announced mid-afternoon: a couple of classes after 13:00 were already
+        // marked (see AttendanceSeeder), so those marks stay but don't count.
+        ['college' => 'COS', 'title' => 'Science Fair awarding ceremony', 'starts_on' => '2026-10-09', 'ends_on' => '2026-10-09', 'suspends_classes' => true, 'suspends_from' => '13:00', 'memo_number' => 'COS Memo No. 2026-031', 'entered_at' => '2026-10-09 15:30', 'description' => 'Afternoon classes suspended for the awarding ceremony at the gymnasium.'],
         ['college' => 'COE', 'title' => "World Teachers' Day celebration", 'starts_on' => '2026-10-05', 'ends_on' => '2026-10-05', 'suspends_classes' => true],
         ['college' => null, 'title' => "All Saints' Day", 'starts_on' => '2026-11-01', 'ends_on' => '2026-11-01', 'suspends_classes' => true],
         ['college' => null, 'title' => "All Souls' Day", 'starts_on' => '2026-11-02', 'ends_on' => '2026-11-02', 'suspends_classes' => true],

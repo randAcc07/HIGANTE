@@ -2,6 +2,7 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Attendance\ClassDays;
 use App\Enums\AttendanceStatus;
 use App\Enums\ExcuseStatus;
 use App\Models\AbsenceExcuse;
@@ -17,18 +18,23 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Marks every class period from the start of the term to yesterday, as the
- * teacher of each schedule would have, skipping suspended days. Today's
- * classes are left for the teacher to mark.
+ * Attendance from the start of the term to yesterday, as the teachers would
+ * have marked it. Everyone counts as present unless marked otherwise, so
+ * only lates and absences are written; a present record exists only where
+ * a mark was later corrected back to present. Suspended meetings (whole
+ * days, or the classes starting inside a suspension's window) have no
+ * marks, except a couple of afternoon classes marked before the partial-day
+ * suspension was entered: those marks stay but don't count.
  *
- * Most learners are almost always present; some are often late or absent,
- * so warnings and drop flags happen naturally. The demo logins are scripted:
+ * Most learners are rarely late or absent; some often are, so warnings and
+ * drop flags happen naturally. The demo logins are scripted:
  * learner.<college>@ ends at 3 and 4 equivalent absences in two classes,
- * atrisk.<college>@ at 5 in one. Learners with an excuse are absent on its
+ * atrisk.<college>@ at 5 in two (StandingSeeder has the dean dismiss the
+ * second). Learners with an excuse are absent on its
  * days, and approved excuses are linked to those absences.
  *
- * Every mark gets its first audit row; a few marks were later corrected by
- * the teacher or the dean, with a second audit row.
+ * Every record gets its first-mark audit row; corrected ones (a few by the
+ * dean, the rest by the teacher) get a second.
  */
 class AttendanceSeeder extends Seeder
 {
@@ -42,8 +48,14 @@ class AttendanceSeeder extends Seeder
     /** Scripted [unexcused absences, lates] for the demo logins' first classes. */
     private const SCRIPTS = [
         'learner' => [[2, 3], [4, 0]],
-        'atrisk' => [[5, 1], [1, 3]],
+        'atrisk' => [[5, 1], [4, 3]],
     ];
+
+    /** About 1 in this many presents was first marked absent (or late) and corrected. */
+    private const CORRECTED_TO_PRESENT = 1500;
+
+    /** About 1 in this many lates and absences was first marked the other way. */
+    private const CORRECTED_BETWEEN = 80;
 
     /** @var list<array<string, mixed>> */
     private array $rows = [];
@@ -61,7 +73,8 @@ class AttendanceSeeder extends Seeder
     }
 
     /**
-     * Dates without classes in a college: campus-wide and college suspensions.
+     * Dates with any suspension in a college (whole day or partial), for
+     * picking excuse days clear of them.
      *
      * @return array<string, true>
      */
@@ -98,7 +111,7 @@ class AttendanceSeeder extends Seeder
             ->all());
     }
 
-    public function run(): void
+    public function run(ClassDays $days): void
     {
         $term = Term::where('school_year', CampusData::TERM['school_year'])
             ->where('semester', CampusData::TERM['semester'])
@@ -108,13 +121,13 @@ class AttendanceSeeder extends Seeder
 
         $excusedDays = $this->excusedDays();
         $scripts = $this->scripts();
+        $marked = $this->markedBeforeSuspension($term);
 
         foreach (College::all() as $college) {
-            $suspended = self::suspendedDates($college->id);
             $dean = User::where('email', StaffSeeder::deanEmail($college->code))->sole();
             $profiles = [];
 
-            $schedules = Schedule::with('teacher')
+            $schedules = Schedule::with(['teacher', 'term', 'subjectOffering.section.program'])
                 ->where('term_id', $term->id)
                 ->whereHas('subjectOffering.subject', fn ($subject) => $subject->where('college_id', $college->id))
                 ->orderBy('id')
@@ -128,27 +141,30 @@ class AttendanceSeeder extends Seeder
                 ->groupBy('subject_offering_id');
 
             foreach ($schedules as $offeringId => $offeringSchedules) {
-                // Every period of the offering: [schedule, date], in date order.
+                // Every period of the offering: [schedule, date, counts], in date order.
                 $periods = [];
 
                 foreach ($offeringSchedules as $schedule) {
                     $day = $first->addDays(($schedule->weekday() - $first->dayOfWeekIso + 7) % 7);
 
                     for (; $day->lte($last); $day = $day->addWeek()) {
-                        if (! isset($suspended[$day->toDateString()])) {
-                            $periods[] = [$schedule, $day];
+                        if ($days->suspension($schedule, $day) === null) {
+                            $periods[] = [$schedule, $day, true];
+                        } elseif (isset($marked["{$schedule->id}|{$day->toDateString()}"])) {
+                            $periods[] = [$schedule, $day, false];
                         }
                     }
                 }
 
                 usort($periods, fn (array $a, array $b): int => [$a[1], $a[0]->starts_at] <=> [$b[1], $b[0]->starts_at]);
+                $forced = [];
 
                 foreach ($enrollments[$offeringId] ?? [] as $enrollment) {
                     $mine = array_values(array_filter($periods, fn (array $period): bool => ($period[0]->batch_id === null || $period[0]->batch_id === $enrollment->batch_id)
                         && ($enrollment->drop_confirmed_at === null || $period[1]->lt($enrollment->drop_confirmed_at->startOfDay()))));
                     $profiles[$enrollment->learner_id] ??= self::profile();
 
-                    $this->mark($enrollment, $mine, $excusedDays[$enrollment->learner_id] ?? [], $scripts[$enrollment->id] ?? null, $profiles[$enrollment->learner_id], $dean);
+                    $this->mark($enrollment, $mine, $excusedDays[$enrollment->learner_id] ?? [], $scripts[$enrollment->id] ?? null, $profiles[$enrollment->learner_id], $dean, $forced);
                 }
             }
         }
@@ -159,17 +175,27 @@ class AttendanceSeeder extends Seeder
     }
 
     /**
-     * @param  list<array{Schedule, CarbonImmutable}>  $periods
+     * @param  list<array{Schedule, CarbonImmutable, bool}>  $periods
      * @param  array<string, true>  $excusedDays
      * @param  array{int, int}|null  $script
      * @param  array{float, float}  $profile
+     * @param  array<string, int>  $forced  Marks already forced per uncounted period ("schedule|date").
      */
-    private function mark(Enrollment $enrollment, array $periods, array $excusedDays, ?array $script, array $profile, User $dean): void
+    private function mark(Enrollment $enrollment, array $periods, array $excusedDays, ?array $script, array $profile, User $dean, array &$forced): void
     {
         $statuses = [];
 
-        foreach ($periods as $index => [, $day]) {
-            if (isset($excusedDays[$day->toDateString()])) {
+        foreach ($periods as $index => [$schedule, $day, $counts]) {
+            if (! $counts) {
+                // Marked before the suspension: one absence and one late per class, so the note shows.
+                $key = "{$schedule->id}|{$day->toDateString()}";
+                $forced[$key] = ($forced[$key] ?? 0) + 1;
+                $statuses[$index] = match ($forced[$key]) {
+                    1 => AttendanceStatus::Absent,
+                    2 => AttendanceStatus::Late,
+                    default => AttendanceStatus::Present,
+                };
+            } elseif (isset($excusedDays[$day->toDateString()])) {
                 $statuses[$index] = AttendanceStatus::Absent;
             }
         }
@@ -189,16 +215,29 @@ class AttendanceSeeder extends Seeder
             }
         }
 
-        foreach ($periods as $index => [$schedule, $day]) {
+        foreach ($periods as $index => [$schedule, $day, $counts]) {
             $status = $statuses[$index] ?? self::roll($profile);
+            $firstStatus = $status;
+
+            if ($script === null && ! isset($statuses[$index])) {
+                $firstStatus = match ($status) {
+                    AttendanceStatus::Present => mt_rand(1, self::CORRECTED_TO_PRESENT) === 1 ? (mt_rand(1, 4) === 1 ? AttendanceStatus::Late : AttendanceStatus::Absent) : $status,
+                    AttendanceStatus::Absent => mt_rand(1, self::CORRECTED_BETWEEN) === 1 ? AttendanceStatus::Late : $status,
+                    AttendanceStatus::Late => mt_rand(1, self::CORRECTED_BETWEEN) === 1 ? AttendanceStatus::Absent : $status,
+                };
+            }
+
+            // Present is the default: nothing is written unless it was marked otherwise first.
+            if ($firstStatus === AttendanceStatus::Present) {
+                continue;
+            }
+
             $markedAt = $day->setTimeFrom($schedule->ends_at)->subMinutes(mt_rand(0, 40));
             $updatedAt = $markedAt;
 
-            // About 1 in 250 marks was corrected the next morning.
-            if ($script === null && ! isset($statuses[$index]) && mt_rand(1, 250) === 1) {
-                $firstStatus = $status === AttendanceStatus::Present ? AttendanceStatus::Absent : AttendanceStatus::Present;
+            if ($firstStatus !== $status) {
                 $updatedAt = $day->addDay()->setTime(mt_rand(7, 11), mt_rand(0, 59))->min(CarbonImmutable::now());
-                $changer = mt_rand(1, 5) === 1 ? $dean->id : $schedule->teacher->user_id;
+                $changer = mt_rand(1, 4) === 1 ? $dean->id : $schedule->teacher->user_id;
                 $this->corrections[] = [$enrollment->id, $schedule->id, $day->toDateString(), $firstStatus, $changer, $updatedAt];
             }
 
@@ -281,6 +320,43 @@ class AttendanceSeeder extends Seeder
                 'changed_at' => $excuse->reviewed_at,
             ])->all());
         }
+    }
+
+    /**
+     * Classes marked on a partial-day suspension's date before it was
+     * entered: the first two (by start) that start inside its window and
+     * had ended by then. Keys are "schedule id|date".
+     *
+     * @return array<string, true>
+     */
+    private function markedBeforeSuspension(Term $term): array
+    {
+        $marked = [];
+        $events = CalendarEvent::where('suspends_classes', true)
+            ->whereNotNull('suspends_from')
+            ->whereBetween('starts_on', [$term->starts_on->toDateString(), self::lastClassDay()->toDateString()])
+            ->get();
+
+        foreach ($events as $event) {
+            $enteredAt = ($event->created_at ?? CarbonImmutable::now())->format('H:i:s');
+            $schedules = Schedule::query()
+                ->where('term_id', $term->id)
+                ->when($event->college_id !== null, fn ($query) => $query->whereHas('subjectOffering.section.program', fn ($program) => $program->where('college_id', $event->college_id)))
+                ->whereRaw('WEEKDAY(starts_at) = ?', [$event->starts_on->dayOfWeekIso - 1])
+                ->whereRaw('TIME(starts_at) >= ?', [$event->suspends_from])
+                ->when($event->suspends_until !== null, fn ($query) => $query->whereRaw('TIME(starts_at) < ?', [$event->suspends_until]))
+                ->whereRaw('TIME(ends_at) <= ?', [$enteredAt])
+                ->orderBy('starts_at')
+                ->orderBy('id')
+                ->limit(2)
+                ->pluck('id');
+
+            foreach ($schedules as $scheduleId) {
+                $marked["{$scheduleId}|{$event->starts_on->toDateString()}"] = true;
+            }
+        }
+
+        return $marked;
     }
 
     /**

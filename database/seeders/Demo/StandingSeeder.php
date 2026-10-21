@@ -2,27 +2,45 @@
 
 namespace Database\Seeders\Demo;
 
+use App\Attendance\ClassDays;
+use App\Attendance\Standing;
 use App\Enums\AttendanceStatus;
 use App\Enums\EnrollmentStatus;
+use App\Enums\RegistrationStatus;
+use App\Enums\UserRole;
 use App\Models\AttendancePolicy;
+use App\Models\AttendanceRecord;
 use App\Models\College;
+use App\Models\Enrollment;
 use App\Models\Term;
+use App\Models\TermRegistration;
 use App\Models\User;
+use App\Notifications\AttendanceNotice;
+use App\Registration\Placement;
+use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
- * Derives each enrollment's standing from its marks, by the term's policy:
- * equivalent absences = unexcused absences + floor(lates / lates per
- * absence). The highest warning count reached becomes warning_level;
- * reaching the drop count flags the enrollment at the class where it
- * happened. In each college the earliest flag (other than the atrisk demo
- * login's) was already confirmed by the dean two days later, and that
- * class has no marks after the drop.
+ * Attendance standing, as the app would have reached it mark by mark, under
+ * App\Attendance\Standing's rules: equivalent absences = unexcused absences
+ * + floor(lates / lates per absence), not counting excused absences or
+ * marks on suspended meetings.
  *
- * Classes already dropped by a withdrawal keep the warnings they reached
- * before it, but are never flagged.
+ * Each class's counted marks are replayed in order: every warning count
+ * reached sends the learner a warning, dated by the mark that reached it;
+ * reaching the drop count flags the class and notifies the learner and the
+ * college's dean. Then the deans decide, through the app's own actions at
+ * the time they did: per college, the earliest flag of a non-demo learner
+ * is confirmed as an absence drop two days later, and the atrisk demo
+ * login's second flagged class is dismissed (their first stays flagged);
+ * in the first college a second flag is dropped and then reinstated. One irregular learner had a subject removed by the dean after
+ * attendance was taken. Older notifications are partly read.
+ *
+ * Finally Standing::refreshMany() runs over everything: it must change
+ * nothing and notify nobody, or seeding fails.
  */
 class StandingSeeder extends Seeder
 {
@@ -31,93 +49,303 @@ class StandingSeeder extends Seeder
         $term = Term::where('school_year', CampusData::TERM['school_year'])
             ->where('semester', CampusData::TERM['semester'])
             ->sole();
-        /** @var AttendancePolicy $policy */
-        $policy = $term->attendancePolicy;
-        /** @var list<int> $warnAt */
-        $warnAt = $policy->warn_at_absences;
 
-        $counts = DB::table('enrollments')
-            ->join('attendance_records', 'attendance_records.enrollment_id', '=', 'enrollments.id')
-            ->whereIn('enrollments.status', [EnrollmentStatus::Enrolled->value, EnrollmentStatus::Dropped->value])
-            ->groupBy('enrollments.id', 'enrollments.status')
-            ->selectRaw("enrollments.id, enrollments.status, SUM(attendance_records.status = 'absent' AND attendance_records.absence_excuse_id IS NULL) AS absences, SUM(attendance_records.status = 'late') AS lates")
-            ->get();
-
-        foreach ($counts as $count) {
-            $equivalent = (int) $count->absences + intdiv((int) $count->lates, $policy->lates_per_absence);
-            $reached = array_filter($warnAt, fn (int $at): bool => $at <= $equivalent);
-
-            if ($equivalent >= $policy->drop_at_absences && $count->status === EnrollmentStatus::Enrolled->value) {
-                DB::table('enrollments')->where('id', $count->id)->update([
-                    'warning_level' => max([0, ...$warnAt]),
-                    'status' => EnrollmentStatus::ForDropping->value,
-                    'flagged_for_drop_at' => $this->reachedAt($count->id, $policy),
-                ]);
-            } elseif ($reached !== []) {
-                DB::table('enrollments')->where('id', $count->id)->update(['warning_level' => max($reached)]);
-            }
-        }
-
-        $this->confirmEarliestDrops();
+        $this->removeOneSubject($term);
+        $this->replay($term);
+        $this->deanDecisions($term);
+        $this->readOlderNotifications();
+        $this->verify($term);
     }
 
     /**
-     * When the enrollment's equivalent absences first reached the drop count.
+     * The dean takes a major subject off one irregular learner's load a week
+     * after its first late or absence; no marks after that.
      */
-    private function reachedAt(int $enrollmentId, AttendancePolicy $policy): ?string
+    private function removeOneSubject(Term $term): void
     {
-        $absences = 0;
-        $lates = 0;
-        $records = DB::table('attendance_records')
-            ->where('enrollment_id', $enrollmentId)
-            ->orderBy('class_date')
-            ->orderBy('created_at')
-            ->get(['status', 'absence_excuse_id', 'created_at']);
+        $registrations = TermRegistration::with('learner.user')
+            ->where('term_id', $term->id)
+            ->where('is_irregular', true)
+            ->where('status', RegistrationStatus::Registered)
+            ->orderBy('id')
+            ->get();
 
-        foreach ($records as $record) {
-            $absences += (int) ($record->status === AttendanceStatus::Absent->value && $record->absence_excuse_id === null);
-            $lates += (int) ($record->status === AttendanceStatus::Late->value);
+        foreach ($registrations as $registration) {
+            $enrollment = Enrollment::query()
+                ->where('learner_id', $registration->learner_id)
+                ->where('status', EnrollmentStatus::Enrolled)
+                ->whereHas('subjectOffering.subject', fn ($subject) => $subject->where('code', 'not regexp', '^(GE|PE|NSTP) '))
+                ->whereHas('attendanceRecords')
+                ->orderBy('id')
+                ->first();
+            $firstMark = $enrollment?->attendanceRecords()->min('class_date');
 
-            if ($absences + intdiv($lates, $policy->lates_per_absence) >= $policy->drop_at_absences) {
-                return $record->created_at;
+            if ($enrollment === null || $firstMark === null) {
+                continue;
             }
-        }
 
-        return null;
+            $removedAt = CarbonImmutable::parse($firstMark)->addWeek()->setTime(10, 0);
+
+            if ($removedAt->isFuture()) {
+                continue;
+            }
+
+            $dean = self::dean($registration->learner->user->college_id);
+            self::at($removedAt, fn () => app(Placement::class)->remove($registration, $enrollment, $dean));
+            $enrollment->attendanceRecords()->where('class_date', '>=', $removedAt->toDateString())->delete();
+
+            return;
+        }
     }
 
-    private function confirmEarliestDrops(): void
+    /**
+     * Warning levels, drop flags and their notices, from each class's
+     * counted marks in order.
+     */
+    private function replay(Term $term): void
     {
-        foreach (College::all() as $college) {
-            $dean = User::where('email', StaffSeeder::deanEmail($college->code))->sole();
-            $flagged = DB::table('enrollments')
-                ->join('learners', 'learners.id', '=', 'enrollments.learner_id')
-                ->join('users', 'users.id', '=', 'learners.user_id')
-                ->where('users.college_id', $college->id)
-                ->where('users.email', '!=', RegistrationSeeder::demoEmail('atrisk', $college->code))
-                ->where('enrollments.status', EnrollmentStatus::ForDropping->value)
-                ->orderBy('enrollments.flagged_for_drop_at')
-                ->first(['enrollments.id', 'enrollments.flagged_for_drop_at']);
+        $days = app(ClassDays::class);
+        /** @var AttendancePolicy $policy */
+        $policy = $term->attendancePolicy;
+        /** @var list<int> $warnAt */
+        $warnAt = array_map(intval(...), $policy->warn_at_absences);
 
-            if ($flagged === null) {
+        $marks = AttendanceRecord::with(['schedule.term', 'schedule.subjectOffering.section.program'])
+            ->whereIn('status', [AttendanceStatus::Absent, AttendanceStatus::Late])
+            ->whereHas('schedule', fn ($schedule) => $schedule->where('term_id', $term->id))
+            ->orderBy('class_date')
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('enrollment_id');
+        $enrollments = Enrollment::with(['learner.user', 'subjectOffering.subject', 'subjectOffering.section.program'])
+            ->findMany($marks->keys())
+            ->keyBy('id');
+
+        foreach ($marks as $enrollmentId => $records) {
+            $enrollment = $enrollments[$enrollmentId];
+            $absences = 0;
+            $lates = 0;
+            $level = 0;
+            $flaggedAt = null;
+            /** @var list<array{string, int, CarbonImmutable}> $events */
+            $events = [];
+
+            foreach ($records as $record) {
+                if ($record->absence_excuse_id !== null || $days->suspension($record->schedule, $record->class_date) !== null) {
+                    continue;
+                }
+
+                $record->status === AttendanceStatus::Absent ? $absences++ : $lates++;
+                $equivalent = $absences + intdiv($lates, $policy->lates_per_absence);
+                $at = $record->created_at ?? $record->class_date;
+
+                if ($equivalent >= $policy->drop_at_absences) {
+                    $level = max([0, ...$warnAt]);
+
+                    if ($flaggedAt === null) {
+                        $flaggedAt = $at;
+                        $events[] = [AttendanceNotice::FLAGGED, $equivalent, $at];
+                    }
+
+                    continue;
+                }
+
+                $reached = max([0, ...array_filter($warnAt, fn (int $count): bool => $count <= $equivalent)]);
+
+                if ($reached > $level) {
+                    $level = $reached;
+                    $events[] = [AttendanceNotice::WARNING, $equivalent, $at];
+                }
+            }
+
+            if ($events === []) {
                 continue;
             }
 
-            $confirmedAt = CarbonImmutable::parse($flagged->flagged_for_drop_at)->addDays(2)->setTime(9, 0);
+            $dropped = $enrollment->status === EnrollmentStatus::Dropped;
+            $enrollment->forceFill([
+                'warning_level' => $level,
+                'status' => $flaggedAt !== null && ! $dropped ? EnrollmentStatus::ForDropping : $enrollment->status,
+                'flagged_for_drop_at' => $flaggedAt,
+            ])->save();
 
-            if ($confirmedAt->isFuture()) {
-                continue;
+            foreach ($events as [$kind, $count, $at]) {
+                $this->notify($enrollment, $kind, $count, $at->addMinutes(mt_rand(1, 20)), $policy->drop_at_absences);
+            }
+        }
+    }
+
+    /**
+     * The notices Standing::refresh() sends, worded the same.
+     */
+    private function notify(Enrollment $enrollment, string $kind, int $count, CarbonImmutable $at, int $dropAt): void
+    {
+        $offering = $enrollment->subjectOffering;
+        $class = "{$offering->subject->code} ({$offering->section->program->code} {$offering->section->name})";
+        $learner = $enrollment->learner->user;
+
+        self::at($at, function () use ($kind, $count, $class, $learner, $offering, $dropAt): void {
+            if ($kind === AttendanceNotice::WARNING) {
+                $learner->notify(new AttendanceNotice(AttendanceNotice::WARNING, __('Warning: you have :count equivalent absences in :class. At :drop you will be flagged for dropping.', ['count' => $count, 'class' => $class, 'drop' => $dropAt])));
+
+                return;
             }
 
-            DB::table('enrollments')->where('id', $flagged->id)->update([
-                'status' => EnrollmentStatus::Dropped->value,
-                'drop_confirmed_at' => $confirmedAt,
-                'drop_confirmed_by' => $dean->id,
-            ]);
-            DB::table('attendance_records')
-                ->where('enrollment_id', $flagged->id)
-                ->where('class_date', '>=', $confirmedAt->toDateString())
-                ->delete();
+            $learner->notify(new AttendanceNotice(AttendanceNotice::FLAGGED, __('You have :count equivalent absences in :class and are flagged for dropping. Your dean will decide; see them if you have an excuse.', ['count' => $count, 'class' => $class])));
+
+            $deans = User::where('role', UserRole::Dean)->where('college_id', $offering->section->program->college_id)->where('is_active', true)->get();
+
+            foreach ($deans as $dean) {
+                $dean->notify(new AttendanceNotice(AttendanceNotice::LEARNER_FLAGGED, __(':name has :count equivalent absences in :class and is flagged for dropping.', ['name' => $learner->full_name, 'count' => $count, 'class' => $class]), route('dean.standing.index', ['term' => $offering->section->term_id, 'status' => 'flagged'], false)));
+            }
+        });
+    }
+
+    /**
+     * Per college: confirm the earliest non-demo flag two days later (its
+     * class has no marks after that) and dismiss the atrisk login's second
+     * flagged class the day after its last mark. In the first college, drop
+     * the next non-demo flag and reinstate it two days later.
+     */
+    private function deanDecisions(Term $term): void
+    {
+        foreach (College::orderBy('id')->get()->values() as $index => $college) {
+            $dean = self::dean($college->id);
+            $atrisk = RegistrationSeeder::demoEmail('atrisk', $college->code);
+            $flagged = fn (bool $demo) => Enrollment::query()
+                ->where('status', EnrollmentStatus::ForDropping)
+                ->whereHas('subjectOffering.section', fn ($section) => $section->where('term_id', $term->id))
+                ->whereHas('learner.user', fn ($user) => $user->where('college_id', $college->id)->where('email', $demo ? '=' : '!=', $atrisk));
+
+            $natural = $flagged(false)->orderBy('flagged_for_drop_at')->orderBy('id')->get()->values();
+
+            if (isset($natural[0])) {
+                $this->confirm($natural[0], $dean, days: 2, until: null);
+            }
+
+            if ($index === 0 && isset($natural[1])) {
+                $reinstatedAt = self::flaggedAt($natural[1])->addDays(3)->setTime(9, 0);
+
+                if (! $reinstatedAt->isFuture() && $this->confirm($natural[1], $dean, days: 1, until: $reinstatedAt)) {
+                    self::at($reinstatedAt, fn () => app(Standing::class)->reinstate($natural[1]->refresh(), $dean));
+                }
+            }
+
+            $second = $flagged(true)->orderBy('id')->skip(1)->first();
+
+            if ($second !== null) {
+                $lastMark = CarbonImmutable::parse((string) $second->attendanceRecords()->max('created_at'));
+                $dismissedAt = $lastMark->addDay()->setTime(10, 0)->min(CarbonImmutable::now());
+                self::at($dismissedAt, fn () => app(Standing::class)->dismiss($second, $dean));
+            }
+        }
+    }
+
+    /**
+     * Confirm an absence drop some days after the flag; marks from then (up
+     * to a reinstatement, if any) are taken away, since a dropped learner
+     * is off the class list.
+     */
+    private function confirm(Enrollment $enrollment, User $dean, int $days, ?CarbonImmutable $until): bool
+    {
+        $confirmedAt = self::flaggedAt($enrollment)->addDays($days)->setTime(9, 0);
+
+        if ($confirmedAt->isFuture()) {
+            return false;
+        }
+
+        self::at($confirmedAt, fn () => app(Standing::class)->confirmDrop($enrollment, $dean));
+        $enrollment->attendanceRecords()
+            ->where('class_date', '>=', $confirmedAt->toDateString())
+            ->when($until !== null, fn ($query) => $query->where('class_date', '<', $until->toDateString()))
+            ->delete();
+
+        return true;
+    }
+
+    /**
+     * Notices more than a week old were read about half the time; the
+     * rest, and everything recent, stay unread.
+     */
+    private function readOlderNotifications(): void
+    {
+        $older = DB::table('notifications')
+            ->where('type', AttendanceNotice::class)
+            ->where('created_at', '<', CarbonImmutable::now()->subWeek())
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get(['id', 'created_at']);
+
+        foreach ($older as $notification) {
+            if (mt_rand(0, 1) === 1) {
+                DB::table('notifications')->where('id', $notification->id)->update([
+                    'read_at' => CarbonImmutable::parse($notification->created_at)->addHours(mt_rand(1, 48)),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * The app's own recalculation must agree with everything seeded above.
+     * A class with fewer lates and absences than the first warning (or drop)
+     * count can't have reached anything, so only the others are recalculated.
+     */
+    private function verify(Term $term): void
+    {
+        /** @var AttendancePolicy $policy */
+        $policy = $term->attendancePolicy;
+        $ids = AttendanceRecord::query()
+            ->whereIn('status', [AttendanceStatus::Absent, AttendanceStatus::Late])
+            ->whereHas('schedule', fn ($schedule) => $schedule->where('term_id', $term->id))
+            ->groupBy('enrollment_id')
+            ->havingRaw('COUNT(*) >= ?', [min([$policy->drop_at_absences, ...array_map(intval(...), $policy->warn_at_absences)])])
+            ->pluck('enrollment_id');
+        $snapshot = fn (): array => Enrollment::whereIn('id', $ids)
+            ->orderBy('id')
+            ->get(['id', 'status', 'warning_level', 'flagged_for_drop_at'])
+            ->map(fn (Enrollment $enrollment): string => implode('|', [$enrollment->id, $enrollment->status->value, $enrollment->warning_level, $enrollment->flagged_for_drop_at?->toDateTimeString()]))
+            ->all();
+
+        $before = $snapshot();
+        $notices = DB::table('notifications')->count();
+
+        app(Standing::class)->refreshMany($ids);
+
+        $changed = array_diff($snapshot(), $before);
+
+        if ($changed !== [] || DB::table('notifications')->count() !== $notices) {
+            throw new RuntimeException('The seeded standing disagrees with App\Attendance\Standing: '.implode(', ', array_slice($changed, 0, 5)));
+        }
+    }
+
+    private static function flaggedAt(Enrollment $enrollment): CarbonImmutable
+    {
+        return $enrollment->flagged_for_drop_at ?? throw new RuntimeException("Enrollment {$enrollment->id} is not flagged.");
+    }
+
+    private static function dean(?int $collegeId): User
+    {
+        return User::where('role', UserRole::Dean)->where('college_id', $collegeId)->orderBy('id')->firstOrFail();
+    }
+
+    /**
+     * Run the app's code as of a past moment (its now() and timestamps).
+     *
+     * @template T
+     *
+     * @param  callable(): T  $action
+     * @return T
+     */
+    private static function at(CarbonImmutable $moment, callable $action): mixed
+    {
+        $now = Carbon::getTestNow();
+        Carbon::setTestNow($moment);
+
+        try {
+            return $action();
+        } finally {
+            Carbon::setTestNow($now);
         }
     }
 }
