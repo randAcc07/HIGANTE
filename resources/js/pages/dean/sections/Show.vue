@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, setLayoutProps } from '@inertiajs/vue3';
-import { CalendarClock, Plus, UserRound } from '@lucide/vue';
+import { CalendarClock, Copy, Plus, UserRound } from '@lucide/vue';
 import BatchController from '@/actions/App/Http/Controllers/Dean/BatchController';
 import OfferingController from '@/actions/App/Http/Controllers/Dean/OfferingController';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
@@ -8,6 +8,7 @@ import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableCo
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import BatchFormDialog from '@/components/dean/BatchFormDialog.vue';
 import BatchRoster from '@/components/dean/BatchRoster.vue';
+import CopyBatchesDialog from '@/components/dean/CopyBatchesDialog.vue';
 import OfferingFormDialog from '@/components/dean/OfferingFormDialog.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
@@ -233,6 +234,23 @@ function nextBatchName(offering: Offering): string {
                                             Batch</Button
                                         >
                                     </BatchFormDialog>
+                                    <CopyBatchesDialog
+                                        v-if="
+                                            canEdit &&
+                                            offering.batches.length &&
+                                            offerings.length > 1
+                                        "
+                                        :source="offering"
+                                        :offerings="offerings"
+                                    >
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            class="h-6 px-2 text-xs"
+                                            ><Copy class="h-3 w-3" />
+                                            Copy</Button
+                                        >
+                                    </CopyBatchesDialog>
                                 </div>
                             </td>
                             <td class="px-4 py-2 text-right">

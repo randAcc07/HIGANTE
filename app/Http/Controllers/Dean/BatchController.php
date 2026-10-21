@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Dean;
 
+use App\Enums\EnrollmentStatus;
 use App\Http\Controllers\Admin\Concerns\RefusesDeletingInUse;
 use App\Http\Controllers\Controller;
 use App\Models\Batch;
@@ -11,6 +12,7 @@ use App\Models\SubjectOffering;
 use App\Registration\Placement;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -99,6 +101,70 @@ class BatchController extends Controller
         $placement->assignBatches($assignments);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Batches saved.')]);
+
+        return back();
+    }
+
+    /**
+     * Give other subjects of the section the same split as this one: the
+     * batch names they lack are added (empty, unscheduled), and everyone
+     * taking both is put in the same-named batch. Learners without a batch
+     * here are left as they are; a target's extra batches stay. Refused as
+     * a whole if anyone would be in two classes at once.
+     */
+    public function copy(Request $request, SubjectOffering $offering, Placement $placement): RedirectResponse
+    {
+        Gate::authorize('update', $offering->section);
+
+        $targetIds = $request->validate([
+            'targets' => ['required', 'array', 'min:1'],
+            'targets.*' => ['integer', 'distinct', Rule::exists(SubjectOffering::class, 'id')->where('section_id', $offering->section_id)->whereNot('id', $offering->id)],
+        ], ['targets.required' => __('Choose the subjects to copy to.'), 'targets.*.exists' => __('Choose subjects of this section.')])['targets'];
+
+        $source = Enrollment::with('batch:id,name')
+            ->where('subject_offering_id', $offering->id)
+            ->where('status', '!=', EnrollmentStatus::Dropped)
+            ->whereNotNull('batch_id')
+            ->get()
+            ->mapWithKeys(fn (Enrollment $enrollment): array => [$enrollment->learner_id => $enrollment->batch?->name]);
+        $names = $offering->batches()->orderBy('name')->pluck('name');
+
+        if ($names->isEmpty()) {
+            throw ValidationException::withMessages(['targets' => __('This subject has no batches to copy.')]);
+        }
+
+        [$added, $placed] = DB::transaction(function () use ($targetIds, $source, $names, $placement): array {
+            $added = 0;
+            $assignments = [];
+
+            foreach (SubjectOffering::with('batches')->findMany($targetIds) as $target) {
+                $byName = $target->batches->keyBy('name');
+
+                foreach ($names->diff($byName->keys()) as $name) {
+                    $byName[$name] = $target->batches()->create(['name' => $name]);
+                    $added++;
+                }
+
+                $enrollments = Enrollment::where('subject_offering_id', $target->id)
+                    ->where('status', '!=', EnrollmentStatus::Dropped)
+                    ->whereIn('learner_id', $source->keys())
+                    ->get();
+
+                foreach ($enrollments as $enrollment) {
+                    $assignments[$enrollment->id] = $byName[$source[$enrollment->learner_id]]->id;
+                }
+            }
+
+            // Checks every learner's week; a clash undoes the added batches too.
+            $placement->assignBatches($assignments);
+
+            return [$added, count($assignments)];
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => trim(
+            trans_choice('{0} No learners to place.|{1} :count learner placed.|[2,*] :count learners placed.', $placed, ['count' => $placed])
+            .' '.($added > 0 ? trans_choice('{1} :count batch added; schedule its classes on the Timetables page.|[2,*] :count batches added; schedule their classes on the Timetables page.', $added, ['count' => $added]) : '')
+        )]);
 
         return back();
     }

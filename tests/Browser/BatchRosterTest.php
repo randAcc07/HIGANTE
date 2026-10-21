@@ -59,3 +59,17 @@ it('moves ticked learners to a batch', function () {
 
     expect(labBatches($campus))->toBe(['Abad' => '1-AB', 'Bautista' => null, 'Cruz' => '1-AB']);
 });
+
+it('copies a subject\'s batches to another subject', function () {
+    $campus = $this->campus;
+
+    visit(path('dean.sections.show', $campus->section))
+        ->click('tbody button:has-text("Copy")')
+        ->assertSee('Copy CS 102\'s batches')
+        ->click('[role="dialog"] label:has-text("CS 101") button')
+        ->click('[role="dialog"] button:has-text("Copy")')
+        ->assertSee('2 batches added')
+        ->assertNoSmoke();
+
+    expect($campus->lecture->batches()->orderBy('name')->pluck('name')->all())->toBe(['1-AA', '1-AB']);
+});

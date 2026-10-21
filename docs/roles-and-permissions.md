@@ -47,7 +47,7 @@ the college and can be offered to any section of its programs.
 | Create schedules: day, time, any campus room, onsite or online, whole offering or one batch                            | ✅     |
 | Assign teachers from their own college only                                                                            | ✅     |
 | Place learners auto-sectioning could not fit; move learners between sections                                           | ✅     |
-| Copy one subject's batches to the section's other split subjects                                                       | ⏳     |
+| Copy one subject's batches to the section's other split subjects                                                       | ✅     |
 | Enroll irregular learners subject by subject                                                                           | ✅     |
 | Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week | ✅     |
 | Oversee their college's excuses and each class's decision; decide only for a class without an active teacher           | ✅     |

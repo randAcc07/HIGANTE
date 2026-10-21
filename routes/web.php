@@ -96,6 +96,7 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
     Route::delete('schedules/{schedule}', [ScheduleController::class, 'destroy'])->name('schedules.destroy');
     Route::get('timetables', [TimetableController::class, 'index'])->name('timetables.index');
     Route::put('sections/{section}/batches', [BatchController::class, 'roster'])->name('batches.roster');
+    Route::post('offerings/{offering}/batches/copy', [BatchController::class, 'copy'])->name('batches.copy');
 
     // Placement: authorized through the learner's registration (TermRegistrationPolicy).
     Route::get('attendance', [DeanAttendanceController::class, 'index'])->name('attendance.index');

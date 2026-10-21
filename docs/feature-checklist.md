@@ -159,7 +159,7 @@ Excuses are decided class by class (reworked after the first build, which had th
 
 - [ ] Learner CSV import (needs a real file to design against)
 - [ ] Server commands for admin accounts, which no admin can change from the app: e.g. `app:reset-admin <email>` printing a new setup link, plus changing an admin's email and deactivating/reactivating an admin
-- [ ] Copy one subject's batches to the section's other split subjects
+- [x] Copy one subject's batches to the section's other subjects ("Copy" on a split subject): missing batch names are added (unscheduled), everyone taking both is put in the same-named batch (learners unbatched in the source are left as they are; a target's extra batches stay); refused whole on any lab overlap
 - [ ] Suspensions for only some programs or year levels of a college (e.g. 4th years for a job fair), if such memos turn out to be common
 - [ ] Email warnings, once a mail server exists (AttendanceNotice is database-only for now)
 - [ ] Open items from the roles doc: substitutes, guardian excuses, curriculum/prospectus

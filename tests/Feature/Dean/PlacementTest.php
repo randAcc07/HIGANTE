@@ -235,4 +235,84 @@ class PlacementTest extends SchedulingTestCase
                 ->where('classes.0.subject', 'CS 101')
                 ->where('canEdit', true));
     }
+
+    /**
+     * CS 101 split into 1-AA (Ann) and 1-AB (Ben), with Cy unbatched; all
+     * three take the subject passed in too.
+     *
+     * @return array{Batch, Batch, array<string, TermRegistration>}
+     */
+    private function splitSource(SubjectOffering ...$targets): array
+    {
+        [$aa, $ab] = [Batch::factory()->for($this->offering)->create(['name' => '1-AA']), Batch::factory()->for($this->offering)->create(['name' => '1-AB'])];
+        $learners = [];
+
+        foreach (['Ann' => $aa, 'Ben' => $ab, 'Cy' => null] as $name => $batch) {
+            $learners[$name] = $this->registration(['section_id' => $this->section->id]);
+            $this->enroll($learners[$name], $this->offering, $batch);
+
+            foreach ($targets as $target) {
+                $this->enroll($learners[$name], $target);
+            }
+        }
+
+        return [$aa, $ab, $learners];
+    }
+
+    private function batchIn(SubjectOffering $offering, TermRegistration $registration): ?string
+    {
+        return Enrollment::with('batch')->where('subject_offering_id', $offering->id)->where('learner_id', $registration->learner_id)->sole()->batch?->name;
+    }
+
+    public function test_copying_batches_gives_other_subjects_the_same_split()
+    {
+        $physics = $this->anotherOffering('PHYS 101');
+        $chemistry = SubjectOffering::factory()->for($this->section)->create(['subject_id' => Subject::factory()->for($this->college)->create(['code' => 'CHEM 101'])->id]);
+        $extra = Batch::factory()->for($chemistry)->create(['name' => '1-AC']);
+        $chemAA = Batch::factory()->for($chemistry)->create(['name' => '1-AA']);
+        [, , $learners] = $this->splitSource($physics, $chemistry);
+        Enrollment::where('subject_offering_id', $chemistry->id)->where('learner_id', $learners['Ben']->learner_id)->update(['batch_id' => $extra->id]);
+        Enrollment::where('subject_offering_id', $chemistry->id)->where('learner_id', $learners['Cy']->learner_id)->update(['batch_id' => $chemAA->id]);
+
+        $this->post(route('dean.batches.copy', $this->offering), ['targets' => [$physics->id, $chemistry->id]])
+            ->assertSessionHasNoErrors()
+            ->assertInertiaFlash('toast.message', '4 learners placed. 3 batches added; schedule their classes on the Timetables page.');
+
+        $this->assertSame(['1-AA', '1-AB'], $physics->batches()->orderBy('name')->pluck('name')->all());
+        $this->assertSame(['1-AA', '1-AB', '1-AC'], $chemistry->batches()->orderBy('name')->pluck('name')->all(), 'The extra 1-AC stays.');
+        $this->assertSame(['1-AA', '1-AB', null], [$this->batchIn($physics, $learners['Ann']), $this->batchIn($physics, $learners['Ben']), $this->batchIn($physics, $learners['Cy'])]);
+        $this->assertSame('1-AB', $this->batchIn($chemistry, $learners['Ben']), 'Moved out of 1-AC to match.');
+        $this->assertSame('1-AA', $this->batchIn($chemistry, $learners['Cy']), 'Unbatched in CS 101: left as is.');
+    }
+
+    public function test_a_copy_that_would_overlap_labs_is_refused_whole()
+    {
+        $physics = $this->anotherOffering('PHYS 101');
+        $chemistry = SubjectOffering::factory()->for($this->section)->create(['subject_id' => Subject::factory()->for($this->college)->create(['code' => 'CHEM 101'])->id]);
+        [$aa, , $learners] = $this->splitSource($physics, $chemistry);
+        $chemAA = Batch::factory()->for($chemistry)->create(['name' => '1-AA']);
+        // Both 1-AA labs on Wednesday morning (put in directly, as scheduling would warn).
+        Schedule::factory()->for($this->offering)->for($aa)->slot(3, '08:00', '11:00')->create();
+        Schedule::factory()->for($chemistry)->for($chemAA)->slot(3, '08:00', '11:00')->create();
+
+        $this->post(route('dean.batches.copy', $this->offering), ['targets' => [$physics->id, $chemistry->id]])
+            ->assertSessionHasErrors('batches.0');
+
+        $this->assertSame(0, $physics->batches()->count(), 'The batches added for PHYS 101 are undone too.');
+        $this->assertNull($this->batchIn($chemistry, $learners['Ann']));
+    }
+
+    public function test_copying_batches_stays_within_the_section_and_its_dean()
+    {
+        $elsewhere = $this->anotherOffering('CS 201', $this->otherSection('1-B'));
+        $this->post(route('dean.batches.copy', $this->offering), ['targets' => [$this->anotherOffering('PHYS 101')->id]])
+            ->assertSessionHasErrors(['targets' => 'This subject has no batches to copy.']);
+
+        Batch::factory()->for($this->offering)->create(['name' => '1-AA']);
+        $this->post(route('dean.batches.copy', $this->offering), ['targets' => [$elsewhere->id]])->assertSessionHasErrors('targets.0');
+        $this->post(route('dean.batches.copy', $this->offering), ['targets' => [$this->offering->id]])->assertSessionHasErrors('targets.0');
+
+        $this->actingAs(User::factory()->dean(College::factory()->create())->create());
+        $this->post(route('dean.batches.copy', $this->offering), ['targets' => [$elsewhere->id]])->assertForbidden();
+    }
 }
