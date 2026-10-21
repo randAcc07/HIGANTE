@@ -10,8 +10,9 @@ use Illuminate\Database\Seeder;
 
 /**
  * The upcoming 2nd semester: the current term's sections again (same
- * programs, year levels, names and capacities), each with a few general
- * education subjects that have no teacher or schedule yet. Nobody is
+ * programs, year levels, names and capacities), each with its few general
+ * education subjects from the curriculum, with no teacher or schedule yet
+ * (one is left out: CampusData::CURRICULUM_GAP). Nobody is
  * registered, so the registrar's list shows the current term's learners
  * carried over and pre-ticked, and registering them keeps each block in
  * its same-named section.
@@ -36,8 +37,10 @@ class NextTermSeeder extends Seeder
                 'capacity' => $section->capacity,
             ]);
 
+            $gap = $section->program->code === CampusData::CURRICULUM_GAP['program'] && $section->name === CampusData::CURRICULUM_GAP['section'];
             $subjectIds = Subject::where('college_id', $section->program->college_id)
                 ->whereIn('code', CampusData::SECOND_SEMESTER_BY_YEAR[$section->year_level])
+                ->when($gap, fn ($query) => $query->where('code', '!=', CampusData::CURRICULUM_GAP['subject']))
                 ->orderBy('code')
                 ->pluck('id');
 

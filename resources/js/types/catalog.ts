@@ -30,6 +30,17 @@ export type Subject = {
     offerings_count?: number;
 };
 
+/** One subject of a program's curriculum, in a year level and semester. */
+export type CurriculumLine = {
+    id: number;
+    year_level: number;
+    semester: Semester;
+    subject: Pick<
+        Subject,
+        'id' | 'code' | 'title' | 'lecture_units' | 'laboratory_units'
+    >;
+};
+
 export type RoomType = 'lecture' | 'laboratory' | 'venue';
 
 export type Room = {
@@ -66,6 +77,8 @@ export type AttendancePolicy = {
     lates_per_absence: number;
     drop_at_absences: number;
     warn_at_absences: number[];
+    /** Days after a class its teacher may still change marks; null is no limit. */
+    teacher_edit_days: number | null;
 };
 
 export type Term = {

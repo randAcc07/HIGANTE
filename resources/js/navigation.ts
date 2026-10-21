@@ -13,6 +13,7 @@ import {
     GraduationCap,
     LayoutGrid,
     LayoutList,
+    ListTree,
     Users,
 } from '@lucide/vue';
 import CollegeController from '@/actions/App/Http/Controllers/Admin/CollegeController';
@@ -21,6 +22,7 @@ import SubjectController from '@/actions/App/Http/Controllers/Admin/SubjectContr
 import AccountController from '@/actions/App/Http/Controllers/Admin/AccountController';
 import TermController from '@/actions/App/Http/Controllers/Admin/TermController';
 import CalendarController from '@/actions/App/Http/Controllers/CalendarController';
+import CurriculumController from '@/actions/App/Http/Controllers/Dean/CurriculumController';
 import DeanAttendanceController from '@/actions/App/Http/Controllers/Dean/AttendanceController';
 import DeanExcuseController from '@/actions/App/Http/Controllers/Dean/ExcuseController';
 import DeanLearnerController from '@/actions/App/Http/Controllers/Dean/LearnerController';
@@ -70,6 +72,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             title: 'Timetables',
             href: TimetableController.index(),
             icon: CalendarClock,
+        },
+        {
+            title: 'Curriculum',
+            href: CurriculumController.index(),
+            icon: ListTree,
         },
         {
             title: 'Learners',

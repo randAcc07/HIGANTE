@@ -44,6 +44,16 @@ class Program extends Model
     }
 
     /**
+     * The program's curriculum, one line per subject.
+     *
+     * @return HasMany<CurriculumSubject, $this>
+     */
+    public function curriculum(): HasMany
+    {
+        return $this->hasMany(CurriculumSubject::class);
+    }
+
+    /**
      * @return HasMany<Section, $this>
      */
     public function sections(): HasMany

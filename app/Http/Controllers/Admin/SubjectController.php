@@ -62,7 +62,10 @@ class SubjectController extends Controller
 
     public function destroy(Subject $subject): RedirectResponse
     {
-        $refusal = $this->refuseIfInUse($subject->code, ['offering' => $subject->offerings()->count()]);
+        $refusal = $this->refuseIfInUse($subject->code, [
+            'offering' => $subject->offerings()->count(),
+            'curriculum' => $subject->curriculumLines()->count(),
+        ]);
 
         if ($refusal !== null) {
             return $refusal;

@@ -116,7 +116,7 @@ class TermController extends Controller
     }
 
     /**
-     * @return array{lates_per_absence: int, drop_at_absences: int, warn_at_absences: list<int>}
+     * @return array{lates_per_absence: int, drop_at_absences: int, warn_at_absences: list<int>, teacher_edit_days: int|null}
      */
     private function policy(TermRequest $request): array
     {
@@ -124,6 +124,7 @@ class TermController extends Controller
             'lates_per_absence' => $request->integer('lates_per_absence'),
             'drop_at_absences' => $request->integer('drop_at_absences'),
             'warn_at_absences' => $request->warnAt(),
+            'teacher_edit_days' => $request->filled('teacher_edit_days') ? $request->integer('teacher_edit_days') : null,
         ];
     }
 }

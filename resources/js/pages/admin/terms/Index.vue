@@ -52,7 +52,12 @@ function policySummary(policy: AttendancePolicy | null | undefined): string {
         ? `warn at ${policy.warn_at_absences.join(' and ')}`
         : 'no warnings';
 
-    return `${policy.lates_per_absence} lates = 1 absence · ${warnings} · drop at ${policy.drop_at_absences}`;
+    const limit =
+        policy.teacher_edit_days === null
+            ? ''
+            : ` · teachers edit ${policy.teacher_edit_days === 0 ? 'on the day only' : `up to ${policy.teacher_edit_days} day${policy.teacher_edit_days === 1 ? '' : 's'} after`}`;
+
+    return `${policy.lates_per_absence} lates = 1 absence · ${warnings} · drop at ${policy.drop_at_absences}${limit}`;
 }
 </script>
 

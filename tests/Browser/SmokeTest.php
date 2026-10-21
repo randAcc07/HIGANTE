@@ -36,6 +36,7 @@ dataset('pages', [
     // Dean
     'dean sections' => ['dean', fn (Campus $c) => path('dean.sections.index', ['term' => $c->term->id]), '1-A'],
     'dean section' => ['dean', fn (Campus $c) => path('dean.sections.show', $c->section), 'Learners and batches'],
+    'dean curriculum' => ['dean', fn (Campus $c) => path('dean.curriculum.index'), 'BSCS has no curriculum yet.'],
     'dean timetable by section' => ['dean', fn (Campus $c) => path('dean.timetables.index', ['term' => $c->term->id, 'view' => 'section', 'target' => $c->section->id]), 'CS 101'],
     'dean timetable by room' => ['dean', fn (Campus $c) => path('dean.timetables.index', ['term' => $c->term->id, 'view' => 'room', 'target' => $c->lab_room->id]), 'CS 102'],
     'dean timetable by teacher' => ['dean', fn (Campus $c) => path('dean.timetables.index', ['term' => $c->term->id, 'view' => 'teacher', 'target' => $c->teacher->id]), 'CS 101'],

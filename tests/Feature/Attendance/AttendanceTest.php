@@ -6,6 +6,7 @@ use App\Enums\AttendanceStatus;
 use App\Enums\EnrollmentStatus;
 use App\Models\AbsenceExcuse;
 use App\Models\AttendanceAudit;
+use App\Models\AttendancePolicy;
 use App\Models\AttendanceRecord;
 use App\Models\Batch;
 use App\Models\CalendarEvent;
@@ -245,6 +246,35 @@ class AttendanceTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->where('canEdit', false)->where('closed', true));
         $this->save($this->everyone())->assertForbidden();
+    }
+
+    public function test_a_terms_limit_stops_teachers_changing_older_marks_but_not_the_dean()
+    {
+        AttendancePolicy::factory()->for($this->term)->create(['teacher_edit_days' => 2]);
+
+        // Monday the 14th + 2 days is today: still open.
+        $this->save([$this->enrolled[0]->id => 'late'])->assertSessionHasNoErrors();
+
+        // Monday the 7th + 2 days was last week.
+        $this->get(route('attendance.show', ['schedule' => $this->class, 'date' => '2026-09-07']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('canEdit', false)
+                ->where('teacherLock', 'Teachers can change marks up to 2 days after a class this term; ask your dean for a correction.')
+                ->has('learners', 3));
+        $this->save([$this->enrolled[0]->id => 'absent'], '2026-09-07')->assertSessionHasErrors('marks');
+        $this->assertSame(1, AttendanceRecord::count());
+
+        $this->actingAs(User::factory()->dean($this->college)->create());
+        $this->get(route('attendance.show', ['schedule' => $this->class, 'date' => '2026-09-07']))
+            ->assertInertia(fn (Assert $page) => $page->where('canEdit', true)->where('teacherLock', null));
+        $this->save([$this->enrolled[0]->id => 'absent'], '2026-09-07')->assertSessionHasNoErrors();
+    }
+
+    public function test_no_limit_by_default()
+    {
+        AttendancePolicy::factory()->for($this->term)->create();
+
+        $this->save([$this->enrolled[0]->id => 'absent'], '2026-08-10')->assertSessionHasNoErrors();
     }
 
     public function test_the_dean_sees_the_colleges_classes_on_a_day()

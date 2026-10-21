@@ -9,6 +9,7 @@ use App\Models\Section;
 use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
+use App\Scheduling\CurriculumFill;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -16,7 +17,9 @@ use Illuminate\Support\Facades\DB;
  * Last school year, for the record: both of its terms get sections and a
  * registration for every learner registered this term in years 2 to 4
  * (withdrawals included), one year level lower. A learner keeps the same
- * section in both semesters. There are no classes or attendance.
+ * section in both semesters, and each section has its subjects from the
+ * curriculum with its learners enrolled. There are no teachers, schedules
+ * or attendance.
  */
 class PastTermSeeder extends Seeder
 {
@@ -78,6 +81,14 @@ class PastTermSeeder extends Seeder
 
         foreach (array_chunk($rows, 1000) as $chunk) {
             DB::table('term_registrations')->insert($chunk);
+        }
+
+        // The dean filled each section from the curriculum the day before the
+        // term began, which enrolled its learners.
+        foreach ($terms as $term) {
+            foreach (Section::with('term')->where('term_id', $term->id)->orderBy('id')->get() as $section) {
+                Clock::at($term->starts_on->subDay()->setTime(9, 0), fn () => app(CurriculumFill::class)->fill($section));
+            }
         }
     }
 }

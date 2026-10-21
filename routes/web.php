@@ -13,6 +13,7 @@ use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Dean\AttendanceController as DeanAttendanceController;
 use App\Http\Controllers\Dean\BatchController;
+use App\Http\Controllers\Dean\CurriculumController;
 use App\Http\Controllers\Dean\ExcuseController as DeanExcuseController;
 use App\Http\Controllers\Dean\LearnerController as DeanLearnerController;
 use App\Http\Controllers\Dean\OfferingController;
@@ -89,8 +90,13 @@ Route::middleware(['auth', 'verified', 'role:registrar'])->prefix('registrar')->
 
 // Scheduling: each change is authorized through its section (SectionPolicy).
 Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean.')->group(function () {
+    Route::get('curriculum', [CurriculumController::class, 'index'])->name('curriculum.index');
+    Route::post('programs/{program}/curriculum', [CurriculumController::class, 'store'])->name('curriculum.store');
+    Route::put('curriculum/{line}', [CurriculumController::class, 'update'])->name('curriculum.update');
+    Route::delete('curriculum/{line}', [CurriculumController::class, 'destroy'])->name('curriculum.destroy');
     Route::resource('sections', SectionController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::post('sections/{section}/offerings', [OfferingController::class, 'store'])->name('offerings.store');
+    Route::post('sections/{section}/offerings/curriculum', [OfferingController::class, 'fromCurriculum'])->name('offerings.curriculum');
     Route::put('offerings/{offering}', [OfferingController::class, 'update'])->name('offerings.update');
     Route::delete('offerings/{offering}', [OfferingController::class, 'destroy'])->name('offerings.destroy');
     Route::post('offerings/{offering}/batches', [BatchController::class, 'store'])->name('batches.store');

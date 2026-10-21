@@ -41,6 +41,7 @@ class AttendanceController extends Controller
         $day = self::date($date);
         $schedule->load(['subjectOffering.subject', 'subjectOffering.section.program', 'batch', 'room', 'teacher.user', 'term']);
         $refusal = $days->refusal($schedule, $day);
+        $teacherLock = self::teacherLock($user, $schedule, $day);
         $dates = array_map(fn (CarbonImmutable $d): string => $d->toDateString(), $days->pastDates($schedule));
         $at = array_search($day->toDateString(), $dates, true);
 
@@ -88,7 +89,8 @@ class AttendanceController extends Controller
             // Neighbouring meeting dates (latest first in $dates).
             'previous' => $at === false ? ($dates[0] ?? null) : ($dates[$at + 1] ?? null),
             'next' => $at === false || $at === 0 ? null : $dates[$at - 1],
-            'canEdit' => $refusal === null && Gate::allows('takeAttendance', $schedule),
+            'canEdit' => $refusal === null && Gate::allows('takeAttendance', $schedule) && $teacherLock === null,
+            'teacherLock' => $teacherLock,
             'closed' => $schedule->term->isClosed(),
             'backLabel' => $user->role === UserRole::Dean ? __('Attendance') : __('My classes'),
             'back' => $user->role === UserRole::Dean
@@ -104,7 +106,7 @@ class AttendanceController extends Controller
         $user = $request->user();
         $day = self::date($date);
 
-        $refusal = $days->refusal($schedule, $day);
+        $refusal = $days->refusal($schedule, $day) ?? self::teacherLock($user, $schedule, $day);
 
         if ($refusal !== null) {
             throw ValidationException::withMessages(['marks' => $refusal]);
@@ -131,6 +133,23 @@ class AttendanceController extends Controller
             : trans_choice('{1} :count mark saved.|[2,*] :count marks saved.', $saved, ['count' => $saved])]);
 
         return back();
+    }
+
+    /**
+     * Why a teacher can no longer change that day's marks (the term's
+     * limit has passed), or null. Deans are never limited.
+     */
+    private static function teacherLock(User $user, Schedule $schedule, CarbonImmutable $day): ?string
+    {
+        $policy = $schedule->term->attendancePolicy;
+
+        if ($user->role !== UserRole::Teacher || $policy === null || ! $policy->lockedForTeachers($day)) {
+            return null;
+        }
+
+        return $policy->teacher_edit_days === 0
+            ? __('Teachers can only change marks on the day of the class this term; ask your dean for a correction.')
+            : trans_choice('{1} Teachers can change marks up to :count day after a class this term; ask your dean for a correction.|[2,*] Teachers can change marks up to :count days after a class this term; ask your dean for a correction.', $policy->teacher_edit_days, ['count' => $policy->teacher_edit_days]);
     }
 
     private static function date(string $date): CarbonImmutable

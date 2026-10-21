@@ -19,7 +19,7 @@ the college and can be offered to any section of its programs.
 | Create the first admin account (`php artisan app:create-admin`)                                                                                                                                                       | ✅     |
 | Manage colleges and their programs                                                                                                                                                                                    | ✅     |
 | Manage rooms (shared campus-wide; any dean can book any room; optional capacity, warn-only)                                                                                                                           | ✅     |
-| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count)                                                                                                                        | ✅     |
+| Manage terms and each term's attendance policy (lates per absence, warning counts, drop count, optional teacher edit limit)                                                                                           | ✅     |
 | Manage subjects (each owned by one college)                                                                                                                                                                           | ✅     |
 | Create registrar, dean and teacher accounts                                                                                                                                                                           | ✅     |
 | Admin accounts: made and kept on the server (`app:create-admin`, `app:reset-admin`, `app:admin-email`, `app:deactivate-admin` / `app:reactivate-admin`, see operations.md); no admin controls another admin's account | ✅     |
@@ -49,6 +49,7 @@ the college and can be offered to any section of its programs.
 | Assign teachers from their own college only                                                                                     | ✅     |
 | Place learners auto-sectioning could not fit; move learners between sections                                                    | ✅     |
 | Copy one subject's batches to the section's other split subjects                                                                | ✅     |
+| Keep each program's curriculum (subjects by year level and semester); new sections get their subjects from it                   | ✅     |
 | Enroll irregular learners subject by subject                                                                                    | ✅     |
 | Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week          | ✅     |
 | Oversee their college's excuses and each class's decision; decide only for a class without an active teacher                    | ✅     |
@@ -70,17 +71,17 @@ the college and can be offered to any section of its programs.
 | Decide excuses for their own classes (approve / not approve / revoke; `medical` needs a file); file one for a learner in their class | ✅     |
 | An excused absence stays locked on the class list (the excuse decides it)                                                            | ✅     |
 | See learners' warning and drop status in their classes                                                                               | ✅     |
-| Time limit on editing marks after a class                                                                                            | ❓     |
+| Change marks up to the term's limit after a class, if the admin sets one (none by default); the dean corrects after that             | ✅     |
 
 ## Learner
 
-| Responsibility                                                                    | Status |
-| --------------------------------------------------------------------------------- | ------ |
-| See own schedule                                                                  | ✅     |
-| See attendance per class and equivalent absences                                  | ✅     |
-| Get warnings at the policy's warning counts; get notified when flagged or dropped | ✅     |
-| Submit excuses with any number of files and track their status                    | ✅     |
-| Whether a guardian can submit excuses too                                         | ❓     |
+| Responsibility                                                                                | Status |
+| --------------------------------------------------------------------------------------------- | ------ |
+| See own schedule                                                                              | ✅     |
+| See attendance per class and equivalent absences                                              | ✅     |
+| Get warnings at the policy's warning counts; get notified when flagged or dropped             | ✅     |
+| Submit excuses with any number of files and track their status                                | ✅     |
+| Guardian accounts for excuses (a parent's letter is attached to the learner's excuse instead) | 🚫     |
 
 ## All users
 

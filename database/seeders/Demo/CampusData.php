@@ -145,6 +145,7 @@ final class CampusData
         ['GEE 1', 'Living in the IT Era', 3, 0],
         ['GEE 2', 'Gender and Society', 3, 0],
         ['GEE 3', 'Philippine Popular Culture', 3, 0],
+        ['GEE 4', 'Great Books', 3, 0],
         ['PE 2', 'Rhythmic Activities', 2, 0, ['kind' => 'pe']],
         ['PE 4', 'Team Sports', 2, 0, ['kind' => 'pe']],
         ['NSTP 2', 'National Service Training Program 2', 3, 0, ['kind' => 'nstp']],
@@ -167,8 +168,17 @@ final class CampusData
         1 => ['GE 2', 'PE 2', 'NSTP 2'],
         2 => ['GE 3', 'GEE 1', 'PE 4'],
         3 => ['GE 7', 'GEE 2'],
-        4 => ['GEE 2', 'GEE 3'],
+        4 => ['GEE 3', 'GEE 4'],
     ];
+
+    /**
+     * The one curriculum line left out of a section, so its page offers
+     * "Add 1 from the curriculum": the upcoming term's BSCS 1-B lacks NSTP 2.
+     */
+    public const CURRICULUM_GAP = ['program' => 'BSCS', 'section' => '1-B', 'subject' => 'NSTP 2'];
+
+    /** Days after a class that its teacher may still change marks, in the current term (null = no limit). */
+    public const TEACHER_EDIT_DAYS = 7;
 
     /**
      * Programs per college, with their major subjects per year level.

@@ -10,6 +10,7 @@ use App\Models\Subject;
 use App\Models\SubjectOffering;
 use App\Models\Teacher;
 use App\Registration\TermRegistrar;
+use App\Scheduling\CurriculumFill;
 use App\Scheduling\ScheduleConflicts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -54,6 +55,22 @@ class OfferingController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => $enrolled === 0
             ? __('Subject added.')
             : trans_choice('{1} Subject added; :count regular learner enrolled.|[2,*] Subject added; :count regular learners enrolled.', $enrolled, ['count' => $enrolled])]);
+
+        return back();
+    }
+
+    /**
+     * Add the curriculum's subjects the section doesn't have yet.
+     */
+    public function fromCurriculum(Section $section, CurriculumFill $curriculum): RedirectResponse
+    {
+        Gate::authorize('update', $section);
+
+        $added = $curriculum->fill($section);
+
+        Inertia::flash('toast', $added === 0
+            ? ['type' => 'info', 'message' => __('The section already has every subject in the curriculum.')]
+            : ['type' => 'success', 'message' => trans_choice('{1} :count subject added from the curriculum.|[2,*] :count subjects added from the curriculum.', $added, ['count' => $added])]);
 
         return back();
     }

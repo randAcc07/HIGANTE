@@ -11,16 +11,20 @@ use App\Enums\EnrollmentStatus;
 use App\Enums\ExcuseStatus;
 use App\Enums\UserRole;
 use App\Models\AbsenceExcuse;
+use App\Models\AttendancePolicy;
 use App\Models\AttendanceRecord;
 use App\Models\CalendarEvent;
+use App\Models\CurriculumSubject;
 use App\Models\Enrollment;
 use App\Models\ExcuseDecision;
 use App\Models\Learner;
 use App\Models\Schedule;
+use App\Models\Section;
 use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
 use App\Notifications\AttendanceNotice;
+use App\Scheduling\CurriculumFill;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Database\Seeders\Demo\TermSeeder;
@@ -229,13 +233,28 @@ class DemoSeederTest extends TestCase
             ->orderBy('enrollments.id')
             ->value('enrollments.status'));
 
-        // Withdrawals match the app: every class dropped, confirmed by the registrar.
+        // Withdrawals match the app: every class of that term dropped, confirmed by the registrar.
         $this->assertSame(0, DB::table('term_registrations')
             ->join('enrollments', 'enrollments.learner_id', '=', 'term_registrations.learner_id')
+            ->join('subject_offerings', 'subject_offerings.id', '=', 'enrollments.subject_offering_id')
+            ->join('sections', fn ($join) => $join->on('sections.id', '=', 'subject_offerings.section_id')->whereColumn('sections.term_id', 'term_registrations.term_id'))
             ->leftJoin('users', 'users.id', '=', 'enrollments.drop_confirmed_by')
             ->where('term_registrations.status', 'withdrawn')
             ->where(fn ($query) => $query->where('enrollments.status', '!=', 'dropped')->orWhere('users.role', '!=', 'registrar'))
             ->count());
+
+        // Every section has its curriculum's subjects for its year level and
+        // semester, except the one line left out to show the button; only the
+        // current term limits teachers' edits.
+        $curriculum = app(CurriculumFill::class);
+        $missing = Section::with(['term', 'program'])->get()
+            ->mapWithKeys(fn (Section $section): array => ["{$section->term->label} {$section->program->code} {$section->name}" => $curriculum->missing($section)->map(fn (CurriculumSubject $line): string => $line->subject->code)->all()])
+            ->filter()
+            ->all();
+        $this->assertSame(['2nd Semester 2026-2027 BSCS 1-B' => ['NSTP 2']], $missing);
+        $this->assertSame(0, CurriculumSubject::query()->join('subjects', 'subjects.id', '=', 'curriculum_subjects.subject_id')->join('programs', 'programs.id', '=', 'curriculum_subjects.program_id')->whereColumn('subjects.college_id', '!=', 'programs.college_id')->count());
+        $this->assertSame([7], AttendancePolicy::whereNotNull('teacher_edit_days')->pluck('teacher_edit_days')->all());
+        $this->assertSame(7, Term::where(['school_year' => '2026-2027', 'semester' => 'first'])->sole()->attendancePolicy?->teacher_edit_days);
 
         $this->assertDemoRegistration();
     }

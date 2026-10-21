@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Head, Link, setLayoutProps } from '@inertiajs/vue3';
-import { CalendarClock, Copy, Plus, UserRound } from '@lucide/vue';
+import { Head, Link, router, setLayoutProps } from '@inertiajs/vue3';
+import { CalendarClock, Copy, ListPlus, Plus, UserRound } from '@lucide/vue';
+import { ref } from 'vue';
 import BatchController from '@/actions/App/Http/Controllers/Dean/BatchController';
 import OfferingController from '@/actions/App/Http/Controllers/Dean/OfferingController';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
@@ -36,8 +37,21 @@ const props = defineProps<{
     subjects: Pick<Subject, 'id' | 'code' | 'title'>[];
     teachers: TeacherOption[];
     roster: RosterRow[];
+    /** Codes of the curriculum's subjects for this year and semester that the section lacks. */
+    curriculumMissing: string[];
     canEdit: boolean;
 }>();
+
+const filling = ref(false);
+
+function addFromCurriculum(): void {
+    filling.value = true;
+    router.post(
+        OfferingController.fromCurriculum.url(props.section.id),
+        {},
+        { preserveScroll: true, onFinish: () => (filling.value = false) },
+    );
+}
 
 setLayoutProps({
     breadcrumbs: [
@@ -119,17 +133,37 @@ function nextBatchName(offering: Offering): string {
                     title="Subjects"
                     description="Each with a default teacher; batches split its learners"
                 />
-                <OfferingFormDialog
-                    v-if="canEdit"
-                    :section-id="section.id"
-                    :teachers="teachers"
-                    :subjects="subjects"
-                >
-                    <Button size="sm" :disabled="subjects.length === 0"
-                        ><Plus class="h-4 w-4" /> Add subject</Button
+                <div v-if="canEdit" class="flex flex-wrap gap-2">
+                    <Button
+                        v-if="curriculumMissing.length"
+                        size="sm"
+                        variant="outline"
+                        :disabled="filling"
+                        :title="curriculumMissing.join(', ')"
+                        @click="addFromCurriculum"
+                        ><ListPlus class="h-4 w-4" /> Add
+                        {{ curriculumMissing.length }} from the
+                        curriculum</Button
                     >
-                </OfferingFormDialog>
+                    <OfferingFormDialog
+                        :section-id="section.id"
+                        :teachers="teachers"
+                        :subjects="subjects"
+                    >
+                        <Button size="sm" :disabled="subjects.length === 0"
+                            ><Plus class="h-4 w-4" /> Add subject</Button
+                        >
+                    </OfferingFormDialog>
+                </div>
             </div>
+            <p
+                v-if="canEdit && curriculumMissing.length"
+                class="text-sm text-muted-foreground"
+            >
+                The curriculum also lists
+                {{ curriculumMissing.join(', ') }} for Year
+                {{ section.year_level }} this semester.
+            </p>
 
             <div class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">

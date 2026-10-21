@@ -15,7 +15,8 @@ use Illuminate\Support\Str;
 
 /**
  * Last school year's two terms, the current term and the upcoming one, each
- * with the handbook attendance policy,
+ * with the handbook attendance policy (the current one also limiting
+ * teachers' changes to marks to TEACHER_EDIT_DAYS after the class),
  * and the current term's holidays and college events (one suspending only an
  * afternoon, with its memo; one narrowed to a program's year level). Runs after the staff,
  * since the admin and deans are the events' authors.
@@ -28,7 +29,12 @@ class TermSeeder extends Seeder
     {
         foreach ([...CampusData::PAST_TERMS, CampusData::TERM, CampusData::NEXT_TERM] as $term) {
             $model = Term::create($term);
-            AttendancePolicy::create(['term_id' => $model->id, ...AttendancePolicy::HANDBOOK]);
+            AttendancePolicy::create([
+                'term_id' => $model->id,
+                ...AttendancePolicy::HANDBOOK,
+                // The current term demos the teachers' edit limit; the others keep none.
+                'teacher_edit_days' => $term === CampusData::TERM ? CampusData::TEACHER_EDIT_DAYS : null,
+            ]);
         }
 
         $admin = User::where('email', 'admin@'.CampusData::EMAIL_DOMAIN)->sole();

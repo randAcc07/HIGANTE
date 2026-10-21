@@ -37,6 +37,7 @@ class TermRequest extends FormRequest
             'drop_at_absences' => ['required', 'integer', 'between:1,50'],
             'warn_at_absences' => ['present', 'array', 'max:10'],
             'warn_at_absences.*' => ['integer', 'min:1', 'distinct'],
+            'teacher_edit_days' => ['nullable', 'integer', 'between:0,365'],
         ];
     }
 

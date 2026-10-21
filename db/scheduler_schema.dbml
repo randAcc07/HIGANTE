@@ -9,6 +9,12 @@ Enum rooms_room_type {
   "venue"
 }
 
+Enum curriculum_subjects_semester {
+  "first"
+  "second"
+  "summer"
+}
+
 Enum users_role {
   "admin"
   "registrar"
@@ -260,6 +266,22 @@ Table subjects {
   }
 }
 
+Table curriculum_subjects {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  program_id "bigint(20) unsigned" [not null]
+  subject_id "bigint(20) unsigned" [not null]
+  year_level "tinyint(3) unsigned" [not null]
+  semester curriculum_subjects_semester [not null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (program_id, subject_id) [unique, name: 'curriculum_subjects_program_id_subject_id_unique']
+    (program_id, year_level, semester) [name: 'curriculum_subjects_program_id_year_level_semester_index']
+    subject_id [name: 'curriculum_subjects_subject_id_foreign']
+  }
+}
+
 Table users {
   id "bigint(20) unsigned" [pk, increment, not null]
   role users_role [not null, default: 'learner']
@@ -469,6 +491,7 @@ Table attendance_policies {
   lates_per_absence "tinyint(3) unsigned" [not null, default: 3]
   drop_at_absences "tinyint(3) unsigned" [not null, default: 5]
   warn_at_absences json [not null, note: 'Ascending equivalent-absence counts that trigger a warning, e.g. [3,4]']
+  teacher_edit_days "smallint(5) unsigned" [null]
   created_at timestamp [null]
   updated_at timestamp [null]
 
@@ -679,6 +702,8 @@ Ref calendar_events_college_id_foreign: calendar_events.college_id > colleges.id
 Ref calendar_events_created_by_foreign: calendar_events.created_by > users.id [delete: set null]
 Ref calendar_event_program_calendar_event_id_foreign: calendar_event_program.calendar_event_id > calendar_events.id [delete: cascade]
 Ref calendar_event_program_program_id_foreign: calendar_event_program.program_id > programs.id [delete: restrict]
+Ref curriculum_subjects_program_id_foreign: curriculum_subjects.program_id > programs.id [delete: cascade]
+Ref curriculum_subjects_subject_id_foreign: curriculum_subjects.subject_id > subjects.id [delete: restrict]
 Ref email_audits_changed_by_foreign: email_audits.changed_by > users.id [delete: set null]
 Ref email_audits_user_id_foreign: email_audits.user_id > users.id [delete: cascade]
 Ref email_changes_user_id_foreign: email_changes.user_id - users.id [delete: cascade]

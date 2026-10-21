@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\Concerns\RefusesDeletingInUse;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Dean\SectionRequest;
 use App\Models\Batch;
+use App\Models\CurriculumSubject;
 use App\Models\Enrollment;
 use App\Models\Program;
 use App\Models\Schedule;
@@ -16,6 +17,7 @@ use App\Models\SubjectOffering;
 use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
+use App\Scheduling\CurriculumFill;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -60,15 +62,22 @@ class SectionController extends Controller
         ]);
     }
 
-    public function store(SectionRequest $request): RedirectResponse
+    /**
+     * Make a section, with its subjects from the program's curriculum.
+     */
+    public function store(SectionRequest $request, CurriculumFill $curriculum): RedirectResponse
     {
         $program = Program::findOrFail($request->integer('program_id'));
         $term = Term::findOrFail($request->integer('term_id'));
         Gate::authorize('create', [Section::class, $program, $term]);
 
         $section = Section::create($request->validated());
+        $added = $curriculum->fill($section);
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Section :name added.', ['name' => "{$program->code} {$section->name}"])]);
+        $name = "{$program->code} {$section->name}";
+        Inertia::flash('toast', ['type' => 'success', 'message' => $added === 0
+            ? __('Section :name added.', ['name' => $name])
+            : trans_choice('{1} Section :name added with :count subject from the curriculum.|[2,*] Section :name added with :count subjects from the curriculum.', $added, ['name' => $name, 'count' => $added])]);
 
         return to_route('dean.sections.show', $section);
     }
@@ -77,7 +86,7 @@ class SectionController extends Controller
      * A section's subjects and batches. Its classes are scheduled on the
      * Timetables page.
      */
-    public function show(Section $section): Response
+    public function show(Section $section, CurriculumFill $curriculum): Response
     {
         Gate::authorize('view', $section);
 
@@ -119,6 +128,7 @@ class SectionController extends Controller
                 ->get(['id', 'code', 'title']),
             'teachers' => ScheduleBlocks::teacherOptions($collegeId),
             'roster' => $this->roster($section, $offerings),
+            'curriculumMissing' => $curriculum->missing($section)->map(fn (CurriculumSubject $line): string => $line->subject->code)->all(),
             'canEdit' => Gate::allows('update', $section),
         ]);
     }

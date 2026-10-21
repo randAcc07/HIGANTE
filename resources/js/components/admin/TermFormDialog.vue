@@ -39,6 +39,11 @@ const form = useForm({
     drop_at_absences: String(policy.drop_at_absences),
     // Typed as "3, 4"; sent as a list.
     warn_at_absences: policy.warn_at_absences.join(', '),
+    // Empty is no limit.
+    teacher_edit_days:
+        policy.teacher_edit_days === null
+            ? ''
+            : String(policy.teacher_edit_days),
 });
 
 function submit(): void {
@@ -46,6 +51,10 @@ function submit(): void {
         ...data,
         lates_per_absence: Number(data.lates_per_absence),
         drop_at_absences: Number(data.drop_at_absences),
+        teacher_edit_days:
+            data.teacher_edit_days.trim() === ''
+                ? null
+                : Number(data.teacher_edit_days),
         warn_at_absences: data.warn_at_absences
             .split(',')
             .map((count) => count.trim())
@@ -72,6 +81,10 @@ function useHandbook(): void {
     form.lates_per_absence = String(props.handbookPolicy.lates_per_absence);
     form.drop_at_absences = String(props.handbookPolicy.drop_at_absences);
     form.warn_at_absences = props.handbookPolicy.warn_at_absences.join(', ');
+    form.teacher_edit_days =
+        props.handbookPolicy.teacher_edit_days === null
+            ? ''
+            : String(props.handbookPolicy.teacher_edit_days);
 }
 </script>
 
@@ -193,6 +206,29 @@ function useHandbook(): void {
                         Counted per class: unexcused absences plus one for every
                         {{ form.lates_per_absence || '…' }} lates.
                     </p>
+                    <div class="grid gap-2">
+                        <Label for="term-edit-days"
+                            >Teachers can change marks for</Label
+                        >
+                        <div class="flex items-center gap-2">
+                            <Input
+                                id="term-edit-days"
+                                v-model="form.teacher_edit_days"
+                                type="number"
+                                min="0"
+                                placeholder="No limit"
+                                class="w-28"
+                            />
+                            <span class="text-sm text-muted-foreground"
+                                >days after a class</span
+                            >
+                        </div>
+                        <InputError :message="form.errors.teacher_edit_days" />
+                        <p class="text-xs text-muted-foreground">
+                            Leave empty for no limit; 0 means only on the day.
+                            Deans can always correct marks.
+                        </p>
+                    </div>
                 </div>
 
                 <DialogFooter>

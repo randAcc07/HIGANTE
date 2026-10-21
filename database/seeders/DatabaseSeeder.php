@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Database\Seeders\Demo\AttendanceSeeder;
 use Database\Seeders\Demo\CatalogSeeder;
+use Database\Seeders\Demo\CurriculumSeeder;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Database\Seeders\Demo\FilipinoNames;
 use Database\Seeders\Demo\NextTermSeeder;
@@ -55,6 +56,7 @@ class DatabaseSeeder extends Seeder
 
         DB::transaction(fn () => $this->call([
             CatalogSeeder::class,
+            CurriculumSeeder::class,
             StaffSeeder::class,
             TermSeeder::class,
             SectionSeeder::class,

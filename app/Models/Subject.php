@@ -58,4 +58,14 @@ class Subject extends Model
     {
         return $this->hasMany(SubjectOffering::class);
     }
+
+    /**
+     * The curriculum lines that list this subject (at most one per program).
+     *
+     * @return HasMany<CurriculumSubject, $this>
+     */
+    public function curriculumLines(): HasMany
+    {
+        return $this->hasMany(CurriculumSubject::class);
+    }
 }

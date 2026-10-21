@@ -28,6 +28,8 @@ const props = defineProps<{
     previous: string | null;
     next: string | null;
     canEdit: boolean;
+    /** Why the teacher can no longer change this day (the term's limit), or null. */
+    teacherLock: string | null;
     closed: boolean;
     back: string;
     backLabel: string;
@@ -208,6 +210,12 @@ function recorded(learner: ClassListLearner): string {
                 class="rounded-lg border p-3 text-sm text-muted-foreground"
             >
                 {{ schedule.term }} is closed, so its attendance is read-only.
+            </p>
+            <p
+                v-else-if="teacherLock"
+                class="rounded-lg border p-3 text-sm text-muted-foreground"
+            >
+                {{ teacherLock }}
             </p>
             <p
                 v-else-if="canEdit && learners.length"

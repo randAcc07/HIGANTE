@@ -157,6 +157,22 @@ CREATE TABLE `subjects` (
   CONSTRAINT `subjects_college_id_foreign` FOREIGN KEY (`college_id`) REFERENCES `colleges` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `curriculum_subjects` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `program_id` bigint(20) unsigned NOT NULL,
+  `subject_id` bigint(20) unsigned NOT NULL,
+  `year_level` tinyint(3) unsigned NOT NULL,
+  `semester` enum('first','second','summer') NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `curriculum_subjects_program_id_subject_id_unique` (`program_id`,`subject_id`),
+  KEY `curriculum_subjects_subject_id_foreign` (`subject_id`),
+  KEY `curriculum_subjects_program_id_year_level_semester_index` (`program_id`,`year_level`,`semester`),
+  CONSTRAINT `curriculum_subjects_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `curriculum_subjects_subject_id_foreign` FOREIGN KEY (`subject_id`) REFERENCES `subjects` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `users` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `role` enum('admin','registrar','dean','teacher','learner') NOT NULL DEFAULT 'learner',
@@ -351,6 +367,7 @@ CREATE TABLE `attendance_policies` (
   `lates_per_absence` tinyint(3) unsigned NOT NULL DEFAULT 3,
   `drop_at_absences` tinyint(3) unsigned NOT NULL DEFAULT 5,
   `warn_at_absences` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL COMMENT 'Ascending equivalent-absence counts that trigger a warning, e.g. [3,4]' CHECK (json_valid(`warn_at_absences`)),
+  `teacher_edit_days` smallint(5) unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
