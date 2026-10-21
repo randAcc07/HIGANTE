@@ -3,13 +3,18 @@
 namespace Tests\Feature\Database;
 
 use App\Attendance\ClassDays;
+use App\Attendance\Excuses;
 use App\Attendance\Standing;
+use App\Enums\DecisionStatus;
 use App\Enums\DropReason;
 use App\Enums\EnrollmentStatus;
+use App\Enums\ExcuseStatus;
 use App\Enums\UserRole;
+use App\Models\AbsenceExcuse;
 use App\Models\AttendanceRecord;
 use App\Models\CalendarEvent;
 use App\Models\Enrollment;
+use App\Models\ExcuseDecision;
 use App\Models\Learner;
 use App\Models\Term;
 use App\Models\TermRegistration;
@@ -91,11 +96,43 @@ class DemoSeederTest extends TestCase
         $this->assertStringStartsWith(TermSeeder::MEMO_DIRECTORY.'/', (string) $partial->memo_path);
         $this->assertSame('COS Memo No. 2026-031', $partial->memo_number);
 
-        // Only approved excuses excuse absences; every mark has its first audit.
-        $this->assertSame(0, DB::table('attendance_records')
-            ->join('absence_excuses', 'absence_excuses.id', '=', 'attendance_records.absence_excuse_id')
-            ->where('absence_excuses.status', '!=', 'approved')
-            ->count());
+        // Excuses are decided per class by whoever the app lets decide, and
+        // each excuse's status summarizes its classes. An absence points at
+        // an excuse only where that class's decision is approved, and every
+        // such absence does.
+        $excuses = app(Excuses::class);
+
+        foreach (ExcuseDecision::with('absenceExcuse')->whereNotNull('decided_by')->get() as $decision) {
+            $this->assertTrue($excuses->canDecide(User::findOrFail($decision->decided_by), $decision), "decision {$decision->id}");
+        }
+
+        foreach (AbsenceExcuse::all() as $excuse) {
+            $status = $excuse->status;
+            $excuses->summarize($excuse);
+            $this->assertSame($status, $excuse->refresh()->status, "excuse {$excuse->id}");
+        }
+
+        $this->assertTrue(AbsenceExcuse::where('status', ExcuseStatus::Partial)
+            ->whereHas('decisions', fn ($decision) => $decision->where('status', DecisionStatus::Approved))
+            ->whereHas('decisions', fn ($decision) => $decision->where('status', DecisionStatus::Declined))
+            ->exists());
+        $this->assertTrue(AbsenceExcuse::whereHas('submitter', fn ($user) => $user->where('role', UserRole::Teacher))->exists());
+        $this->assertTrue(ExcuseDecision::where('status', DecisionStatus::Revoked)->exists());
+
+        $approvedIn = fn (string $operator) => DB::table('attendance_records')
+            ->join('enrollments', 'enrollments.id', '=', 'attendance_records.enrollment_id')
+            ->join('absence_excuses', fn ($join) => $join->on('absence_excuses.learner_id', '=', 'enrollments.learner_id')
+                ->whereColumn('attendance_records.class_date', '>=', 'absence_excuses.date_from')
+                ->whereColumn('attendance_records.class_date', '<=', 'absence_excuses.date_to'))
+            ->join('excuse_decisions', fn ($join) => $join->on('excuse_decisions.absence_excuse_id', '=', 'absence_excuses.id')
+                ->whereColumn('excuse_decisions.subject_offering_id', 'enrollments.subject_offering_id'))
+            ->where('attendance_records.status', 'absent')
+            ->where('excuse_decisions.status', $operator, 'approved');
+        $this->assertSame(0, (clone $approvedIn('='))->where(fn ($query) => $query->whereNull('attendance_records.absence_excuse_id')->orWhereColumn('attendance_records.absence_excuse_id', '!=', 'absence_excuses.id'))->count());
+        $this->assertSame(0, (clone $approvedIn('!='))->whereColumn('attendance_records.absence_excuse_id', 'absence_excuses.id')->count());
+        $this->assertSame(DB::table('attendance_records')->whereNotNull('absence_excuse_id')->count(), (clone $approvedIn('='))->count());
+
+        // Every mark has its first audit.
         $this->assertSame(DB::table('attendance_records')->count(), DB::table('attendance_audits')->whereNull('old_status')->count());
         Storage::disk('local')->assertExists(DB::table('absence_excuse_documents')->value('path') ?? '');
         $this->assertStringStartsWith(ExcuseSeeder::DOCUMENT_DIRECTORY, (string) DB::table('absence_excuse_documents')->value('path'));
@@ -157,8 +194,12 @@ class DemoSeederTest extends TestCase
             $this->assertContains(AttendanceNotice::WARNING, $kinds('learner'));
             $this->assertContains(AttendanceNotice::FLAGGED, $kinds('atrisk'));
             $this->assertContains(AttendanceNotice::LEARNER_FLAGGED, $kinds('dean'));
+            $this->assertContains(AttendanceNotice::EXCUSE_APPROVED, $kinds('learner'));
         }
         $this->assertSame(0, DB::table('notifications')->where('created_at', '>', now())->count());
+        foreach ([AttendanceNotice::EXCUSE_TO_DECIDE, AttendanceNotice::EXCUSE_DECLINED, AttendanceNotice::EXCUSE_REVOKED] as $kind) {
+            $this->assertTrue(DB::table('notifications')->where('data->kind', $kind)->exists(), $kind);
+        }
         $this->assertGreaterThan(DB::table('notifications')->count() / 2, DB::table('notifications')->whereNull('read_at')->count());
         $this->assertSame(Enrollment::where('drop_reason', 'absences')->count() + 1, DB::table('notifications')->whereIn('data->kind', ['dropped'])->count());
 

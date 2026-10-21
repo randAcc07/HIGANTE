@@ -17,7 +17,6 @@ use App\Models\TermRegistration;
 use App\Models\User;
 use App\Notifications\AttendanceNotice;
 use App\Registration\Placement;
-use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -36,7 +35,7 @@ use RuntimeException;
  * the time they did: per college, the earliest flag of a non-demo learner
  * is confirmed as an absence drop two days later, and the atrisk demo
  * login's second flagged class is dismissed (their first stays flagged);
- * in the first college a second flag is dropped and then reinstated. One irregular learner had a subject removed by the dean after
+ * once on campus a later flag is dropped and then reinstated. One irregular learner had a subject removed by the dean after
  * attendance was taken. Older notifications are partly read.
  *
  * Finally Standing::refreshMany() runs over everything: it must change
@@ -91,7 +90,7 @@ class StandingSeeder extends Seeder
             }
 
             $dean = self::dean($registration->learner->user->college_id);
-            self::at($removedAt, fn () => app(Placement::class)->remove($registration, $enrollment, $dean));
+            Clock::at($removedAt, fn () => app(Placement::class)->remove($registration, $enrollment, $dean));
             $enrollment->attendanceRecords()->where('class_date', '>=', $removedAt->toDateString())->delete();
 
             return;
@@ -181,7 +180,7 @@ class StandingSeeder extends Seeder
      */
     private function notify(Enrollment $enrollment, string $kind, int $count, CarbonImmutable $at): void
     {
-        self::at($at, fn () => $kind === AttendanceNotice::WARNING
+        Clock::at($at, fn () => $kind === AttendanceNotice::WARNING
             ? app(Standing::class)->announceWarning($enrollment, $count)
             : app(Standing::class)->announceFlag($enrollment, $count));
     }
@@ -189,12 +188,15 @@ class StandingSeeder extends Seeder
     /**
      * Per college: confirm the earliest non-demo flag two days later (its
      * class has no marks after that) and dismiss the atrisk login's second
-     * flagged class the day after its last mark. In the first college, drop
-     * the next non-demo flag and reinstate it two days later.
+     * flagged class the day after its last mark. Once on campus (the first
+     * college with a later non-demo flag at least three days old), drop
+     * that flag and reinstate it two days later.
      */
     private function deanDecisions(Term $term): void
     {
-        foreach (College::orderBy('id')->get()->values() as $index => $college) {
+        $reinstated = false;
+
+        foreach (College::orderBy('id')->get() as $college) {
             $dean = self::dean($college->id);
             $atrisk = RegistrationSeeder::demoEmail('atrisk', $college->code);
             $flagged = fn (bool $demo) => Enrollment::query()
@@ -208,11 +210,15 @@ class StandingSeeder extends Seeder
                 $this->confirm($natural[0], $dean, days: 2, until: null);
             }
 
-            if ($index === 0 && isset($natural[1])) {
-                $reinstatedAt = self::flaggedAt($natural[1])->addDays(3)->setTime(9, 0);
+            // One reinstatement on campus: the first college with a later flag old enough.
+            foreach ($reinstated ? [] : $natural->slice(1) as $enrollment) {
+                $reinstatedAt = self::flaggedAt($enrollment)->addDays(3)->setTime(9, 0);
 
-                if (! $reinstatedAt->isFuture() && $this->confirm($natural[1], $dean, days: 1, until: $reinstatedAt)) {
-                    self::at($reinstatedAt, fn () => app(Standing::class)->reinstate($natural[1]->refresh(), $dean));
+                if (! $reinstatedAt->isFuture() && $this->confirm($enrollment, $dean, days: 1, until: $reinstatedAt)) {
+                    Clock::at($reinstatedAt, fn () => app(Standing::class)->reinstate($enrollment->refresh(), $dean));
+                    $reinstated = true;
+
+                    break;
                 }
             }
 
@@ -221,7 +227,7 @@ class StandingSeeder extends Seeder
             if ($second !== null) {
                 $lastMark = CarbonImmutable::parse((string) $second->attendanceRecords()->max('created_at'));
                 $dismissedAt = $lastMark->addDay()->setTime(10, 0)->min(CarbonImmutable::now());
-                self::at($dismissedAt, fn () => app(Standing::class)->dismiss($second, $dean));
+                Clock::at($dismissedAt, fn () => app(Standing::class)->dismiss($second, $dean));
             }
         }
     }
@@ -239,7 +245,7 @@ class StandingSeeder extends Seeder
             return false;
         }
 
-        self::at($confirmedAt, fn () => app(Standing::class)->confirmDrop($enrollment, $dean));
+        Clock::at($confirmedAt, fn () => app(Standing::class)->confirmDrop($enrollment, $dean));
         $enrollment->attendanceRecords()
             ->where('class_date', '>=', $confirmedAt->toDateString())
             ->when($until !== null, fn ($query) => $query->where('class_date', '<', $until->toDateString()))
@@ -311,25 +317,5 @@ class StandingSeeder extends Seeder
     private static function dean(?int $collegeId): User
     {
         return User::where('role', UserRole::Dean)->where('college_id', $collegeId)->orderBy('id')->firstOrFail();
-    }
-
-    /**
-     * Run the app's code as of a past moment (its now() and timestamps).
-     *
-     * @template T
-     *
-     * @param  callable(): T  $action
-     * @return T
-     */
-    private static function at(CarbonImmutable $moment, callable $action): mixed
-    {
-        $now = Carbon::getTestNow();
-        Carbon::setTestNow($moment);
-
-        try {
-            return $action();
-        } finally {
-            Carbon::setTestNow($now);
-        }
     }
 }

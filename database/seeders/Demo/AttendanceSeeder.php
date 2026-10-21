@@ -4,12 +4,12 @@ namespace Database\Seeders\Demo;
 
 use App\Attendance\ClassDays;
 use App\Enums\AttendanceStatus;
-use App\Enums\ExcuseStatus;
+use App\Enums\DecisionStatus;
 use App\Models\AbsenceExcuse;
 use App\Models\CalendarEvent;
 use App\Models\College;
 use App\Models\Enrollment;
-use App\Models\Learner;
+use App\Models\ExcuseDecision;
 use App\Models\Schedule;
 use App\Models\Term;
 use App\Models\User;
@@ -30,8 +30,8 @@ use Illuminate\Support\Facades\DB;
  * drop flags happen naturally. The demo logins are scripted:
  * learner.<college>@ ends at 3 and 4 equivalent absences in two classes,
  * atrisk.<college>@ at 5 in two (StandingSeeder has the dean dismiss the
- * second). Learners with an excuse are absent on its
- * days, and approved excuses are linked to those absences.
+ * second). Learners with an excuse are absent on its days, and the
+ * absences in the classes where it was approved are linked to it.
  *
  * Every record gets its first-mark audit row; corrected ones (a few by the
  * dean, the rest by the teacher) get a second.
@@ -94,23 +94,6 @@ class AttendanceSeeder extends Seeder
         return $dates;
     }
 
-    /**
-     * The ISO weekdays on which a learner has a class.
-     *
-     * @return list<int>
-     */
-    public static function weekdaysOf(Learner $learner): array
-    {
-        return array_values(Schedule::query()
-            ->join('enrollments', 'enrollments.subject_offering_id', '=', 'schedules.subject_offering_id')
-            ->where('enrollments.learner_id', $learner->id)
-            ->where(fn ($query) => $query->whereNull('schedules.batch_id')->orWhereColumn('schedules.batch_id', 'enrollments.batch_id'))
-            ->get(['schedules.starts_at'])
-            ->map(fn (Schedule $schedule): int => $schedule->weekday())
-            ->unique()
-            ->all());
-    }
-
     public function run(ClassDays $days): void
     {
         $term = Term::where('school_year', CampusData::TERM['school_year'])
@@ -171,7 +154,7 @@ class AttendanceSeeder extends Seeder
 
         $this->flush();
         $this->audit();
-        $this->linkApprovedExcuses();
+        $this->linkDecidedExcuses();
     }
 
     /**
@@ -296,28 +279,47 @@ class AttendanceSeeder extends Seeder
     }
 
     /**
-     * Approving an excuse excuses the learner's absences in every class in
-     * its date range (lates stay as they are), with an audit row each.
+     * An approval excuses the learner's absences in that class on the
+     * excuse's days (lates stay); a revoked one was linked and then unlinked.
+     * Each step is audited as done by whoever decided or revoked it, when
+     * they did. Marks come after the decisions in seeding order, so this is
+     * what Excuses::decide() and revoke() would have linked.
      */
-    private function linkApprovedExcuses(): void
+    private function linkDecidedExcuses(): void
     {
-        foreach (AbsenceExcuse::where('status', ExcuseStatus::Approved)->get() as $excuse) {
+        $decisions = ExcuseDecision::with('absenceExcuse')
+            ->whereIn('status', [DecisionStatus::Approved, DecisionStatus::Revoked])
+            ->orderBy('id')
+            ->get();
+
+        foreach ($decisions as $decision) {
+            $excuse = $decision->absenceExcuse;
             $records = DB::table('attendance_records')
                 ->join('enrollments', 'enrollments.id', '=', 'attendance_records.enrollment_id')
                 ->where('enrollments.learner_id', $excuse->learner_id)
+                ->where('enrollments.subject_offering_id', $decision->subject_offering_id)
                 ->whereBetween('attendance_records.class_date', [$excuse->date_from->toDateString(), $excuse->date_to->toDateString()])
                 ->where('attendance_records.status', AttendanceStatus::Absent->value)
+                ->whereNull('attendance_records.absence_excuse_id')
                 ->pluck('attendance_records.id');
-
-            DB::table('attendance_records')->whereIn('id', $records)->update(['absence_excuse_id' => $excuse->id, 'updated_at' => $excuse->reviewed_at]);
-            DB::table('attendance_audits')->insert($records->map(fn (int $id): array => [
+            $revoked = $decision->status === DecisionStatus::Revoked;
+            $audit = fn (int $id, ?int $old, ?int $new, ?int $by, mixed $at): array => [
                 'attendance_record_id' => $id,
-                'changed_by' => $excuse->reviewed_by,
+                'changed_by' => $by,
                 'old_status' => AttendanceStatus::Absent->value,
                 'new_status' => AttendanceStatus::Absent->value,
-                'old_absence_excuse_id' => null,
-                'new_absence_excuse_id' => $excuse->id,
-                'changed_at' => $excuse->reviewed_at,
+                'old_absence_excuse_id' => $old,
+                'new_absence_excuse_id' => $new,
+                'changed_at' => $at,
+            ];
+
+            DB::table('attendance_records')->whereIn('id', $records)->update([
+                'absence_excuse_id' => $revoked ? null : $excuse->id,
+                'updated_at' => $revoked ? $decision->revoked_at : $decision->decided_at,
+            ]);
+            DB::table('attendance_audits')->insert($records->flatMap(fn (int $id): array => [
+                $audit($id, null, $excuse->id, $decision->decided_by, $decision->decided_at),
+                ...($revoked ? [$audit($id, $excuse->id, null, $decision->revoked_by, $decision->revoked_at)] : []),
             ])->all());
         }
     }

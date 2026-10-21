@@ -16,10 +16,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * A request to excuse a learner's absences over a date range. It is decided
  * class by class (decisions); status summarizes them. Never deleted.
  *
- * reviewed_* / revoked_* / review_remarks are from when the dean decided
- * excuses as a whole; the app no longer reads or writes them (dropped once
- * the demo seeder writes decisions).
- *
  * @property int $id
  * @property int $learner_id
  * @property CarbonImmutable $date_from
@@ -28,17 +24,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $remarks
  * @property ExcuseStatus $status
  * @property int|null $submitted_by
- * @property int|null $reviewed_by
- * @property CarbonImmutable|null $reviewed_at
- * @property string|null $review_remarks
- * @property CarbonImmutable|null $revoked_at
- * @property int|null $revoked_by
- * @property string|null $revoke_remarks
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Learner $learner
  */
-#[Fillable(['learner_id', 'date_from', 'date_to', 'reason', 'remarks', 'status', 'submitted_by', 'reviewed_by', 'reviewed_at', 'review_remarks', 'revoked_at', 'revoked_by', 'revoke_remarks'])]
+#[Fillable(['learner_id', 'date_from', 'date_to', 'reason', 'remarks', 'status', 'submitted_by'])]
 class AbsenceExcuse extends Model
 {
     /** @use HasFactory<AbsenceExcuseFactory> */
@@ -74,8 +64,6 @@ class AbsenceExcuse extends Model
             'date_to' => 'date:Y-m-d',
             'reason' => ExcuseReason::class,
             'status' => ExcuseStatus::class,
-            'reviewed_at' => 'datetime',
-            'revoked_at' => 'datetime',
         ];
     }
 
@@ -93,14 +81,6 @@ class AbsenceExcuse extends Model
     public function submitter(): BelongsTo
     {
         return $this->belongsTo(User::class, 'submitted_by');
-    }
-
-    /**
-     * @return BelongsTo<User, $this>
-     */
-    public function reviewer(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'reviewed_by');
     }
 
     /**

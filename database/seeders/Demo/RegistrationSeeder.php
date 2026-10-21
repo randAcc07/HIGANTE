@@ -17,7 +17,6 @@ use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
 use App\Registration\TermRegistrar;
-use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -169,14 +168,7 @@ class RegistrationSeeder extends Seeder
      */
     private function withdraw(TermRegistration $registration, User $registrar): void
     {
-        $now = Carbon::getTestNow();
-        Carbon::setTestNow(CarbonImmutable::parse(self::WITHDRAWN_ON.' 10:00'));
-
-        try {
-            app(TermRegistrar::class)->withdraw($registration, $registrar);
-        } finally {
-            Carbon::setTestNow($now);
-        }
+        Clock::at(CarbonImmutable::parse(self::WITHDRAWN_ON.' 10:00'), fn () => app(TermRegistrar::class)->withdraw($registration, $registrar));
     }
 
     /**

@@ -33,9 +33,6 @@ class AbsenceExcuseFactory extends Factory
             'remarks' => null,
             'status' => ExcuseStatus::Pending,
             'submitted_by' => null,
-            'reviewed_by' => null,
-            'reviewed_at' => null,
-            'review_remarks' => null,
         ];
     }
 
@@ -44,8 +41,11 @@ class AbsenceExcuseFactory extends Factory
         return $this->state(['reason' => ExcuseReason::Medical]);
     }
 
+    /**
+     * Summarized as approved; its per-class decisions are the caller's.
+     */
     public function approved(): static
     {
-        return $this->state(['status' => ExcuseStatus::Approved, 'reviewed_at' => now()]);
+        return $this->state(['status' => ExcuseStatus::Approved]);
     }
 }

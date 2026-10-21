@@ -147,7 +147,7 @@ Excuses are decided class by class (reworked after the first build, which had th
 - [x] Approval excuses the learner's absences in that class on the excuse's days (lates stay), including absences marked later; revoking it (per class) restores them, or moves them to another excuse approved for the class covering the day. Each link and unlink is audited and the standing recounted. The excuse's status summarizes its classes: pending, approved, partly approved, not approved, revoked
 - [x] Learner sees each excuse's classes and how each decided, with the teacher's remarks, and is notified of every decision
 - [x] Excuses covering a closed term's days can't be decided or revoked
-- [ ] Drop the old excuse-level review columns (`reviewed_by`, `reviewed_at`, `review_remarks`, `revoked_at`, `revoked_by`, `revoke_remarks` on `absence_excuses`) once the demo seeder writes decisions
+- [x] Drop the old excuse-level review columns (`reviewed_by`, `reviewed_at`, `review_remarks`, `revoked_at`, `revoked_by`, `revoke_remarks` on `absence_excuses`) once the demo seeder writes decisions
 
 ## 12. Learner views
 
