@@ -3,10 +3,8 @@ import { router } from '@inertiajs/vue3';
 import { ChevronLeft, ChevronRight } from '@lucide/vue';
 import { computed } from 'vue';
 import AttendanceController from '@/actions/App/Http/Controllers/AttendanceController';
-import GridZoomControl from '@/components/GridZoomControl.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
 import { Button } from '@/components/ui/button';
-import { useGridZoom } from '@/composables/useGridZoom';
 import { formatDate, formatDateRange } from '@/lib/dates';
 import { dashboard } from '@/routes';
 import type { DatedWeek, GridBlock, WeekClass, Weekday } from '@/types';
@@ -28,7 +26,6 @@ const props = defineProps<{
 }>();
 
 // In the header's toolbar rather than above the grid.
-const zoom = useGridZoom();
 
 const byKey = computed(
     () => new Map(props.week.blocks.map((item) => [key(item), item])),
@@ -142,53 +139,48 @@ function open(block: GridBlock): void {
 
 <template>
     <div class="space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-1">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        class="h-9"
-                        :disabled="!week.previous"
-                        aria-label="Previous week"
-                        @click="go(week.previous)"
-                        ><ChevronLeft class="h-4 w-4"
-                    /></Button>
-                    <Button
-                        v-if="!isThisWeek"
-                        variant="outline"
-                        size="sm"
-                        class="h-9"
-                        @click="go(null)"
-                        >This week</Button
-                    >
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        class="h-9"
-                        :disabled="!week.next"
-                        aria-label="Next week"
-                        @click="go(week.next)"
-                        ><ChevronRight class="h-4 w-4"
-                    /></Button>
+        <ScheduleGrid :blocks="blocks" :day-heads="heads" @block="open">
+            <template #heading>
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-1">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="h-9"
+                            :disabled="!week.previous"
+                            aria-label="Previous week"
+                            @click="go(week.previous)"
+                            ><ChevronLeft class="h-4 w-4"
+                        /></Button>
+                        <Button
+                            v-if="!isThisWeek"
+                            variant="outline"
+                            size="sm"
+                            class="h-9"
+                            @click="go(null)"
+                            >This week</Button
+                        >
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="h-9"
+                            :disabled="!week.next"
+                            aria-label="Next week"
+                            @click="go(week.next)"
+                            ><ChevronRight class="h-4 w-4"
+                        /></Button>
+                    </div>
+                    <h2 class="font-medium">
+                        {{ range }}
+                        <span
+                            v-if="isThisWeek"
+                            class="text-sm font-normal text-muted-foreground"
+                            >· current week</span
+                        >
+                    </h2>
                 </div>
-                <h2 class="font-medium">
-                    {{ range }}
-                    <span
-                        v-if="isThisWeek"
-                        class="text-sm font-normal text-muted-foreground"
-                        >· current week</span
-                    >
-                </h2>
-            </div>
-            <GridZoomControl :zoom="zoom" />
-        </div>
-        <ScheduleGrid
-            :blocks="blocks"
-            :day-heads="heads"
-            :zoom="zoom"
-            @block="open"
-        />
+            </template>
+        </ScheduleGrid>
         <p
             v-if="week.blocks.length === 0"
             class="text-center text-sm text-muted-foreground"

@@ -6,6 +6,7 @@ import DayClasses from '@/components/attendance/DayClasses.vue';
 import DayPicker from '@/components/attendance/DayPicker.vue';
 import Heading from '@/components/Heading.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import { formatDate } from '@/lib/dates';
 import type { ClassBlock, DayClass, GridBlock, TermPhase } from '@/types';
@@ -84,10 +85,9 @@ const blocks = computed<GridBlock[]>(() => {
                         : 'No terms yet'
                 "
             />
-            <select
+            <NativeSelect
                 v-if="terms.length > 1"
                 v-model="filters.term"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 aria-label="Term"
             >
                 <option
@@ -97,7 +97,7 @@ const blocks = computed<GridBlock[]>(() => {
                 >
                     {{ option.label }} ({{ phaseLabels[option.phase] }})
                 </option>
-            </select>
+            </NativeSelect>
         </div>
 
         <section v-if="term" class="space-y-3">
@@ -125,12 +125,15 @@ const blocks = computed<GridBlock[]>(() => {
         </section>
 
         <section v-if="term" class="space-y-3">
-            <Heading
-                variant="small"
-                title="Week"
-                description="Your classes this term"
-            />
-            <ScheduleGrid :blocks="blocks" />
+            <ScheduleGrid :blocks="blocks">
+                <template #heading>
+                    <Heading
+                        variant="small"
+                        title="Week"
+                        description="Your classes this term"
+                    />
+                </template>
+            </ScheduleGrid>
         </section>
     </div>
 </template>

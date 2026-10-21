@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 
 type CheckResult = {
     /** Set when the sheet is clean: what the import uses. */
@@ -166,10 +167,9 @@ const termLabel = computed(
                     </div>
                     <div v-if="registrationTerms.length" class="grid gap-2">
                         <Label for="import-term">Register them for</Label>
-                        <select
+                        <NativeSelect
                             id="import-term"
                             v-model="form.register_term_id"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                             @change="result = null"
                         >
                             <option :value="null">Don't register yet</option>
@@ -180,7 +180,7 @@ const termLabel = computed(
                             >
                                 {{ term.label }}
                             </option>
-                        </select>
+                        </NativeSelect>
                         <p class="text-xs text-muted-foreground">
                             Each goes to the emptiest section of their program
                             and year level with room; the Irregular column

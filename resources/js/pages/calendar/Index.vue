@@ -8,6 +8,7 @@ import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { formatDateRange, parseDate } from '@/lib/dates';
 import { formatTime } from '@/lib/time';
 import type { CalendarEvent } from '@/types';
@@ -118,10 +119,9 @@ function suspensionLabel(event: CalendarEvent): string {
                 "
             />
             <div class="flex gap-2">
-                <select
+                <NativeSelect
                     v-if="terms.length > 1"
                     :value="term?.id"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="Term"
                     @change="
                         showTerm(
@@ -136,7 +136,7 @@ function suspensionLabel(event: CalendarEvent): string {
                     >
                         {{ option.label }}
                     </option>
-                </select>
+                </NativeSelect>
                 <CalendarEventFormDialog
                     v-if="canCreate"
                     :scope="newEventScope"

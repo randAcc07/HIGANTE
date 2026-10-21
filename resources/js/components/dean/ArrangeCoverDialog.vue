@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { formatDate } from '@/lib/dates';
 import type { TeacherOption } from '@/types';
 
@@ -150,10 +151,9 @@ function submit(): void {
                 <div class="grid gap-3 sm:grid-cols-3">
                     <div class="grid gap-2">
                         <Label for="cover-teacher">Teacher away</Label>
-                        <select
+                        <NativeSelect
                             id="cover-teacher"
                             v-model="form.teacher_id"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                         >
                             <option :value="null" disabled>Choose…</option>
                             <option
@@ -164,7 +164,7 @@ function submit(): void {
                                 {{ teacher.name
                                 }}{{ teacher.on_leave ? ' (on leave)' : '' }}
                             </option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.teacher_id" />
                     </div>
                     <div class="grid gap-2">
@@ -206,10 +206,9 @@ function submit(): void {
                             <Label for="cover-everyone"
                                 >Same substitute for all</Label
                             >
-                            <select
+                            <NativeSelect
                                 id="cover-everyone"
                                 :value="everyone"
-                                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                                 @change="
                                     setEveryone(
                                         ($event.target as HTMLSelectElement)
@@ -231,7 +230,7 @@ function submit(): void {
                                 >
                                     {{ teacher.name }}
                                 </option>
-                            </select>
+                            </NativeSelect>
                         </div>
 
                         <div class="overflow-x-auto rounded-lg border">
@@ -279,14 +278,15 @@ function submit(): void {
                                                 >Covered by
                                                 {{ row.covered_by }}</span
                                             >
-                                            <select
+                                            <NativeSelect
+                                                size="sm"
                                                 v-else
                                                 v-model="
                                                     form.substitutes[
                                                         row.schedule_id
                                                     ]
                                                 "
-                                                class="h-8 w-full rounded-md border border-input bg-transparent px-2 text-sm"
+                                                class="w-full"
                                                 :aria-label="`Substitute for ${row.class}`"
                                             >
                                                 <option :value="null">
@@ -299,7 +299,7 @@ function submit(): void {
                                                 >
                                                     {{ teacher.name }}
                                                 </option>
-                                            </select>
+                                            </NativeSelect>
                                             <InputError
                                                 :message="rowError(index)"
                                             />

@@ -8,6 +8,7 @@ import Heading from '@/components/Heading.vue';
 import Pagination from '@/components/Pagination.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import type { College, Paginated, Subject } from '@/types';
 
@@ -59,11 +60,7 @@ function units(subject: Subject): string {
         </div>
 
         <div class="flex flex-wrap gap-3">
-            <select
-                v-model="filters.college"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="College"
-            >
+            <NativeSelect v-model="filters.college" aria-label="College">
                 <option :value="null">All colleges</option>
                 <option
                     v-for="college in colleges"
@@ -72,7 +69,7 @@ function units(subject: Subject): string {
                 >
                     {{ college.code }}
                 </option>
-            </select>
+            </NativeSelect>
             <Input
                 v-model="filters.search"
                 class="max-w-xs"

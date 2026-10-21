@@ -8,6 +8,7 @@ import type { PlanRow } from '@/components/dean/ArrangeCoverDialog.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { TeacherOption } from '@/types';
 
 defineOptions({
@@ -65,10 +66,9 @@ function showTerm(id: number): void {
                 "
             />
             <div class="flex gap-2">
-                <select
+                <NativeSelect
                     v-if="terms.length > 1"
                     :value="term?.id"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="Term"
                     @change="
                         showTerm(
@@ -83,7 +83,7 @@ function showTerm(id: number): void {
                     >
                         {{ option.label }}
                     </option>
-                </select>
+                </NativeSelect>
                 <ArrangeCoverDialog
                     v-if="term && canEdit"
                     :term="term"

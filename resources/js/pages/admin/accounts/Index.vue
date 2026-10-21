@@ -11,6 +11,7 @@ import SetupLinkDialog from '@/components/SetupLinkDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import type { Account, College, Paginated } from '@/types';
 
@@ -89,11 +90,7 @@ function lastLogin(account: Account): string {
                 placeholder="Search name, email or number"
                 aria-label="Search accounts"
             />
-            <select
-                v-model="filters.role"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Role"
-            >
+            <NativeSelect v-model="filters.role" aria-label="Role">
                 <option :value="null">All roles</option>
                 <option
                     v-for="(label, role) in roleLabels"
@@ -102,12 +99,8 @@ function lastLogin(account: Account): string {
                 >
                     {{ label }}
                 </option>
-            </select>
-            <select
-                v-model="filters.college"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="College"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.college" aria-label="College">
                 <option :value="null">All colleges</option>
                 <option
                     v-for="college in colleges"
@@ -116,16 +109,12 @@ function lastLogin(account: Account): string {
                 >
                     {{ college.code }}
                 </option>
-            </select>
-            <select
-                v-model="filters.status"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Status"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.status" aria-label="Status">
                 <option :value="null">Active and deactivated</option>
                 <option value="active">Active</option>
                 <option value="inactive">Deactivated</option>
-            </select>
+            </NativeSelect>
         </div>
 
         <div class="overflow-x-auto rounded-lg border">

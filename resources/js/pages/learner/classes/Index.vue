@@ -5,6 +5,7 @@ import ClassController from '@/actions/App/Http/Controllers/Learner/ClassControl
 import Heading from '@/components/Heading.vue';
 import StandingBadge from '@/components/learner/StandingBadge.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
+import { NativeSelect } from '@/components/ui/native-select';
 import type {
     AttendancePolicy,
     ClassBlock,
@@ -101,10 +102,9 @@ const blocks = computed<GridBlock[]>(() => {
     <div class="flex flex-col gap-6 p-4">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <Heading title="My classes" :description="description" />
-            <select
+            <NativeSelect
                 v-if="terms.length > 1"
                 :value="term?.id"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 aria-label="Term"
                 @change="showTerm"
             >
@@ -115,7 +115,7 @@ const blocks = computed<GridBlock[]>(() => {
                 >
                     {{ option.label }} ({{ phaseLabels[option.phase] }})
                 </option>
-            </select>
+            </NativeSelect>
         </div>
 
         <p
@@ -219,12 +219,15 @@ const blocks = computed<GridBlock[]>(() => {
         </section>
 
         <section v-if="term" class="space-y-3">
-            <Heading
-                variant="small"
-                title="Week"
-                description="Your classes, including your batches' labs"
-            />
-            <ScheduleGrid :blocks="blocks" />
+            <ScheduleGrid :blocks="blocks">
+                <template #heading>
+                    <Heading
+                        variant="small"
+                        title="Week"
+                        description="Your classes, including your batches' labs"
+                    />
+                </template>
+            </ScheduleGrid>
         </section>
     </div>
 </template>

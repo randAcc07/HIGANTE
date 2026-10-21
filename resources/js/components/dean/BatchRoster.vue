@@ -6,6 +6,7 @@ import LearnerController from '@/actions/App/Http/Controllers/Dean/LearnerContro
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { NativeSelect } from '@/components/ui/native-select';
 import { newcomerCounts } from '@/lib/batchSplit';
 import type { Offering, RosterRow } from '@/types';
 
@@ -292,19 +293,19 @@ function onSetAll(row: RosterRow, event: Event): void {
                 class="ml-auto flex flex-wrap items-center gap-2 text-sm"
             >
                 <span>{{ ticked.size }} ticked: put in</span>
-                <select
+                <NativeSelect
+                    size="sm"
                     v-model="moveTo"
-                    class="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
                     aria-label="Batch to put the ticked learners in"
                 >
                     <option :value="null" disabled>batch…</option>
                     <option v-for="name in names" :key="name" :value="name">
                         {{ name }}
                     </option>
-                </select>
-                <select
+                </NativeSelect>
+                <NativeSelect
+                    size="sm"
                     v-model="moveIn"
-                    class="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
                     aria-label="Subjects to apply it to"
                 >
                     <option :value="null">in every split subject</option>
@@ -315,7 +316,7 @@ function onSetAll(row: RosterRow, event: Event): void {
                     >
                         in {{ offering.subject.code }} only
                     </option>
-                </select>
+                </NativeSelect>
                 <Button
                     size="sm"
                     :disabled="moveTo === null"
@@ -418,8 +419,8 @@ function onSetAll(row: RosterRow, event: Event): void {
                             </div>
                         </td>
                         <td v-if="canEdit && names.length" class="px-4 py-2">
-                            <select
-                                class="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
+                            <NativeSelect
+                                size="sm"
                                 :aria-label="`Set all batches for ${row.name}`"
                                 @change="onSetAll(row, $event)"
                             >
@@ -431,19 +432,19 @@ function onSetAll(row: RosterRow, event: Event): void {
                                 >
                                     {{ name }}
                                 </option>
-                            </select>
+                            </NativeSelect>
                         </td>
                         <td
                             v-for="offering in split"
                             :key="offering.id"
                             class="px-4 py-2"
                         >
-                            <select
+                            <NativeSelect
+                                size="sm"
                                 v-if="row.enrollments[offering.id]"
                                 v-model="
                                     chosen[row.enrollments[offering.id].id]
                                 "
-                                class="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
                                 :disabled="!canEdit"
                                 :aria-label="`${row.name}'s batch in ${offering.subject.code}`"
                             >
@@ -455,7 +456,7 @@ function onSetAll(row: RosterRow, event: Event): void {
                                 >
                                     {{ batch.name }}
                                 </option>
-                            </select>
+                            </NativeSelect>
                             <span v-else class="text-muted-foreground"
                                 >Not taking</span
                             >

@@ -21,6 +21,7 @@ import SetupLinkDialog from '@/components/SetupLinkDialog.vue';
 import StandingBadge from '@/components/learner/StandingBadge.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import { formatDate, formatDateRange } from '@/lib/dates';
 import { lateLabel, reasonLabels, statusLabels } from '@/lib/excuses';
 import { formatTime } from '@/lib/time';
@@ -325,9 +326,8 @@ function suspensionWhen(item: UpcomingSuspension): string {
                         v-if="dean.sections.length"
                         class="flex flex-wrap gap-2"
                     >
-                        <select
+                        <NativeSelect
                             :value="program"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                             aria-label="Program"
                             @change="
                                 pickProgram(
@@ -345,10 +345,9 @@ function suspensionWhen(item: UpcomingSuspension): string {
                             >
                                 {{ option.code }}
                             </option>
-                        </select>
-                        <select
+                        </NativeSelect>
+                        <NativeSelect
                             :value="dean.section"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                             aria-label="Section"
                             @change="
                                 showSection(
@@ -366,7 +365,7 @@ function suspensionWhen(item: UpcomingSuspension): string {
                             >
                                 {{ option.name }} (Year {{ option.year_level }})
                             </option>
-                        </select>
+                        </NativeSelect>
                     </div>
                     <p
                         v-else

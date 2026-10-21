@@ -14,6 +14,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 
 type Proposal = {
     id: number;
@@ -169,10 +170,10 @@ function submit(): void {
                                 {{ row.program }} {{ row.from }}
                             </td>
                             <td class="px-3 py-2">
-                                <select
+                                <NativeSelect
+                                    size="sm"
                                     v-model.number="row.year_level"
                                     :disabled="!row.ticked"
-                                    class="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
                                     :aria-label="`Year level for ${row.program} ${row.from}`"
                                 >
                                     <option
@@ -182,7 +183,7 @@ function submit(): void {
                                     >
                                         {{ year }}
                                     </option>
-                                </select>
+                                </NativeSelect>
                             </td>
                             <td class="px-3 py-2">
                                 <Input

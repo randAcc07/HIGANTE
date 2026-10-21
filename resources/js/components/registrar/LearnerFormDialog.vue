@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { College, LearnerRecord, LearnerStatus, Program } from '@/types';
 
 const props = defineProps<{
@@ -147,10 +148,9 @@ function submit(): void {
 
                 <div class="grid gap-2">
                     <Label for="learner-program">Program</Label>
-                    <select
+                    <NativeSelect
                         id="learner-program"
                         v-model="form.program_id"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     >
                         <option :value="null" disabled>Choose…</option>
                         <optgroup
@@ -166,22 +166,18 @@ function submit(): void {
                                 {{ program.code }} · {{ program.name }}
                             </option>
                         </optgroup>
-                    </select>
+                    </NativeSelect>
                     <InputError :message="form.errors.program_id" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="learner-status">Student status</Label>
-                    <select
-                        id="learner-status"
-                        v-model="form.status"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    >
+                    <NativeSelect id="learner-status" v-model="form.status">
                         <option value="active">Active</option>
                         <option value="inactive">Inactive (on leave)</option>
                         <option value="graduated">Graduated</option>
                         <option value="dropped_out">Dropped out</option>
-                    </select>
+                    </NativeSelect>
                     <InputError :message="form.errors.status" />
                 </div>
 
@@ -190,10 +186,9 @@ function submit(): void {
                     class="grid gap-2"
                 >
                     <Label for="learner-register">Register for</Label>
-                    <select
+                    <NativeSelect
                         id="learner-register"
                         v-model="form.register_term_id"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                         :disabled="form.status !== 'active'"
                     >
                         <option :value="null">Don't register yet</option>
@@ -204,7 +199,7 @@ function submit(): void {
                         >
                             {{ term.label }}
                         </option>
-                    </select>
+                    </NativeSelect>
                     <InputError :message="form.errors.register_term_id" />
                     <label
                         v-if="form.register_term_id && form.status === 'active'"

@@ -9,6 +9,7 @@ import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import type { Paginated, Room } from '@/types';
 
@@ -56,25 +57,17 @@ const filters = useFilters(RoomController.index.url(), {
                 placeholder="Search name, code or building"
                 aria-label="Search rooms"
             />
-            <select
-                v-model="filters.type"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Type"
-            >
+            <NativeSelect v-model="filters.type" aria-label="Type">
                 <option :value="null">All types</option>
                 <option value="lecture">Lecture</option>
                 <option value="laboratory">Laboratory</option>
                 <option value="venue">Venue</option>
-            </select>
-            <select
-                v-model="filters.status"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Status"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.status" aria-label="Status">
                 <option :value="null">Active and inactive</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
-            </select>
+            </NativeSelect>
         </div>
 
         <div class="overflow-x-auto rounded-lg border">

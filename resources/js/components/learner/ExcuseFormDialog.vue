@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { addDays, daysBetween, today } from '@/lib/days';
 import { reasonLabels } from '@/lib/excuses';
 import type { ExcuseReason } from '@/types';
@@ -99,11 +100,7 @@ function submit(): void {
             <form class="space-y-4" @submit.prevent="submit">
                 <div v-if="learners" class="grid gap-2">
                     <Label for="excuse-learner">Learner</Label>
-                    <select
-                        id="excuse-learner"
-                        v-model="form.learner_id"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    >
+                    <NativeSelect id="excuse-learner" v-model="form.learner_id">
                         <option :value="null" disabled>Choose…</option>
                         <option
                             v-for="learner in learners"
@@ -112,7 +109,7 @@ function submit(): void {
                         >
                             {{ learner.name }} · {{ learner.student_number }}
                         </option>
-                    </select>
+                    </NativeSelect>
                     <InputError :message="form.errors.learner_id" />
                 </div>
                 <div class="grid grid-cols-2 gap-4">
@@ -150,11 +147,7 @@ function submit(): void {
 
                 <div class="grid gap-2">
                     <Label for="excuse-reason">Reason</Label>
-                    <select
-                        id="excuse-reason"
-                        v-model="form.reason"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    >
+                    <NativeSelect id="excuse-reason" v-model="form.reason">
                         <option
                             v-for="reason in reasons"
                             :key="reason"
@@ -162,7 +155,7 @@ function submit(): void {
                         >
                             {{ reasonLabels[reason] }}
                         </option>
-                    </select>
+                    </NativeSelect>
                     <p
                         v-if="form.reason === 'medical'"
                         class="text-xs text-muted-foreground"

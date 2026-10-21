@@ -7,6 +7,7 @@ import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
 import CurriculumFormDialog from '@/components/dean/CurriculumFormDialog.vue';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { CurriculumLine, Program, Semester, Subject } from '@/types';
 
 defineOptions({
@@ -94,10 +95,9 @@ function showProgram(id: number): void {
                 "
             />
             <div v-if="program" class="flex gap-2">
-                <select
+                <NativeSelect
                     v-if="programs.length > 1"
                     :value="program.id"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="Program"
                     @change="
                         showProgram(
@@ -112,7 +112,7 @@ function showProgram(id: number): void {
                     >
                         {{ option.code }}
                     </option>
-                </select>
+                </NativeSelect>
                 <CurriculumFormDialog
                     :program-id="program.id"
                     :semesters="semesters"

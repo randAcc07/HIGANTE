@@ -7,6 +7,7 @@ import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import type { Paginated, Program, TermPhase } from '@/types';
 
@@ -97,10 +98,9 @@ function showQueue(): void {
                 "
             />
             <div class="flex flex-wrap gap-2">
-                <select
+                <NativeSelect
                     v-if="terms.length > 1"
                     v-model="filters.term"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="Term"
                 >
                     <option
@@ -110,7 +110,7 @@ function showQueue(): void {
                     >
                         {{ option.label }} ({{ phaseLabels[option.phase] }})
                     </option>
-                </select>
+                </NativeSelect>
                 <NextTermButton
                     v-if="nextTerm"
                     :term="nextTerm"
@@ -142,9 +142,8 @@ function showQueue(): void {
                 placeholder="Search name, email or student number"
                 aria-label="Search learners"
             />
-            <select
+            <NativeSelect
                 v-model="filters.program"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 aria-label="Program"
                 @change="filters.section = null"
             >
@@ -156,22 +155,14 @@ function showQueue(): void {
                 >
                     {{ program.code }}
                 </option>
-            </select>
-            <select
-                v-model="filters.year"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Year level"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.year" aria-label="Year level">
                 <option :value="null">All years</option>
                 <option v-for="year in 6" :key="year" :value="year">
                     Year {{ year }}
                 </option>
-            </select>
-            <select
-                v-model="filters.section"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Section"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.section" aria-label="Section">
                 <option :value="null">All sections</option>
                 <option value="none">No section</option>
                 <option
@@ -187,24 +178,19 @@ function showQueue(): void {
                 >
                     {{ section.program.code }} {{ section.name }}
                 </option>
-            </select>
-            <select
+            </NativeSelect>
+            <NativeSelect
                 v-model="filters.irregular"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 aria-label="Regular or irregular"
             >
                 <option :value="null">Regular and irregular</option>
                 <option :value="0">Regular</option>
                 <option :value="1">Irregular</option>
-            </select>
-            <select
-                v-model="filters.status"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Status"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.status" aria-label="Status">
                 <option :value="null">Registered</option>
                 <option value="withdrawn">Withdrawn</option>
-            </select>
+            </NativeSelect>
         </div>
 
         <template v-if="registrations">

@@ -14,6 +14,7 @@ import Heading from '@/components/Heading.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { NativeSelect } from '@/components/ui/native-select';
 import type {
     ClassBlock,
     GridBlock,
@@ -227,9 +228,8 @@ function unitsOf(offering: PlacementOffering): string {
                 "
             />
             <div class="flex flex-wrap items-center gap-3">
-                <select
+                <NativeSelect
                     v-model="sectionId"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="Section"
                     :disabled="!canEdit"
                 >
@@ -245,7 +245,7 @@ function unitsOf(offering: PlacementOffering): string {
                             section.capacity ? ` of ${section.capacity}` : ''
                         }})
                     </option>
-                </select>
+                </NativeSelect>
                 <Button
                     v-if="canEdit"
                     :disabled="
@@ -311,13 +311,13 @@ function unitsOf(offering: PlacementOffering): string {
                                 {{ enrollment.offering.section }}
                             </td>
                             <td class="px-4 py-2">
-                                <select
+                                <NativeSelect
+                                    size="sm"
                                     v-if="
                                         enrollment.offering.batches.length &&
                                         enrollment.status !== 'dropped'
                                     "
                                     :value="enrollment.batch_id ?? ''"
-                                    class="h-8 rounded-md border border-input bg-transparent px-2 text-sm"
                                     :disabled="!canEdit"
                                     :aria-label="`Batch in ${enrollment.offering.subject.code}`"
                                     @change="changeBatch(enrollment, $event)"
@@ -331,7 +331,7 @@ function unitsOf(offering: PlacementOffering): string {
                                     >
                                         {{ batch.name }}
                                     </option>
-                                </select>
+                                </NativeSelect>
                                 <span v-else class="text-muted-foreground"
                                     >—</span
                                 >
@@ -386,9 +386,9 @@ function unitsOf(offering: PlacementOffering): string {
                 class="flex flex-wrap items-center gap-3"
                 @submit.prevent="enroll"
             >
-                <select
+                <NativeSelect
                     v-model="add.subject_offering_id"
-                    class="h-9 max-w-md rounded-md border border-input bg-transparent px-3 text-sm"
+                    class="max-w-md"
                     aria-label="Subject to add"
                 >
                     <option :value="null" disabled>Add a subject…</option>
@@ -400,11 +400,10 @@ function unitsOf(offering: PlacementOffering): string {
                         {{ offering.subject.code }}
                         {{ offering.subject.title }} · {{ offering.section }}
                     </option>
-                </select>
-                <select
+                </NativeSelect>
+                <NativeSelect
                     v-if="chosenOffering?.batches.length"
                     v-model="add.batch_id"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="Batch"
                 >
                     <option :value="null">No batch</option>
@@ -415,7 +414,7 @@ function unitsOf(offering: PlacementOffering): string {
                     >
                         {{ batch.name }}
                     </option>
-                </select>
+                </NativeSelect>
                 <Button
                     :disabled="
                         add.subject_offering_id === null || add.processing
@@ -432,12 +431,15 @@ function unitsOf(offering: PlacementOffering): string {
         </section>
 
         <section class="space-y-3">
-            <Heading
-                variant="small"
-                title="Week"
-                description="Whole-class meetings plus those of the learner's batches"
-            />
-            <ScheduleGrid :blocks="blocks" />
+            <ScheduleGrid :blocks="blocks">
+                <template #heading>
+                    <Heading
+                        variant="small"
+                        title="Week"
+                        description="Whole-class meetings plus those of the learner's batches"
+                    />
+                </template>
+            </ScheduleGrid>
         </section>
     </div>
 </template>

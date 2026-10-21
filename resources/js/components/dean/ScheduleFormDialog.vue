@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import { formatTime, fromMinutes, toMinutes, WEEKDAYS } from '@/lib/time';
 import type {
     NewClassSlot,
@@ -227,9 +228,6 @@ function remove(): void {
         });
     }
 }
-
-const selectClass =
-    'h-9 w-full rounded-md border border-input bg-transparent px-3 text-sm disabled:opacity-60';
 </script>
 
 <template>
@@ -264,10 +262,10 @@ const selectClass =
             <form v-if="editable" class="space-y-4" @submit.prevent="submit">
                 <div v-if="sections && !existing" class="grid gap-2">
                     <Label for="class-section">Section</Label>
-                    <select
+                    <NativeSelect
                         id="class-section"
                         v-model="sectionId"
-                        :class="selectClass"
+                        class="w-full"
                     >
                         <option
                             v-for="section in sections"
@@ -276,16 +274,16 @@ const selectClass =
                         >
                             {{ section.label }}
                         </option>
-                    </select>
+                    </NativeSelect>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">
                         <Label for="class-subject">Subject</Label>
-                        <select
+                        <NativeSelect
                             id="class-subject"
                             v-model="form.subject_offering_id"
-                            :class="selectClass"
+                            class="w-full"
                             :disabled="!!existing"
                         >
                             <option
@@ -295,14 +293,14 @@ const selectClass =
                             >
                                 {{ item.subject.code }}
                             </option>
-                        </select>
+                        </NativeSelect>
                     </div>
                     <div class="grid gap-2">
                         <Label for="class-batch">Who</Label>
-                        <select
+                        <NativeSelect
                             id="class-batch"
                             v-model="form.batch_id"
-                            :class="selectClass"
+                            class="w-full"
                         >
                             <option :value="null">Whole subject</option>
                             <option
@@ -312,7 +310,7 @@ const selectClass =
                             >
                                 Batch {{ batch.name }}
                             </option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.batch_id" />
                     </div>
                 </div>
@@ -320,10 +318,10 @@ const selectClass =
                 <div class="grid grid-cols-3 gap-4">
                     <div class="grid gap-2">
                         <Label for="class-day">Day</Label>
-                        <select
+                        <NativeSelect
                             id="class-day"
                             v-model="form.weekday"
-                            :class="selectClass"
+                            class="w-full"
                             :disabled="locked"
                         >
                             <option
@@ -333,14 +331,14 @@ const selectClass =
                             >
                                 {{ WEEKDAYS[day] }}
                             </option>
-                        </select>
+                        </NativeSelect>
                     </div>
                     <div class="grid gap-2">
                         <Label for="class-start">From</Label>
-                        <select
+                        <NativeSelect
                             id="class-start"
                             v-model="form.start"
-                            :class="selectClass"
+                            class="w-full"
                             :disabled="locked"
                         >
                             <option
@@ -350,14 +348,14 @@ const selectClass =
                             >
                                 {{ formatTime(time) }}
                             </option>
-                        </select>
+                        </NativeSelect>
                     </div>
                     <div class="grid gap-2">
                         <Label for="class-end">To</Label>
-                        <select
+                        <NativeSelect
                             id="class-end"
                             v-model="form.end"
-                            :class="selectClass"
+                            class="w-full"
                             :disabled="locked"
                         >
                             <option
@@ -367,7 +365,7 @@ const selectClass =
                             >
                                 {{ formatTime(time) }}
                             </option>
-                        </select>
+                        </NativeSelect>
                     </div>
                 </div>
                 <InputError
@@ -384,24 +382,24 @@ const selectClass =
                 <div class="grid grid-cols-3 gap-4">
                     <div class="grid gap-2">
                         <Label for="class-mode">Where</Label>
-                        <select
+                        <NativeSelect
                             id="class-mode"
                             v-model="form.mode"
-                            :class="selectClass"
+                            class="w-full"
                         >
                             <option value="onsite">In a room</option>
                             <option value="online">Online</option>
-                        </select>
+                        </NativeSelect>
                     </div>
                     <div
                         v-if="form.mode === 'onsite'"
                         class="col-span-2 grid gap-2"
                     >
                         <Label for="class-room">Room</Label>
-                        <select
+                        <NativeSelect
                             id="class-room"
                             v-model="form.room_id"
-                            :class="selectClass"
+                            class="w-full"
                         >
                             <option :value="null" disabled>Choose…</option>
                             <optgroup
@@ -422,17 +420,17 @@ const selectClass =
                                     }}
                                 </option>
                             </optgroup>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.room_id" />
                     </div>
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="class-teacher">Teacher</Label>
-                    <select
+                    <NativeSelect
                         id="class-teacher"
                         v-model="form.teacher_id"
-                        :class="selectClass"
+                        class="w-full"
                     >
                         <option :value="null" disabled>Choose…</option>
                         <option
@@ -443,7 +441,7 @@ const selectClass =
                             {{ teacher.name
                             }}{{ teacher.on_leave ? ' (on leave)' : '' }}
                         </option>
-                    </select>
+                    </NativeSelect>
                     <InputError :message="form.errors.teacher_id" />
                 </div>
 

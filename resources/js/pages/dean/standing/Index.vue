@@ -8,6 +8,7 @@ import Pagination from '@/components/Pagination.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import { formatDate } from '@/lib/dates';
 import type { Paginated, Program, TermPhase } from '@/types';
@@ -121,10 +122,9 @@ function breakdown(row: Row): string {
                           : 'No terms yet'
                 "
             />
-            <select
+            <NativeSelect
                 v-if="terms.length > 1"
                 v-model="filters.term"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 aria-label="Term"
             >
                 <option
@@ -134,7 +134,7 @@ function breakdown(row: Row): string {
                 >
                     {{ option.label }} ({{ phaseLabels[option.phase] }})
                 </option>
-            </select>
+            </NativeSelect>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 border-b">
@@ -161,11 +161,7 @@ function breakdown(row: Row): string {
                 placeholder="Search name, email or student number"
                 aria-label="Search learners"
             />
-            <select
-                v-model="filters.section"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Section"
-            >
+            <NativeSelect v-model="filters.section" aria-label="Section">
                 <option :value="null">All sections</option>
                 <option
                     v-for="section in sections"
@@ -174,7 +170,7 @@ function breakdown(row: Row): string {
                 >
                     {{ section.program.code }} {{ section.name }}
                 </option>
-            </select>
+            </NativeSelect>
         </div>
 
         <div class="overflow-x-auto rounded-lg border">

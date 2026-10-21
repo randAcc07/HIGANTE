@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import type {
     College,
@@ -198,10 +199,9 @@ function registerOne(learnerId: number): void {
                 "
             />
             <div class="flex flex-wrap gap-2">
-                <select
+                <NativeSelect
                     v-if="terms.length > 1"
                     v-model="filters.term"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="Term"
                 >
                     <option
@@ -211,7 +211,7 @@ function registerOne(learnerId: number): void {
                     >
                         {{ option.label }} ({{ phaseLabels[option.phase] }})
                     </option>
-                </select>
+                </NativeSelect>
                 <NextTermButton
                     v-if="nextTerm"
                     :term="nextTerm"
@@ -266,26 +266,24 @@ function registerOne(learnerId: number): void {
             </div>
 
             <div class="flex flex-wrap gap-3">
-                <select
+                <NativeSelect
                     v-if="filters.view === 'candidates'"
                     v-model="filters.source"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="List"
                 >
                     <option value="list">
                         {{ listLabels[term.semester] }}
                     </option>
                     <option value="others">Others not registered</option>
-                </select>
+                </NativeSelect>
                 <Input
                     v-model="filters.search"
                     class="max-w-xs"
                     placeholder="Search name, email or student number"
                     aria-label="Search learners"
                 />
-                <select
+                <NativeSelect
                     v-model="filters.college"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     aria-label="College"
                     @change="filters.program = null"
                 >
@@ -297,12 +295,8 @@ function registerOne(learnerId: number): void {
                     >
                         {{ college.code }}
                     </option>
-                </select>
-                <select
-                    v-model="filters.program"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    aria-label="Program"
-                >
+                </NativeSelect>
+                <NativeSelect v-model="filters.program" aria-label="Program">
                     <option :value="null">All programs</option>
                     <option
                         v-for="program in programs"
@@ -311,27 +305,19 @@ function registerOne(learnerId: number): void {
                     >
                         {{ program.code }}
                     </option>
-                </select>
-                <select
-                    v-model="filters.year"
-                    class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                    aria-label="Year level"
-                >
+                </NativeSelect>
+                <NativeSelect v-model="filters.year" aria-label="Year level">
                     <option :value="null">All years</option>
                     <option v-for="year in 6" :key="year" :value="year">
                         Year {{ year }}
                     </option>
-                </select>
+                </NativeSelect>
                 <template v-if="filters.view === 'registered'">
-                    <select
-                        v-model="filters.status"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                        aria-label="Status"
-                    >
+                    <NativeSelect v-model="filters.status" aria-label="Status">
                         <option :value="null">Any status</option>
                         <option value="registered">Registered</option>
                         <option value="withdrawn">Withdrawn</option>
-                    </select>
+                    </NativeSelect>
                     <label class="flex items-center gap-2 text-sm">
                         <Checkbox
                             :model-value="filters.unsectioned === 1"

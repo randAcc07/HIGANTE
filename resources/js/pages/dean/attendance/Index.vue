@@ -5,6 +5,7 @@ import AttendanceController from '@/actions/App/Http/Controllers/Dean/Attendance
 import DayClasses from '@/components/attendance/DayClasses.vue';
 import DayPicker from '@/components/attendance/DayPicker.vue';
 import Heading from '@/components/Heading.vue';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import { formatDate } from '@/lib/dates';
 import type { DayClass, Program, TeacherOption, TermPhase } from '@/types';
@@ -77,10 +78,9 @@ const marked = computed(() =>
                         : 'No terms yet'
                 "
             />
-            <select
+            <NativeSelect
                 v-if="terms.length > 1"
                 v-model="filters.term"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 aria-label="Term"
             >
                 <option
@@ -90,16 +90,12 @@ const marked = computed(() =>
                 >
                     {{ option.label }} ({{ phaseLabels[option.phase] }})
                 </option>
-            </select>
+            </NativeSelect>
         </div>
 
         <div v-if="term" class="flex flex-wrap items-center gap-3">
             <DayPicker v-model="day" :today="today" />
-            <select
-                v-model="filters.section"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Section"
-            >
+            <NativeSelect v-model="filters.section" aria-label="Section">
                 <option :value="null">All sections</option>
                 <option
                     v-for="section in sections"
@@ -108,12 +104,8 @@ const marked = computed(() =>
                 >
                     {{ section.program.code }} {{ section.name }}
                 </option>
-            </select>
-            <select
-                v-model="filters.teacher"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Teacher"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.teacher" aria-label="Teacher">
                 <option :value="null">All teachers</option>
                 <option
                     v-for="teacher in teachers"
@@ -122,7 +114,7 @@ const marked = computed(() =>
                 >
                     {{ teacher.name }}
                 </option>
-            </select>
+            </NativeSelect>
         </div>
 
         <section v-if="term" class="space-y-3">

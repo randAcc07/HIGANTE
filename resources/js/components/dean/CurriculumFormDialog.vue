@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { CurriculumLine, Semester, Subject } from '@/types';
 
 /**
@@ -108,23 +109,21 @@ function submit(): void {
                 <div class="grid grid-cols-2 gap-3">
                     <div class="grid gap-2">
                         <Label for="curriculum-year">Year level</Label>
-                        <select
+                        <NativeSelect
                             id="curriculum-year"
                             v-model.number="form.year_level"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                         >
                             <option v-for="year in 6" :key="year" :value="year">
                                 Year {{ year }}
                             </option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.year_level" />
                     </div>
                     <div class="grid gap-2">
                         <Label for="curriculum-semester">Semester</Label>
-                        <select
+                        <NativeSelect
                             id="curriculum-semester"
                             v-model="form.semester"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                         >
                             <option
                                 v-for="option in semesters"
@@ -133,7 +132,7 @@ function submit(): void {
                             >
                                 {{ option.label }}
                             </option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.semester" />
                     </div>
                 </div>

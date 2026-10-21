@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { Account, College, DutyStatus, UserRole } from '@/types';
 
 const props = defineProps<{
@@ -105,23 +106,18 @@ function submit(): void {
                 <div v-if="!account" class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">
                         <Label for="staff-role">Role</Label>
-                        <select
-                            id="staff-role"
-                            v-model="form.role"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                        >
+                        <NativeSelect id="staff-role" v-model="form.role">
                             <option value="teacher">Teacher</option>
                             <option value="dean">Dean</option>
                             <option value="registrar">Registrar</option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.role" />
                     </div>
                     <div v-if="inCollege" class="grid gap-2">
                         <Label for="staff-college">College</Label>
-                        <select
+                        <NativeSelect
                             id="staff-college"
                             v-model="form.college_id"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                         >
                             <option :value="null" disabled>Choose…</option>
                             <option
@@ -131,7 +127,7 @@ function submit(): void {
                             >
                                 {{ college.code }}
                             </option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.college_id" />
                     </div>
                 </div>
@@ -166,14 +162,13 @@ function submit(): void {
                     </div>
                     <div class="grid gap-2">
                         <Label for="staff-duty">Duty status</Label>
-                        <select
+                        <NativeSelect
                             id="staff-duty"
                             v-model="form.duty_status"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                         >
                             <option value="active">Active</option>
                             <option value="on_leave">On leave</option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.duty_status" />
                     </div>
                 </div>

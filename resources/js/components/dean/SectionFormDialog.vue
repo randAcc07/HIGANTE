@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { Program } from '@/types';
 
 type SectionRow = {
@@ -83,10 +84,9 @@ function submit(): void {
                 <div v-if="!section" class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 grid gap-2">
                         <Label for="section-program">Program</Label>
-                        <select
+                        <NativeSelect
                             id="section-program"
                             v-model="form.program_id"
-                            class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                         >
                             <option
                                 v-for="program in programs"
@@ -95,7 +95,7 @@ function submit(): void {
                             >
                                 {{ program.code }}
                             </option>
-                        </select>
+                        </NativeSelect>
                         <InputError :message="form.errors.program_id" />
                     </div>
                     <div class="grid gap-2">

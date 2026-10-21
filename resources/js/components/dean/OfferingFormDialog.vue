@@ -14,6 +14,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
+import { NativeSelect } from '@/components/ui/native-select';
 import type { Offering, Subject, TeacherOption } from '@/types';
 
 /**
@@ -87,10 +88,9 @@ function submit(): void {
             <form class="space-y-4" @submit.prevent="submit">
                 <div v-if="!offering" class="grid gap-2">
                     <Label for="offering-subject">Subject</Label>
-                    <select
+                    <NativeSelect
                         id="offering-subject"
                         v-model="form.subject_id"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     >
                         <option :value="null" disabled>Choose…</option>
                         <option
@@ -100,15 +100,14 @@ function submit(): void {
                         >
                             {{ subject.code }} · {{ subject.title }}
                         </option>
-                    </select>
+                    </NativeSelect>
                     <InputError :message="form.errors.subject_id" />
                 </div>
                 <div class="grid gap-2">
                     <Label for="offering-teacher">Default teacher</Label>
-                    <select
+                    <NativeSelect
                         id="offering-teacher"
                         v-model="form.teacher_id"
-                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                     >
                         <option :value="null">To be announced</option>
                         <option
@@ -119,7 +118,7 @@ function submit(): void {
                             {{ teacher.name
                             }}{{ teacher.on_leave ? ' (on leave)' : '' }}
                         </option>
-                    </select>
+                    </NativeSelect>
                     <InputError :message="form.errors.teacher_id" />
                 </div>
                 <Label v-if="offering" class="flex items-start gap-2">

@@ -12,6 +12,7 @@ import SetupLinkDialog from '@/components/SetupLinkDialog.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { NativeSelect } from '@/components/ui/native-select';
 import { useFilters } from '@/composables/useFilters';
 import type {
     College,
@@ -102,9 +103,8 @@ const statusLabels: Record<LearnerStatus, string> = {
                 placeholder="Search name, email or student number"
                 aria-label="Search learners"
             />
-            <select
+            <NativeSelect
                 v-model="filters.college"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
                 aria-label="College"
                 @change="filters.program = null"
             >
@@ -116,12 +116,8 @@ const statusLabels: Record<LearnerStatus, string> = {
                 >
                     {{ college.code }}
                 </option>
-            </select>
-            <select
-                v-model="filters.program"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Program"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.program" aria-label="Program">
                 <option :value="null">All programs</option>
                 <option
                     v-for="program in programs"
@@ -130,22 +126,14 @@ const statusLabels: Record<LearnerStatus, string> = {
                 >
                     {{ program.code }}
                 </option>
-            </select>
-            <select
-                v-model="filters.year"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Year level"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.year" aria-label="Year level">
                 <option :value="null">All years</option>
                 <option v-for="year in 6" :key="year" :value="year">
                     Year {{ year }}
                 </option>
-            </select>
-            <select
-                v-model="filters.status"
-                class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
-                aria-label="Status"
-            >
+            </NativeSelect>
+            <NativeSelect v-model="filters.status" aria-label="Status">
                 <option :value="null">Any status</option>
                 <option
                     v-for="(label, status) in statusLabels"
@@ -154,7 +142,7 @@ const statusLabels: Record<LearnerStatus, string> = {
                 >
                     {{ label }}
                 </option>
-            </select>
+            </NativeSelect>
         </div>
 
         <div class="overflow-x-auto rounded-lg border">

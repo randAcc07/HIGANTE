@@ -3,7 +3,6 @@ import { TriangleAlert } from '@lucide/vue';
 import { computed } from 'vue';
 import GridZoomControl from '@/components/GridZoomControl.vue';
 import { useGridZoom } from '@/composables/useGridZoom';
-import type { GridZoom } from '@/composables/useGridZoom';
 import { formatTime, fromMinutes, toMinutes, WEEKDAYS } from '@/lib/time';
 import type { GridBlock, Weekday } from '@/types';
 
@@ -23,8 +22,8 @@ const props = withDefaults(
         to?: string;
         step?: number;
         editable?: boolean;
-        /** Shared zoom, when the page shows GridZoomControl in its own toolbar. */
-        zoom?: GridZoom;
+        /** Shown in place of the grid (heading row kept, zoom hidden), e.g. until a target is picked. */
+        empty?: string;
         /** A dated week: each day's date and its calendar events (a suspending one shades the day). */
         dayHeads?: Partial<
             Record<Weekday, { date: string; events: string[]; off: boolean }>
@@ -36,7 +35,7 @@ const props = withDefaults(
         to: '20:00',
         step: 30,
         editable: false,
-        zoom: undefined,
+        empty: undefined,
         dayHeads: undefined,
     },
 );
@@ -46,8 +45,8 @@ const emit = defineEmits<{
     block: [block: GridBlock];
 }>();
 
-// The page's zoom if it shows the control itself, else the grid's own.
-const zoom = props.zoom ?? useGridZoom();
+// Each grid owns its zoom; pages put their heading or toolbar in #heading.
+const zoom = useGridZoom();
 const ppm = zoom.pixelsPerMinute;
 const start = computed(() => toMinutes(props.from));
 const height = computed(() => (toMinutes(props.to) - start.value) * ppm.value);
@@ -163,11 +162,24 @@ function pick(day: Weekday, event: MouseEvent): void {
 
 <template>
     <div class="space-y-2">
-        <div v-if="!props.zoom" class="flex justify-end">
-            <GridZoomControl :zoom="zoom" />
+        <!-- A page's heading shares the zoom control's row instead of
+             stacking above it. -->
+        <div
+            v-if="$slots.heading || !empty"
+            class="flex flex-wrap items-center justify-between gap-3"
+        >
+            <slot name="heading" />
+            <GridZoomControl v-if="!empty" :zoom="zoom" class="ml-auto" />
         </div>
 
+        <p
+            v-if="empty"
+            class="rounded-lg border p-8 text-center text-sm text-muted-foreground"
+        >
+            {{ empty }}
+        </p>
         <div
+            v-else
             class="max-h-[75vh] overflow-auto rounded-lg border"
             @wheel="zoom.onWheel"
             @touchstart="zoom.onTouchStart"

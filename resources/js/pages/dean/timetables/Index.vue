@@ -4,11 +4,10 @@ import { computed, ref } from 'vue';
 import { toast } from 'vue-sonner';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import ScheduleFormDialog from '@/components/dean/ScheduleFormDialog.vue';
-import GridZoomControl from '@/components/GridZoomControl.vue';
 import Heading from '@/components/Heading.vue';
 import NextTermButton from '@/components/NextTermButton.vue';
 import ScheduleGrid from '@/components/ScheduleGrid.vue';
-import { useGridZoom } from '@/composables/useGridZoom';
+import { NativeSelect } from '@/components/ui/native-select';
 import type {
     BusyBlock,
     ClassBlock,
@@ -145,8 +144,6 @@ function show(query: {
     );
 }
 
-const zoom = useGridZoom();
-
 // A section's week offers only its subjects; a room's or teacher's week asks
 // for the section in the dialog.
 const dialogOfferings = computed(() =>
@@ -195,9 +192,6 @@ function saved(): void {
         toast.info('The class moved out of this timetable.');
     }
 }
-
-const selectClass =
-    'h-9 rounded-md border border-input bg-transparent px-3 text-sm';
 </script>
 
 <template>
@@ -213,120 +207,120 @@ const selectClass =
             "
         />
 
-        <div class="flex flex-wrap items-center gap-3">
-            <select
-                v-if="terms.length > 1"
-                :value="term?.id"
-                :class="selectClass"
-                aria-label="Term"
-                @change="
-                    show({
-                        term: Number(
-                            ($event.target as HTMLSelectElement).value,
-                        ),
-                        target: null,
-                        batch: null,
-                    })
-                "
-            >
-                <option
-                    v-for="option in terms"
-                    :key="option.id"
-                    :value="option.id"
-                >
-                    {{ option.label }}
-                </option>
-            </select>
-            <NextTermButton
-                v-if="nextTerm"
-                :term="nextTerm"
-                @pick="(id) => show({ term: id, target: null, batch: null })"
-            />
-            <select
-                :value="selected.view"
-                :class="selectClass"
-                aria-label="View"
-                @change="
-                    show({
-                        view: ($event.target as HTMLSelectElement)
-                            .value as View,
-                        target: null,
-                        batch: null,
-                    })
-                "
-            >
-                <option
-                    v-for="option in VIEWS"
-                    :key="option.value"
-                    :value="option.value"
-                >
-                    {{ option.label }}
-                </option>
-            </select>
-            <select
-                :value="selected.target ?? ''"
-                :class="selectClass"
-                :aria-label="
-                    VIEWS.find((option) => option.value === selected.view)
-                        ?.label
-                "
-                @change="
-                    show({
-                        target:
-                            Number(
-                                ($event.target as HTMLSelectElement).value,
-                            ) || null,
-                        batch: null,
-                    })
-                "
-            >
-                <option value="">Choose…</option>
-                <option
-                    v-for="option in targets"
-                    :key="option.id"
-                    :value="option.id"
-                >
-                    {{ option.label }}
-                </option>
-            </select>
-            <select
-                v-if="selected.view === 'section' && batches.length"
-                :value="selected.batch ?? ''"
-                :class="selectClass"
-                aria-label="Batch"
-                @change="
-                    show({
-                        batch:
-                            ($event.target as HTMLSelectElement).value || null,
-                    })
-                "
-            >
-                <option value="">Whole section</option>
-                <option v-for="name in batches" :key="name" :value="name">
-                    Batch {{ name }}
-                </option>
-            </select>
-            <GridZoomControl
-                v-if="selected.target"
-                :zoom="zoom"
-                class="ml-auto"
-            />
-        </div>
-
         <ScheduleGrid
-            v-if="selected.target"
             :blocks="blocks"
-            :zoom="zoom"
             :editable="canEdit && dialogOfferings.length > 0"
+            :empty="
+                selected.target
+                    ? undefined
+                    : `Choose a ${selected.view} to see its week.`
+            "
             @slot="addAt"
             @block="edit"
-        />
-        <p
-            v-else
-            class="rounded-lg border p-8 text-center text-sm text-muted-foreground"
         >
-            Choose a {{ selected.view }} to see its week.
-        </p>
+            <template #heading>
+                <div class="flex flex-wrap items-center gap-3">
+                    <NativeSelect
+                        v-if="terms.length > 1"
+                        :value="term?.id"
+                        aria-label="Term"
+                        @change="
+                            show({
+                                term: Number(
+                                    ($event.target as HTMLSelectElement).value,
+                                ),
+                                target: null,
+                                batch: null,
+                            })
+                        "
+                    >
+                        <option
+                            v-for="option in terms"
+                            :key="option.id"
+                            :value="option.id"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </NativeSelect>
+                    <NextTermButton
+                        v-if="nextTerm"
+                        :term="nextTerm"
+                        @pick="
+                            (id) =>
+                                show({ term: id, target: null, batch: null })
+                        "
+                    />
+                    <NativeSelect
+                        :value="selected.view"
+                        aria-label="View"
+                        @change="
+                            show({
+                                view: ($event.target as HTMLSelectElement)
+                                    .value as View,
+                                target: null,
+                                batch: null,
+                            })
+                        "
+                    >
+                        <option
+                            v-for="option in VIEWS"
+                            :key="option.value"
+                            :value="option.value"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </NativeSelect>
+                    <NativeSelect
+                        :value="selected.target ?? ''"
+                        :aria-label="
+                            VIEWS.find(
+                                (option) => option.value === selected.view,
+                            )?.label
+                        "
+                        @change="
+                            show({
+                                target:
+                                    Number(
+                                        ($event.target as HTMLSelectElement)
+                                            .value,
+                                    ) || null,
+                                batch: null,
+                            })
+                        "
+                    >
+                        <option value="">Choose…</option>
+                        <option
+                            v-for="option in targets"
+                            :key="option.id"
+                            :value="option.id"
+                        >
+                            {{ option.label }}
+                        </option>
+                    </NativeSelect>
+                    <NativeSelect
+                        v-if="selected.view === 'section' && batches.length"
+                        :value="selected.batch ?? ''"
+                        aria-label="Batch"
+                        @change="
+                            show({
+                                batch:
+                                    ($event.target as HTMLSelectElement)
+                                        .value || null,
+                            })
+                        "
+                    >
+                        <option value="">Whole section</option>
+                        <option
+                            v-for="name in batches"
+                            :key="name"
+                            :value="name"
+                        >
+                            Batch {{ name }}
+                        </option>
+                    </NativeSelect>
+                </div>
+            </template>
+        </ScheduleGrid>
     </div>
 
     <ScheduleFormDialog
