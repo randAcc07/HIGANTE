@@ -17,7 +17,9 @@ defineOptions({
 });
 
 const props = defineProps<{
-    excuses: Paginated<Excuse & { learner: ExcuseLearner }>;
+    excuses: Paginated<
+        Excuse & { learner: ExcuseLearner; dean_decides: number }
+    >;
     counts: Record<ExcuseStatus, number>;
     filters: { status: ExcuseStatus; search: string | null };
 }>();
@@ -27,7 +29,21 @@ const filters = useFilters(ExcuseController.index.url(), {
     search: props.filters.search ?? '',
 });
 
-const tabs: ExcuseStatus[] = ['pending', 'approved', 'rejected', 'revoked'];
+const tabs: ExcuseStatus[] = [
+    'pending',
+    'partial',
+    'approved',
+    'rejected',
+    'revoked',
+];
+
+function decided(excuse: Excuse): string {
+    const done = excuse.decisions.filter((d) => d.status !== 'pending').length;
+
+    return excuse.decisions.length
+        ? `${done} of ${excuse.decisions.length} decided`
+        : 'No classes';
+}
 </script>
 
 <template>
@@ -36,7 +52,7 @@ const tabs: ExcuseStatus[] = ['pending', 'approved', 'rejected', 'revoked'];
     <div class="flex flex-col gap-6 p-4">
         <Heading
             title="Excuses"
-            description="Your college's learners' excuses: review each with its files and the absences it covers"
+            description="Your college's learners' excuses and how each class decided. Teachers decide for their classes; you decide only for classes without a teacher."
         />
 
         <div class="flex flex-wrap items-center gap-2 border-b">
@@ -70,7 +86,7 @@ const tabs: ExcuseStatus[] = ['pending', 'approved', 'rejected', 'revoked'];
                         <th class="px-4 py-2 font-medium">Learner</th>
                         <th class="px-4 py-2 font-medium">Days</th>
                         <th class="px-4 py-2 font-medium">Reason</th>
-                        <th class="px-4 py-2 font-medium">Files</th>
+                        <th class="px-4 py-2 font-medium">Classes</th>
                         <th class="px-4 py-2 font-medium">Submitted</th>
                     </tr>
                 </thead>
@@ -103,7 +119,13 @@ const tabs: ExcuseStatus[] = ['pending', 'approved', 'rejected', 'revoked'];
                             {{ reasonLabels[excuse.reason] }}
                         </td>
                         <td class="px-4 py-2">
-                            {{ excuse.documents.length || '—' }}
+                            {{ decided(excuse) }}
+                            <Badge
+                                v-if="excuse.dean_decides"
+                                variant="default"
+                                class="ml-2"
+                                >{{ excuse.dean_decides }} yours</Badge
+                            >
                         </td>
                         <td class="px-4 py-2 whitespace-nowrap">
                             {{

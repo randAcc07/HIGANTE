@@ -22,6 +22,7 @@ use App\Http\Controllers\Dean\SectionController;
 use App\Http\Controllers\Dean\StandingController;
 use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
+use App\Http\Controllers\ExcuseDecisionController;
 use App\Http\Controllers\ExcuseDocumentController;
 use App\Http\Controllers\Learner\ClassController as LearnerClassController;
 use App\Http\Controllers\Learner\ExcuseController as LearnerExcuseController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Registrar\LearnerController;
 use App\Http\Controllers\Registrar\RegistrationController;
 use App\Http\Controllers\Teacher\ClassController;
+use App\Http\Controllers\Teacher\ExcuseController as TeacherExcuseController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => to_route('dashboard'))->name('home');
@@ -99,9 +101,6 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
     Route::get('attendance', [DeanAttendanceController::class, 'index'])->name('attendance.index');
     Route::get('excuses', [DeanExcuseController::class, 'index'])->name('excuses.index');
     Route::get('excuses/{excuse}', [DeanExcuseController::class, 'show'])->name('excuses.show');
-    Route::post('excuses/{excuse}/approve', [DeanExcuseController::class, 'approve'])->name('excuses.approve');
-    Route::post('excuses/{excuse}/reject', [DeanExcuseController::class, 'reject'])->name('excuses.reject');
-    Route::post('excuses/{excuse}/revoke', [DeanExcuseController::class, 'revoke'])->name('excuses.revoke');
     Route::get('standing', [StandingController::class, 'index'])->name('standing.index');
     Route::post('enrollments/{enrollment}/drop', [StandingController::class, 'drop'])->name('standing.drop');
     Route::post('enrollments/{enrollment}/dismiss', [StandingController::class, 'dismiss'])->name('standing.dismiss');
@@ -123,6 +122,8 @@ Route::middleware(['auth', 'verified', 'role:learner'])->prefix('learner')->name
 
 Route::middleware(['auth', 'verified', 'role:teacher'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('classes', [ClassController::class, 'index'])->name('classes.index');
+    Route::get('excuses', [TeacherExcuseController::class, 'index'])->name('excuses.index');
+    Route::post('excuses', [TeacherExcuseController::class, 'store'])->name('excuses.store');
 });
 
 // A class list on a date: its teacher takes attendance, the dean of its
@@ -130,6 +131,13 @@ Route::middleware(['auth', 'verified', 'role:teacher'])->prefix('teacher')->name
 Route::middleware(['auth', 'verified', 'role:teacher,dean'])->group(function () {
     Route::get('attendance/{schedule}/{date}', [AttendanceController::class, 'show'])->where('date', '\d{4}-\d{2}-\d{2}')->name('attendance.show');
     Route::put('attendance/{schedule}/{date}', [AttendanceController::class, 'update'])->where('date', '\d{4}-\d{2}-\d{2}')->name('attendance.update');
+
+    // One class's decision on an excuse: its teacher decides (the dean for
+    // a class without one); the college's dean can look (Excuses::canDecide).
+    Route::get('excuses/decisions/{decision}', [ExcuseDecisionController::class, 'show'])->name('excuses.decisions.show');
+    Route::post('excuses/decisions/{decision}/approve', [ExcuseDecisionController::class, 'approve'])->name('excuses.decisions.approve');
+    Route::post('excuses/decisions/{decision}/decline', [ExcuseDecisionController::class, 'decline'])->name('excuses.decisions.decline');
+    Route::post('excuses/decisions/{decision}/revoke', [ExcuseDecisionController::class, 'revoke'])->name('excuses.decisions.revoke');
 });
 
 // Account setup links. Signed URLs authorize them; see AccountSetupController.

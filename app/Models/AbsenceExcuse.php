@@ -13,8 +13,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A request to excuse a learner's absences over a date range, reviewed by
- * the dean of the learner's college. Revoked by status, never deleted.
+ * A request to excuse a learner's absences over a date range. It is decided
+ * class by class (decisions); status summarizes them. Never deleted.
+ *
+ * reviewed_* / revoked_* / review_remarks are from when the dean decided
+ * excuses as a whole; the app no longer reads or writes them (dropped once
+ * the demo seeder writes decisions).
  *
  * @property int $id
  * @property int $learner_id
@@ -97,6 +101,14 @@ class AbsenceExcuse extends Model
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * @return HasMany<ExcuseDecision, $this>
+     */
+    public function decisions(): HasMany
+    {
+        return $this->hasMany(ExcuseDecision::class);
     }
 
     /**

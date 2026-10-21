@@ -39,6 +39,7 @@ Enum absence_excuses_reason {
 Enum absence_excuses_status {
   "pending"
   "approved"
+  "partial"
   "rejected"
   "revoked"
 }
@@ -64,6 +65,13 @@ Enum enrollments_drop_reason {
   "absences"
   "withdrawn"
   "removed"
+}
+
+Enum excuse_decisions_status {
+  "pending"
+  "approved"
+  "declined"
+  "revoked"
 }
 
 Enum schedules_mode {
@@ -541,6 +549,28 @@ Table enrollments {
   }
 }
 
+Table excuse_decisions {
+  id "bigint(20) unsigned" [pk, increment, not null]
+  absence_excuse_id "bigint(20) unsigned" [not null]
+  subject_offering_id "bigint(20) unsigned" [not null]
+  status excuse_decisions_status [not null, default: 'pending']
+  remarks text [null]
+  decided_by "bigint(20) unsigned" [null]
+  decided_at timestamp [null]
+  revoked_by "bigint(20) unsigned" [null]
+  revoked_at timestamp [null]
+  revoke_remarks text [null]
+  created_at timestamp [null]
+  updated_at timestamp [null]
+
+  indexes {
+    (absence_excuse_id, subject_offering_id) [unique, name: 'excuse_decisions_absence_excuse_id_subject_offering_id_unique']
+    decided_by [name: 'excuse_decisions_decided_by_foreign']
+    revoked_by [name: 'excuse_decisions_revoked_by_foreign']
+    (subject_offering_id, status) [name: 'excuse_decisions_subject_offering_id_status_index']
+  }
+}
+
 Table schedules {
   id "bigint(20) unsigned" [pk, increment, not null]
   subject_offering_id "bigint(20) unsigned" [not null]
@@ -654,6 +684,10 @@ Ref enrollments_drop_dismissed_by_foreign: enrollments.drop_dismissed_by > users
 Ref enrollments_learner_id_foreign: enrollments.learner_id > learners.id [delete: restrict]
 Ref enrollments_reinstated_by_foreign: enrollments.reinstated_by > users.id [delete: set null]
 Ref enrollments_subject_offering_id_foreign: enrollments.subject_offering_id > subject_offerings.id [delete: restrict]
+Ref excuse_decisions_absence_excuse_id_foreign: excuse_decisions.absence_excuse_id > absence_excuses.id [delete: cascade]
+Ref excuse_decisions_decided_by_foreign: excuse_decisions.decided_by > users.id [delete: set null]
+Ref excuse_decisions_revoked_by_foreign: excuse_decisions.revoked_by > users.id [delete: set null]
+Ref excuse_decisions_subject_offering_id_foreign: excuse_decisions.subject_offering_id > subject_offerings.id [delete: restrict]
 Ref learners_program_id_foreign: learners.program_id > programs.id [delete: restrict]
 Ref learners_user_id_foreign: learners.user_id - users.id [delete: cascade]
 Ref passkeys_user_id_foreign: passkeys.user_id > users.id [delete: cascade]

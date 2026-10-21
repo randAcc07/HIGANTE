@@ -52,6 +52,7 @@ dataset('pages', [
     // Teacher and learner
     'teacher classes' => ['teacher', fn (Campus $c) => path('teacher.classes.index', ['date' => $c->lastLecture()]), 'Open a class to take or correct its attendance'],
     'teacher class list' => ['teacher', fn (Campus $c) => path('attendance.show', ['schedule' => $c->lectureClass, 'date' => $c->lastLecture()]), 'Everyone counts as present unless marked otherwise.'],
+    'teacher excuses' => ['teacher', fn (Campus $c) => path('teacher.excuses.index'), 'Nothing to decide right now.'],
     'teacher dashboard' => ['teacher', fn (Campus $c) => path('dashboard'), 'Welcome,'],
     'teacher calendar' => ['teacher', fn (Campus $c) => path('calendar.index'), '{term}'],
     'learner dashboard' => ['learner', fn (Campus $c) => path('dashboard'), 'Welcome,'],

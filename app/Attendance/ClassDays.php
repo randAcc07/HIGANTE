@@ -55,6 +55,19 @@ class ClassDays
     }
 
     /**
+     * Whether the class meets on that date (past or future): its weekday,
+     * inside its term, and not suspended.
+     */
+    public function meets(Schedule $schedule, CarbonImmutable $date): bool
+    {
+        $schedule->loadMissing('term');
+
+        return $date->dayOfWeekIso === $schedule->weekday()
+            && $date->between($schedule->term->starts_on, $schedule->term->ends_on)
+            && $this->suspension($schedule, $date) === null;
+    }
+
+    /**
      * The class's meeting dates in its term up to today, latest first.
      *
      * @return list<CarbonImmutable>

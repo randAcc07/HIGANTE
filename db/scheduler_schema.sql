@@ -261,7 +261,7 @@ CREATE TABLE `absence_excuses` (
   `date_to` date NOT NULL,
   `reason` enum('medical','illness','school_activity','other') NOT NULL,
   `remarks` text DEFAULT NULL,
-  `status` enum('pending','approved','rejected','revoked') NOT NULL DEFAULT 'pending',
+  `status` enum('pending','approved','partial','rejected','revoked') NOT NULL DEFAULT 'pending',
   `submitted_by` bigint(20) unsigned DEFAULT NULL,
   `reviewed_by` bigint(20) unsigned DEFAULT NULL,
   `reviewed_at` timestamp NULL DEFAULT NULL,
@@ -433,6 +433,30 @@ CREATE TABLE `enrollments` (
   CONSTRAINT `enrollments_learner_id_foreign` FOREIGN KEY (`learner_id`) REFERENCES `learners` (`id`),
   CONSTRAINT `enrollments_reinstated_by_foreign` FOREIGN KEY (`reinstated_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `enrollments_subject_offering_id_foreign` FOREIGN KEY (`subject_offering_id`) REFERENCES `subject_offerings` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `excuse_decisions` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `absence_excuse_id` bigint(20) unsigned NOT NULL,
+  `subject_offering_id` bigint(20) unsigned NOT NULL,
+  `status` enum('pending','approved','declined','revoked') NOT NULL DEFAULT 'pending',
+  `remarks` text DEFAULT NULL,
+  `decided_by` bigint(20) unsigned DEFAULT NULL,
+  `decided_at` timestamp NULL DEFAULT NULL,
+  `revoked_by` bigint(20) unsigned DEFAULT NULL,
+  `revoked_at` timestamp NULL DEFAULT NULL,
+  `revoke_remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `excuse_decisions_absence_excuse_id_subject_offering_id_unique` (`absence_excuse_id`,`subject_offering_id`),
+  KEY `excuse_decisions_decided_by_foreign` (`decided_by`),
+  KEY `excuse_decisions_revoked_by_foreign` (`revoked_by`),
+  KEY `excuse_decisions_subject_offering_id_status_index` (`subject_offering_id`,`status`),
+  CONSTRAINT `excuse_decisions_absence_excuse_id_foreign` FOREIGN KEY (`absence_excuse_id`) REFERENCES `absence_excuses` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `excuse_decisions_decided_by_foreign` FOREIGN KEY (`decided_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `excuse_decisions_revoked_by_foreign` FOREIGN KEY (`revoked_by`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `excuse_decisions_subject_offering_id_foreign` FOREIGN KEY (`subject_offering_id`) REFERENCES `subject_offerings` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `schedules` (

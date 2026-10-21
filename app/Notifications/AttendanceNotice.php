@@ -4,12 +4,14 @@ namespace App\Notifications;
 
 use App\Models\AbsenceExcuse;
 use App\Models\Enrollment;
+use App\Models\ExcuseDecision;
 use Illuminate\Notifications\Notification;
 
 /**
  * An in-app notice about attendance: a warning, a drop flag, a confirmed
- * drop, a reinstatement or an excuse decision (to the learner), or a learner
- * flagged for dropping or a new excuse to review (to the dean). Email comes later, once a mail server exists.
+ * drop, a reinstatement or a class's excuse decision (to the learner), a
+ * learner flagged for dropping (to the dean), or an excuse to decide for a
+ * class (to its teacher, or the dean for a class without one). Email comes later, once a mail server exists.
  */
 class AttendanceNotice extends Notification
 {
@@ -23,11 +25,11 @@ class AttendanceNotice extends Notification
 
     public const LEARNER_FLAGGED = 'learner_flagged';
 
-    public const EXCUSE_SUBMITTED = 'excuse_submitted';
+    public const EXCUSE_TO_DECIDE = 'excuse_to_decide';
 
     public const EXCUSE_APPROVED = 'excuse_approved';
 
-    public const EXCUSE_REJECTED = 'excuse_rejected';
+    public const EXCUSE_DECLINED = 'excuse_declined';
 
     public const EXCUSE_REVOKED = 'excuse_revoked';
 
@@ -73,32 +75,44 @@ class AttendanceNotice extends Notification
     }
 
     /**
-     * To the dean, linking to the excuse to review.
+     * To a class's teacher (or the dean, for a class without one), linking
+     * to the decision to make.
      */
-    public static function excuseSubmitted(AbsenceExcuse $excuse): self
+    public static function excuseToDecide(ExcuseDecision $decision): self
     {
+        $excuse = $decision->absenceExcuse;
         $excuse->loadMissing('learner.user');
 
         return new self(
-            self::EXCUSE_SUBMITTED,
-            __(':name submitted an excuse (:reason) for :days.', ['name' => $excuse->learner->user->full_name, 'reason' => $excuse->reason->label(), 'days' => self::days($excuse)]),
-            route('dean.excuses.show', $excuse, false),
+            self::EXCUSE_TO_DECIDE,
+            __(':name asks to excuse :days (:reason) in :subject.', ['name' => $excuse->learner->user->full_name, 'days' => self::days($excuse), 'reason' => $excuse->reason->label(), 'subject' => self::subject($decision)]),
+            route('excuses.decisions.show', $decision, false),
         );
     }
 
-    public static function excuseApproved(AbsenceExcuse $excuse): self
+    public static function excuseApproved(ExcuseDecision $decision): self
     {
-        return new self(self::EXCUSE_APPROVED, __('Your excuse for :days was approved; your absences on those days are excused.', ['days' => self::days($excuse)]), route('learner.excuses.index', [], false));
+        return new self(self::EXCUSE_APPROVED, __('Your excuse for :days was approved in :subject; those absences are excused.', ['days' => self::days($decision->absenceExcuse), 'subject' => self::subject($decision)]), route('learner.excuses.index', [], false));
     }
 
-    public static function excuseRejected(AbsenceExcuse $excuse): self
+    public static function excuseDeclined(ExcuseDecision $decision): self
     {
-        return new self(self::EXCUSE_REJECTED, __('Your excuse for :days was not approved: :remarks', ['days' => self::days($excuse), 'remarks' => $excuse->review_remarks]), route('learner.excuses.index', [], false));
+        return new self(self::EXCUSE_DECLINED, __('Your excuse for :days was not approved in :subject: :remarks', ['days' => self::days($decision->absenceExcuse), 'subject' => self::subject($decision), 'remarks' => $decision->remarks]), route('learner.excuses.index', [], false));
     }
 
-    public static function excuseRevoked(AbsenceExcuse $excuse): self
+    public static function excuseRevoked(ExcuseDecision $decision): self
     {
-        return new self(self::EXCUSE_REVOKED, __('Your approved excuse for :days was revoked, so those absences count again: :remarks', ['days' => self::days($excuse), 'remarks' => $excuse->revoke_remarks]), route('learner.excuses.index', [], false));
+        return new self(self::EXCUSE_REVOKED, __('Your excuse for :days was revoked in :subject, so those absences count again: :remarks', ['days' => self::days($decision->absenceExcuse), 'subject' => self::subject($decision), 'remarks' => $decision->revoke_remarks]), route('learner.excuses.index', [], false));
+    }
+
+    /**
+     * "CS 101" (the subject the decision is for).
+     */
+    private static function subject(ExcuseDecision $decision): string
+    {
+        $decision->loadMissing('subjectOffering.subject');
+
+        return $decision->subjectOffering->subject->code;
     }
 
     /**

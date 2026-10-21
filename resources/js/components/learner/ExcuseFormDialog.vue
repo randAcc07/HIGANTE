@@ -22,10 +22,14 @@ const props = defineProps<{
     reasons: ExcuseReason[];
     maxDays: number;
     dueWithinDays: number;
+    /** A teacher filing for a learner: who they can choose, and where it goes. */
+    learners?: { id: number; name: string; student_number: string }[];
+    url?: string;
 }>();
 
 const open = ref(false);
 const form = useForm({
+    learner_id: null as number | null,
     date_from: '',
     date_to: '',
     reason: 'medical' as ExcuseReason,
@@ -54,11 +58,12 @@ function pick(event: Event): void {
 }
 
 function submit(): void {
-    form.transform((data) => ({
+    form.transform(({ learner_id, ...data }) => ({
         ...data,
+        ...(props.learners ? { learner_id } : {}),
         date_to: data.date_to || data.date_from,
         remarks: data.remarks || null,
-    })).post(ExcuseController.store.url(), {
+    })).post(props.url ?? ExcuseController.store.url(), {
         forceFormData: true,
         preserveScroll: true,
         onSuccess: () => {
@@ -75,14 +80,41 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent class="max-h-[90vh] overflow-y-auto">
-            <DialogTitle>Submit an excuse</DialogTitle>
+            <DialogTitle>{{
+                learners ? 'File an excuse for a learner' : 'Submit an excuse'
+            }}</DialogTitle>
             <DialogDescription>
-                For absences on one day or a range of up to
-                {{ props.maxDays }} days. Your dean reviews it; once approved,
-                your absences in every class on those days are excused (lates
-                stay).
+                <template v-if="learners"
+                    >For a learner in one of your classes, e.g. one who handed
+                    you a certificate. It counts as approved in your classes;
+                    their other teachers decide for theirs.</template
+                >
+                <template v-else
+                    >For absences on one day or a range of up to
+                    {{ props.maxDays }} days. Each of your teachers decides for
+                    their class; once approved, your absences in that class on
+                    those days are excused (lates stay).</template
+                >
             </DialogDescription>
             <form class="space-y-4" @submit.prevent="submit">
+                <div v-if="learners" class="grid gap-2">
+                    <Label for="excuse-learner">Learner</Label>
+                    <select
+                        id="excuse-learner"
+                        v-model="form.learner_id"
+                        class="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
+                    >
+                        <option :value="null" disabled>Choose…</option>
+                        <option
+                            v-for="learner in learners"
+                            :key="learner.id"
+                            :value="learner.id"
+                        >
+                            {{ learner.name }} · {{ learner.student_number }}
+                        </option>
+                    </select>
+                    <InputError :message="form.errors.learner_id" />
+                </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">
                         <Label for="excuse-from">From</Label>
@@ -112,8 +144,8 @@ function submit(): void {
                     This is {{ daysLate }} day{{
                         daysLate === 1 ? '' : 's'
                     }}
-                    past the {{ dueWithinDays }}-day deadline. You can still
-                    submit it; your dean will see it as late.
+                    past the {{ dueWithinDays }}-day deadline. It can still be
+                    submitted; it will show as late.
                 </p>
 
                 <div class="grid gap-2">
@@ -173,8 +205,13 @@ function submit(): void {
                 </div>
 
                 <DialogFooter>
-                    <Button :disabled="form.processing || !form.date_from"
-                        >Submit</Button
+                    <Button
+                        :disabled="
+                            form.processing ||
+                            !form.date_from ||
+                            (!!learners && form.learner_id === null)
+                        "
+                        >{{ learners ? 'File' : 'Submit' }}</Button
                     >
                 </DialogFooter>
             </form>

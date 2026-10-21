@@ -138,11 +138,16 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 
 ## 11. Excuses
 
-- [x] Learner submits an excuse: date range (one day, or up to 31 days of a term they're registered for; not a closed term), reason, remarks, any number of files (up to 10 PDFs or photos of 10 MB each). The dean of their college is notified. Once submitted, an excuse is never deleted. Excuses are due within 7 days after their last day (`AbsenceExcuse::DUE_WITHIN_DAYS`): later ones are still accepted but flagged late (days past the deadline) for the dean, and the learner is warned before and after submitting
-- [x] Dean reviews (the Excuses queue, pending first, and each excuse with its files and every absence on its days); `medical` needs at least one file to be approved, `illness` is the dean's discretion. Not approving or revoking needs remarks for the learner
-- [x] Approval excuses the learner's absences in every class in the range (lates stay), including absences marked later on those days; revoking (its own `revoked` status) restores them, or moves them to another approved excuse covering the day. Each link and unlink is audited and the standing recounted
-- [x] Learner sees each excuse's status, the dean's remarks and how many absences it excused, and is notified of every decision
-- [x] Excuses covering a closed term's days can't be reviewed or revoked
+Excuses are decided class by class (reworked after the first build, which had the dean decide whole excuses): the college dean oversees schedules and drops, and the teachers who see the learner in class judge the excuses.
+
+- [x] Learner submits an excuse: date range (one day, or up to 31 days of a term they're registered for; not a closed term), reason, remarks, any number of files (up to 10 PDFs or photos of 10 MB each). Each class with a meeting in the range (the learner's batch, not suspended, while enrolled) gets its own decision, and its teachers are notified. Once submitted, an excuse is never deleted. Excuses are due within 7 days after their last day (`AbsenceExcuse::DUE_WITHIN_DAYS`): later ones are still accepted but flagged late, and the learner is warned before and after submitting
+- [x] A teacher of the class decides it (whoever teaches the learner's meetings of it now: lecture or their batch's lab, so a substitute takes over pending ones; decisions already made keep who made them) from their Excuses queue and the class's decision page (files, the absences in their class); `medical` needs at least one file to be approved, `illness` is the teacher's discretion. Not approving or revoking needs remarks for the learner
+- [x] A teacher can file an excuse for a learner in one of their classes (e.g. a paper certificate handed to them): approved in their own classes, the learner's other teachers decide theirs
+- [x] The dean oversees every excuse of the college and how each class decided (read-only), and decides only for a class without an active teacher
+- [x] Approval excuses the learner's absences in that class on the excuse's days (lates stay), including absences marked later; revoking it (per class) restores them, or moves them to another excuse approved for the class covering the day. Each link and unlink is audited and the standing recounted. The excuse's status summarizes its classes: pending, approved, partly approved, not approved, revoked
+- [x] Learner sees each excuse's classes and how each decided, with the teacher's remarks, and is notified of every decision
+- [x] Excuses covering a closed term's days can't be decided or revoked
+- [ ] Drop the old excuse-level review columns (`reviewed_by`, `reviewed_at`, `review_remarks`, `revoked_at`, `revoked_by`, `revoke_remarks` on `absence_excuses`) once the demo seeder writes decisions
 
 ## 12. Learner views
 
@@ -157,5 +162,4 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 - [ ] Copy one subject's batches to the section's other split subjects
 - [ ] Suspensions for only some programs or year levels of a college (e.g. 4th years for a job fair), if such memos turn out to be common
 - [ ] Email warnings, once a mail server exists (AttendanceNotice is database-only for now)
-- [ ] Teacher-side excuses, filed for a learner (needs clarifying first)
 - [ ] Open items from the roles doc: substitutes, guardian excuses, curriculum/prospectus

@@ -1,4 +1,4 @@
-import type { ExcuseReason, ExcuseStatus } from '@/types';
+import type { DecisionStatus, ExcuseReason, ExcuseStatus } from '@/types';
 
 export const reasonLabels: Record<ExcuseReason, string> = {
     medical: 'Medical certificate',
@@ -10,7 +10,15 @@ export const reasonLabels: Record<ExcuseReason, string> = {
 export const statusLabels: Record<ExcuseStatus, string> = {
     pending: 'Pending',
     approved: 'Approved',
+    partial: 'Partly approved',
     rejected: 'Not approved',
+    revoked: 'Revoked',
+};
+
+export const decisionLabels: Record<DecisionStatus, string> = {
+    pending: 'Waiting for the teacher',
+    approved: 'Approved',
+    declined: 'Not approved',
     revoked: 'Revoked',
 };
 

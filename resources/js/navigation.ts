@@ -32,6 +32,7 @@ import LearnerClassController from '@/actions/App/Http/Controllers/Learner/Class
 import LearnerExcuseController from '@/actions/App/Http/Controllers/Learner/ExcuseController';
 import RegistrationController from '@/actions/App/Http/Controllers/Registrar/RegistrationController';
 import ClassController from '@/actions/App/Http/Controllers/Teacher/ClassController';
+import TeacherExcuseController from '@/actions/App/Http/Controllers/Teacher/ExcuseController';
 import { dashboard } from '@/routes';
 import type { NavItem, UserRole } from '@/types';
 
@@ -96,6 +97,11 @@ const itemsByRole: Record<UserRole, () => NavItem[]> = {
             title: 'My classes',
             href: ClassController.index(),
             icon: CalendarCheck,
+        },
+        {
+            title: 'Excuses',
+            href: TeacherExcuseController.index(),
+            icon: FileCheck,
         },
     ],
     learner: () => [

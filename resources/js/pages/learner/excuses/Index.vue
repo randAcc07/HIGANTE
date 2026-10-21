@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { FileText, Plus } from '@lucide/vue';
 import ExcuseController from '@/actions/App/Http/Controllers/Learner/ExcuseController';
+import DecisionList from '@/components/excuses/DecisionList.vue';
 import Heading from '@/components/Heading.vue';
 import ExcuseFormDialog from '@/components/learner/ExcuseFormDialog.vue';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +30,7 @@ const badgeVariant: Record<
 > = {
     pending: 'secondary',
     approved: 'default',
+    partial: 'outline',
     rejected: 'destructive',
     revoked: 'destructive',
 };
@@ -41,7 +43,7 @@ const badgeVariant: Record<
         <div class="flex flex-wrap items-start justify-between gap-4">
             <Heading
                 title="Excuses"
-                :description="`Ask your dean to excuse absences, within ${dueWithinDays} days after them, and see how each request was decided`"
+                :description="`Ask your teachers to excuse absences, within ${dueWithinDays} days after them, and see how each request was decided`"
             />
             <ExcuseFormDialog
                 :reasons="reasons"
@@ -71,14 +73,6 @@ const badgeVariant: Record<
                     <Badge v-if="excuse.days_late" variant="outline">{{
                         lateLabel(excuse.days_late)
                     }}</Badge>
-                    <span
-                        v-if="excuse.status === 'approved' && excuse.excused"
-                        class="text-sm text-muted-foreground"
-                        >{{ excuse.excused }} absence{{
-                            excuse.excused === 1 ? '' : 's'
-                        }}
-                        excused</span
-                    >
                 </div>
                 <p v-if="excuse.remarks" class="text-sm">
                     {{ excuse.remarks }}
@@ -98,35 +92,15 @@ const badgeVariant: Record<
                         >
                     </li>
                 </ul>
-                <p
-                    v-if="excuse.review_remarks"
-                    class="rounded-md bg-muted/50 p-2 text-sm"
-                >
-                    <span class="font-medium">Dean:</span>
-                    {{ excuse.review_remarks }}
-                </p>
-                <p
-                    v-if="excuse.revoke_remarks"
-                    class="rounded-md bg-muted/50 p-2 text-sm"
-                >
-                    <span class="font-medium"
-                        >Revoked
-                        {{
-                            excuse.revoked_on
-                                ? formatDate(excuse.revoked_on)
-                                : ''
-                        }}:</span
-                    >
-                    {{ excuse.revoke_remarks }}
-                </p>
+                <DecisionList :decisions="excuse.decisions" />
                 <p class="text-xs text-muted-foreground">
                     Submitted
                     {{
                         excuse.submitted_on
                             ? formatDate(excuse.submitted_on)
                             : ''
-                    }}<template v-if="excuse.reviewed_on">
-                        · decided {{ formatDate(excuse.reviewed_on) }}</template
+                    }}<template v-if="excuse.filed_by">
+                        by {{ excuse.filed_by }}</template
                     >
                 </p>
             </li>

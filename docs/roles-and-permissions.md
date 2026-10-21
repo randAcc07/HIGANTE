@@ -50,8 +50,7 @@ the college and can be offered to any section of its programs.
 | Copy one subject's batches to the section's other split subjects                                                       | ⏳     |
 | Enroll irregular learners subject by subject                                                                           | ✅     |
 | Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week | ✅     |
-| Approve or reject excuses for their college's learners (`medical` needs at least one file)                             | ✅     |
-| Revoke an approved excuse (its absences count again)                                                                   | ✅     |
+| Oversee their college's excuses and each class's decision; decide only for a class without an active teacher           | ✅     |
 | Confirm or dismiss drops flagged at the policy's drop count                                                            | ✅     |
 | Reinstate a learner dropped for absences                                                                               | ✅     |
 | Partial-day suspensions and suspension memos (number + PDF) for their own college                                      | ✅     |
@@ -62,14 +61,15 @@ the college and can be offered to any section of its programs.
 
 ## Teacher (own college only)
 
-| Responsibility                                                          | Status |
-| ----------------------------------------------------------------------- | ------ |
-| See own schedule and class lists                                        | ✅     |
-| Mark present / late / absent per scheduled class, by their own judgment | ✅     |
-| Correct own marks (every change is audited)                             | ✅     |
-| Cannot undo an excuse the dean approved (enforced by the database)      | ✅     |
-| See learners' warning and drop status in their classes                  | ✅     |
-| Time limit on editing marks after a class                               | ❓     |
+| Responsibility                                                                                                                       | Status |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| See own schedule and class lists                                                                                                     | ✅     |
+| Mark present / late / absent per scheduled class, by their own judgment                                                              | ✅     |
+| Correct own marks (every change is audited)                                                                                          | ✅     |
+| Decide excuses for their own classes (approve / not approve / revoke; `medical` needs a file); file one for a learner in their class | ✅     |
+| An excused absence stays locked on the class list (the excuse decides it)                                                            | ✅     |
+| See learners' warning and drop status in their classes                                                                               | ✅     |
+| Time limit on editing marks after a class                                                                                            | ❓     |
 
 ## Learner
 
