@@ -120,17 +120,33 @@ class Standing
             'flagged_for_drop_at' => $flag ? ($enrollment->flagged_for_drop_at ?? now()) : null,
         ])->save();
 
-        $class = self::className($enrollment);
-        $learner = $enrollment->learner->user;
-
         if ($flagged) {
-            $learner->notify(new AttendanceNotice(AttendanceNotice::FLAGGED, __('You have :count equivalent absences in :class and are flagged for dropping. Your dean will decide; see them if you have an excuse.', ['count' => $equivalent, 'class' => $class])));
-
-            foreach (self::deans($enrollment) as $dean) {
-                $dean->notify(new AttendanceNotice(AttendanceNotice::LEARNER_FLAGGED, __(':name has :count equivalent absences in :class and is flagged for dropping.', ['name' => $learner->full_name, 'count' => $equivalent, 'class' => $class]), route('dean.standing.index', ['term' => $enrollment->subjectOffering->section->term_id, 'status' => 'flagged'], false)));
-            }
+            $this->announceFlag($enrollment, $equivalent);
         } elseif ($raised) {
-            $learner->notify(new AttendanceNotice(AttendanceNotice::WARNING, __('Warning: you have :count equivalent absences in :class. At :drop you will be flagged for dropping.', ['count' => $equivalent, 'class' => $class, 'drop' => $policy['drop_at_absences']])));
+            $this->announceWarning($enrollment, $equivalent);
+        }
+    }
+
+    /**
+     * Tell the learner they reached a warning count.
+     */
+    public function announceWarning(Enrollment $enrollment, int $equivalent): void
+    {
+        $enrollment->loadMissing('learner.user');
+        $enrollment->learner->user->notify(AttendanceNotice::warning($enrollment, $equivalent, self::policy($enrollment)['drop_at_absences']));
+    }
+
+    /**
+     * Tell the learner, and the deans of their class's college, that they
+     * are flagged for dropping.
+     */
+    public function announceFlag(Enrollment $enrollment, int $equivalent): void
+    {
+        $enrollment->loadMissing('learner.user');
+        $enrollment->learner->user->notify(AttendanceNotice::flagged($enrollment, $equivalent));
+
+        foreach (self::deans($enrollment) as $dean) {
+            $dean->notify(AttendanceNotice::learnerFlagged($enrollment, $equivalent));
         }
     }
 
@@ -167,7 +183,7 @@ class Standing
             'drop_reason' => DropReason::Absences,
         ])->save();
 
-        $enrollment->learner->user->notify(new AttendanceNotice(AttendanceNotice::DROPPED, __('You have been dropped from :class for absences.', ['class' => self::className($enrollment)])));
+        $enrollment->learner->user->notify(AttendanceNotice::dropped($enrollment));
     }
 
     /**
@@ -208,7 +224,7 @@ class Standing
             $this->refresh($enrollment);
         });
 
-        $enrollment->learner->user->notify(new AttendanceNotice(AttendanceNotice::REINSTATED, __('You have been reinstated in :class.', ['class' => self::className($enrollment)])));
+        $enrollment->learner->user->notify(AttendanceNotice::reinstated($enrollment));
     }
 
     /**
@@ -226,17 +242,6 @@ class Standing
             'drop_at_absences' => $policy->drop_at_absences,
             'warn_at_absences' => array_map('intval', $policy->warn_at_absences),
         ];
-    }
-
-    /**
-     * "CS 101 (BSCS 1-A)".
-     */
-    private static function className(Enrollment $enrollment): string
-    {
-        $enrollment->loadMissing(['subjectOffering.subject', 'subjectOffering.section.program']);
-        $offering = $enrollment->subjectOffering;
-
-        return "{$offering->subject->code} ({$offering->section->program->code} {$offering->section->name})";
     }
 
     /**

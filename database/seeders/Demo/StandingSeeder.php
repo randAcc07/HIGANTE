@@ -171,35 +171,19 @@ class StandingSeeder extends Seeder
             ])->save();
 
             foreach ($events as [$kind, $count, $at]) {
-                $this->notify($enrollment, $kind, $count, $at->addMinutes(mt_rand(1, 20)), $policy->drop_at_absences);
+                $this->notify($enrollment, $kind, $count, $at->addMinutes(mt_rand(1, 20)));
             }
         }
     }
 
     /**
-     * The notices Standing::refresh() sends, worded the same.
+     * The app's own warning or flag notice, as of the mark that reached it.
      */
-    private function notify(Enrollment $enrollment, string $kind, int $count, CarbonImmutable $at, int $dropAt): void
+    private function notify(Enrollment $enrollment, string $kind, int $count, CarbonImmutable $at): void
     {
-        $offering = $enrollment->subjectOffering;
-        $class = "{$offering->subject->code} ({$offering->section->program->code} {$offering->section->name})";
-        $learner = $enrollment->learner->user;
-
-        self::at($at, function () use ($kind, $count, $class, $learner, $offering, $dropAt): void {
-            if ($kind === AttendanceNotice::WARNING) {
-                $learner->notify(new AttendanceNotice(AttendanceNotice::WARNING, __('Warning: you have :count equivalent absences in :class. At :drop you will be flagged for dropping.', ['count' => $count, 'class' => $class, 'drop' => $dropAt])));
-
-                return;
-            }
-
-            $learner->notify(new AttendanceNotice(AttendanceNotice::FLAGGED, __('You have :count equivalent absences in :class and are flagged for dropping. Your dean will decide; see them if you have an excuse.', ['count' => $count, 'class' => $class])));
-
-            $deans = User::where('role', UserRole::Dean)->where('college_id', $offering->section->program->college_id)->where('is_active', true)->get();
-
-            foreach ($deans as $dean) {
-                $dean->notify(new AttendanceNotice(AttendanceNotice::LEARNER_FLAGGED, __(':name has :count equivalent absences in :class and is flagged for dropping.', ['name' => $learner->full_name, 'count' => $count, 'class' => $class]), route('dean.standing.index', ['term' => $offering->section->term_id, 'status' => 'flagged'], false)));
-            }
-        });
+        self::at($at, fn () => $kind === AttendanceNotice::WARNING
+            ? app(Standing::class)->announceWarning($enrollment, $count)
+            : app(Standing::class)->announceFlag($enrollment, $count));
     }
 
     /**
