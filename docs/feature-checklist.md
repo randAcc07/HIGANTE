@@ -82,6 +82,8 @@ Every feature is done only when:
 ## 6. Dean scheduling
 
 - [x] Sections for a term (program, year level, name, optional capacity); term, program and year level fixed once made. Opens on the next upcoming term
+- [x] Copy sections from the latest earlier term with sections: the same blocks for a 2nd semester; one year level up for a new school year (a name starting with the year follows it, 1-A → 2-A; years past the curriculum start unticked). Year, name and capacity can be changed per row; a taken name refuses the whole copy. Each copy remembers its source (registration keeps the block together through it) and gets its curriculum subjects; teachers, batches and classes are not copied
+- [x] "Add N curriculum subjects" on the Sections list fills every section of the term at once (only adds)
 - [x] Subject offerings per section with a default teacher (own college only, or TBA); changing the teacher can move the subject's classes too (substitutes), checked against the new teacher's week
 - [x] Batches per offering (named, e.g. 1-AA / 1-AB)
 - [x] Schedules: day, time, room or online, whole offering or one batch, teacher
@@ -101,7 +103,7 @@ confirmation (it would duplicate the office visit) and no enrollment window.
 - [x] 2nd semester: the same list, pre-ticked with everyone registered in the 1st semester of the same school year (withdrawn learners unticked), same year level and irregular flag; the registrar unticks those who left
 - [x] New learners (freshmen, transferees) are admitted and registered directly (the admit form's "Register for" term)
 - [x] The registrar can override the proposed year level (returnees, irregulars) and mark a registration irregular (no automatic enrollment in the section's subjects). Made regular later, the learner gets the section's subjects they lack; made irregular, they keep their subjects for the dean
-- [x] Approval registers the learner and auto-sections them: the emptiest section of their program and year level with room (ties to the first by name); otherwise unsectioned for the dean. A 2nd semester keeps the block: the section named like the learner's 1st-semester one, even past capacity (warned), else the emptiest. The learner record's year level follows their latest registration
+- [x] Approval registers the learner and auto-sections them: the emptiest section of their program and year level with room (ties to the first by name); otherwise unsectioned for the dean. The block is kept, even past capacity (warned): the section copied from the learner's section in the source terms (a new school year's shifted-up copy, or a 2nd semester's), or in a 2nd semester the hand-made section named like it; else the emptiest. The learner record's year level follows their latest registration
 - [x] Regular learners are enrolled in every offering of their section, including offerings the dean adds later (batches are left for the dean). An offering can be removed while none of its enrollments has attendance; its enrollments go with it
 - [x] Withdrawal keeps the registration and its history and drops every class the learner still has (confirmed by the registrar). A registration made by mistake can be undone (removed with its enrollments) until attendance is recorded
 - [x] Registration changes only while the term is upcoming or in session; an ended or closed term's registrations are read-only

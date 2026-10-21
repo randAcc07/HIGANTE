@@ -20,6 +20,7 @@ use App\Http\Controllers\Dean\OfferingController;
 use App\Http\Controllers\Dean\PlacementController;
 use App\Http\Controllers\Dean\ScheduleController;
 use App\Http\Controllers\Dean\SectionController;
+use App\Http\Controllers\Dean\SectionCopyController;
 use App\Http\Controllers\Dean\StandingController;
 use App\Http\Controllers\Dean\TimetableController;
 use App\Http\Controllers\EmailChangeLinkController;
@@ -94,6 +95,8 @@ Route::middleware(['auth', 'verified', 'role:dean'])->prefix('dean')->name('dean
     Route::post('programs/{program}/curriculum', [CurriculumController::class, 'store'])->name('curriculum.store');
     Route::put('curriculum/{line}', [CurriculumController::class, 'update'])->name('curriculum.update');
     Route::delete('curriculum/{line}', [CurriculumController::class, 'destroy'])->name('curriculum.destroy');
+    Route::post('sections/copy', [SectionCopyController::class, 'store'])->name('sections.copy');
+    Route::post('terms/{term}/sections/curriculum', [SectionCopyController::class, 'fill'])->name('sections.curriculum');
     Route::resource('sections', SectionController::class)->only(['index', 'store', 'show', 'update', 'destroy']);
     Route::post('sections/{section}/offerings', [OfferingController::class, 'store'])->name('offerings.store');
     Route::post('sections/{section}/offerings/curriculum', [OfferingController::class, 'fromCurriculum'])->name('offerings.curriculum');

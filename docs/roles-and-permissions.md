@@ -44,6 +44,7 @@ the college and can be offered to any section of its programs.
 | Responsibility                                                                                                                  | Status |
 | ------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | Create sections for a term (optional capacity) before registration opens                                                        | ✅     |
+| Copy an earlier term's sections (one year up for a new school year), keeping blocks together through registration               | ✅     |
 | Create subject offerings for sections; split an offering into uneven batches                                                    | ✅     |
 | Create schedules: day, time, any campus room, onsite or online, whole offering or one batch                                     | ✅     |
 | Assign teachers from their own college only                                                                                     | ✅     |

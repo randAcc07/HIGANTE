@@ -177,6 +177,12 @@ final class CampusData
      */
     public const CURRICULUM_GAP = ['program' => 'BSCS', 'section' => '1-B', 'subject' => 'NSTP 2'];
 
+    /**
+     * The college whose upcoming 2nd-semester sections aren't made yet, so
+     * its dean is offered "Copy sections" from the 1st semester.
+     */
+    public const UNCOPIED_COLLEGE = 'COE';
+
     /** Days after a class that its teacher may still change marks, in the current term (null = no limit). */
     public const TEACHER_EDIT_DAYS = 7;
 

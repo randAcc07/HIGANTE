@@ -195,11 +195,12 @@ class TermRegistrar
 
     /**
      * The section a new registration goes to, and a warning when it puts the
-     * section past its capacity. A 2nd semester keeps the block together
-     * (the section named like the learner's 1st-semester one); otherwise,
-     * or when there is no such section, the emptiest section of the program
-     * and year level with room (ties go to the first by name). Null when all
-     * are full: the dean places them.
+     * section past its capacity. The block stays together: the section
+     * copied from the learner's section in the source terms (any term), or
+     * in a 2nd semester the one named like it (sections made by hand), even
+     * past capacity. Otherwise the emptiest section of the program and year
+     * level with room (ties go to the first by name). Null when all are
+     * full: the dean places them.
      *
      * @return array{Section|null, string|null}
      */
@@ -224,20 +225,26 @@ class TermRegistrar
             ->pluck('members', 'section_id');
         $size = fn (Section $section): int => (int) ($sizes[$section->id] ?? 0);
 
-        if ($term->semester === Semester::Second) {
-            $previous = $learner->termRegistrations()
-                ->with('section:id,name')
-                ->whereIn('term_id', self::sourceTerms($term)->select('id'))
-                ->first();
-            $same = $previous?->section === null ? null : $sections->firstWhere('name', $previous->section->name);
+        // The learner's latest sectioned registration in the source terms.
+        $previous = $learner->termRegistrations()
+            ->with('section:id,name')
+            ->join('terms', 'terms.id', '=', 'term_registrations.term_id')
+            ->whereIn('term_registrations.term_id', self::sourceTerms($term)->select('id'))
+            ->whereNotNull('term_registrations.section_id')
+            ->orderByDesc('terms.starts_on')
+            ->select('term_registrations.*')
+            ->first();
+        $same = $previous?->section === null ? null : (
+            $sections->firstWhere('previous_section_id', $previous->section->id)
+            ?? ($term->semester === Semester::Second ? $sections->first(fn (Section $section): bool => $section->previous_section_id === null && $section->name === $previous->section->name) : null)
+        );
 
-            if ($same !== null && $same->capacity !== null && $size($same) >= $same->capacity) {
-                return [$same, __(':section is now over its capacity of :capacity.', ['section' => "{$learner->program->code} {$same->name}", 'capacity' => $same->capacity])];
-            }
+        if ($same !== null && $same->capacity !== null && $size($same) >= $same->capacity) {
+            return [$same, __(':section is now over its capacity of :capacity.', ['section' => "{$learner->program->code} {$same->name}", 'capacity' => $same->capacity])];
+        }
 
-            if ($same !== null) {
-                return [$same, null];
-            }
+        if ($same !== null) {
+            return [$same, null];
         }
 
         $emptiest = null;

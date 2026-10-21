@@ -9,11 +9,13 @@ use App\Enums\DecisionStatus;
 use App\Enums\DropReason;
 use App\Enums\EnrollmentStatus;
 use App\Enums\ExcuseStatus;
+use App\Enums\Semester;
 use App\Enums\UserRole;
 use App\Models\AbsenceExcuse;
 use App\Models\AttendancePolicy;
 use App\Models\AttendanceRecord;
 use App\Models\CalendarEvent;
+use App\Models\College;
 use App\Models\CurriculumSubject;
 use App\Models\Enrollment;
 use App\Models\ExcuseDecision;
@@ -24,7 +26,9 @@ use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
 use App\Notifications\AttendanceNotice;
+use App\Registration\TermRegistrar;
 use App\Scheduling\CurriculumFill;
+use App\Scheduling\SectionCopy;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\Demo\ExcuseSeeder;
 use Database\Seeders\Demo\TermSeeder;
@@ -255,6 +259,34 @@ class DemoSeederTest extends TestCase
         $this->assertSame(0, CurriculumSubject::query()->join('subjects', 'subjects.id', '=', 'curriculum_subjects.subject_id')->join('programs', 'programs.id', '=', 'curriculum_subjects.program_id')->whereColumn('subjects.college_id', '!=', 'programs.college_id')->count());
         $this->assertSame([7], AttendancePolicy::whereNotNull('teacher_edit_days')->pluck('teacher_edit_days')->all());
         $this->assertSame(7, Term::where(['school_year' => '2026-2027', 'semester' => 'first'])->sole()->attendancePolicy?->teacher_edit_days);
+
+        // Sections are chained as copies: a 2nd semester's from the same-named
+        // 1st-semester block of its school year, a 1st semester's (from year
+        // 2) from last 2nd semester's a year lower, named to follow. COE has
+        // no upcoming sections yet, so its dean is offered the copy.
+        $all = Section::with('term')->get()->keyBy('id');
+
+        foreach ($all as $section) {
+            $from = $all->get((int) $section->previous_section_id);
+            $label = "{$section->term->label} {$section->name} ({$section->id})";
+
+            if ($section->term->semester === Semester::Second) {
+                $this->assertNotNull($from, $label);
+                $this->assertSame([$section->term->school_year, 'first', $section->program_id, $section->year_level, $section->name], [$from->term->school_year, $from->term->semester->value, $from->program_id, $from->year_level, $from->name], $label);
+            } elseif ($from !== null) {
+                $this->assertSame([TermRegistrar::previousSchoolYear($section->term->school_year), 'second', $section->program_id, $section->year_level - 1], [$from->term->school_year, $from->term->semester->value, $from->program_id, $from->year_level], $label);
+                $this->assertSame(substr($section->name, 1), substr($from->name, 1), $label);
+            }
+        }
+
+        $current = Term::where(['school_year' => '2026-2027', 'semester' => 'first'])->sole();
+        $next = Term::where(['school_year' => '2026-2027', 'semester' => 'second'])->sole();
+        $this->assertSame(0, Section::where('term_id', $current->id)->where('year_level', '>=', 2)->whereNull('previous_section_id')->count());
+        $this->assertSame(0, Section::where('term_id', $current->id)->where('year_level', 1)->whereNotNull('previous_section_id')->count());
+        $coe = College::where('code', 'COE')->sole();
+        $this->assertFalse(Section::where('term_id', $next->id)->whereRelation('program', 'college_id', $coe->id)->exists());
+        $this->assertSame($current->id, app(SectionCopy::class)->source($next, $coe->id)?->id);
+        $this->assertSame(Section::where('term_id', $current->id)->whereRelation('program', 'college_id', $coe->id)->count(), count(app(SectionCopy::class)->proposals($current, $next, $coe->id)));
 
         $this->assertDemoRegistration();
     }

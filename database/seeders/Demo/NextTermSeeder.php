@@ -9,13 +9,15 @@ use App\Models\Term;
 use Illuminate\Database\Seeder;
 
 /**
- * The upcoming 2nd semester: the current term's sections again (same
- * programs, year levels, names and capacities), each with its few general
- * education subjects from the curriculum, with no teacher or schedule yet
- * (one is left out: CampusData::CURRICULUM_GAP). Nobody is
+ * The upcoming 2nd semester: the current term's sections copied over (same
+ * programs, year levels, names and capacities, each pointing back at its
+ * 1st-semester section), each with its few general education subjects from
+ * the curriculum and no teacher or schedule yet; one line is left out
+ * (CampusData::CURRICULUM_GAP). CampusData::UNCOPIED_COLLEGE has no
+ * sections yet, so its dean is offered "Copy sections". Nobody is
  * registered, so the registrar's list shows the current term's learners
- * carried over and pre-ticked, and registering them keeps each block in
- * its same-named section.
+ * carried over and pre-ticked, and registering them keeps each block in the
+ * section copied from theirs.
  */
 class NextTermSeeder extends Seeder
 {
@@ -28,9 +30,16 @@ class NextTermSeeder extends Seeder
             ->where('semester', CampusData::NEXT_TERM['semester'])
             ->sole();
 
-        foreach (Section::with('program')->where('term_id', $current->id)->orderBy('id')->get() as $section) {
+        $sections = Section::with('program.college')
+            ->where('term_id', $current->id)
+            ->whereRelation('program.college', 'code', '!=', CampusData::UNCOPIED_COLLEGE)
+            ->orderBy('id')
+            ->get();
+
+        foreach ($sections as $section) {
             $copy = Section::create([
                 'term_id' => $next->id,
+                'previous_section_id' => $section->id,
                 'program_id' => $section->program_id,
                 'year_level' => $section->year_level,
                 'name' => $section->name,

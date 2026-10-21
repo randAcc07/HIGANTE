@@ -507,6 +507,7 @@ Table attendance_policies {
 Table sections {
   id "bigint(20) unsigned" [pk, increment, not null]
   term_id "bigint(20) unsigned" [not null]
+  previous_section_id "bigint(20) unsigned" [null]
   program_id "bigint(20) unsigned" [not null]
   year_level "tinyint(3) unsigned" [not null]
   name varchar(30) [not null]
@@ -515,6 +516,7 @@ Table sections {
   updated_at timestamp [null]
 
   indexes {
+    previous_section_id [name: 'sections_previous_section_id_foreign']
     program_id [name: 'sections_program_id_foreign']
     (term_id, program_id, name) [unique, name: 'sections_term_id_program_id_name_unique']
   }
@@ -726,6 +728,7 @@ Ref schedules_room_id_foreign: schedules.room_id > rooms.id [delete: restrict]
 Ref schedules_subject_offering_id_foreign: schedules.subject_offering_id > subject_offerings.id [delete: cascade]
 Ref schedules_teacher_id_foreign: schedules.teacher_id > teachers.id [delete: restrict]
 Ref schedules_term_id_foreign: schedules.term_id > terms.id [delete: restrict]
+Ref sections_previous_section_id_foreign: sections.previous_section_id > sections.id [delete: set null]
 Ref sections_program_id_foreign: sections.program_id > programs.id [delete: restrict]
 Ref sections_term_id_foreign: sections.term_id > terms.id [delete: restrict]
 Ref subjects_college_id_foreign: subjects.college_id > colleges.id [delete: restrict]

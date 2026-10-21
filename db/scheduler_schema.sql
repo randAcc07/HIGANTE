@@ -379,6 +379,7 @@ CREATE TABLE `attendance_policies` (
 CREATE TABLE `sections` (
   `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
   `term_id` bigint(20) unsigned NOT NULL,
+  `previous_section_id` bigint(20) unsigned DEFAULT NULL,
   `program_id` bigint(20) unsigned NOT NULL,
   `year_level` tinyint(3) unsigned NOT NULL,
   `name` varchar(30) NOT NULL,
@@ -388,6 +389,8 @@ CREATE TABLE `sections` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `sections_term_id_program_id_name_unique` (`term_id`,`program_id`,`name`),
   KEY `sections_program_id_foreign` (`program_id`),
+  KEY `sections_previous_section_id_foreign` (`previous_section_id`),
+  CONSTRAINT `sections_previous_section_id_foreign` FOREIGN KEY (`previous_section_id`) REFERENCES `sections` (`id`) ON DELETE SET NULL,
   CONSTRAINT `sections_program_id_foreign` FOREIGN KEY (`program_id`) REFERENCES `programs` (`id`),
   CONSTRAINT `sections_term_id_foreign` FOREIGN KEY (`term_id`) REFERENCES `terms` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

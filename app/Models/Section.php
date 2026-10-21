@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property int $id
  * @property int $term_id
+ * @property int|null $previous_section_id
  * @property int $program_id
  * @property int $year_level
  * @property string $name
@@ -24,8 +25,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $updated_at
  * @property-read Term $term
  * @property-read Program $program
+ * @property-read Section|null $previous
  */
-#[Fillable(['term_id', 'program_id', 'year_level', 'name', 'capacity'])]
+#[Fillable(['term_id', 'previous_section_id', 'program_id', 'year_level', 'name', 'capacity'])]
 class Section extends Model
 {
     /** @use HasFactory<SectionFactory> */
@@ -37,6 +39,17 @@ class Section extends Model
     public function term(): BelongsTo
     {
         return $this->belongsTo(Term::class);
+    }
+
+    /**
+     * The earlier term's section this one was copied from; registration
+     * follows it to keep the block together.
+     *
+     * @return BelongsTo<Section, $this>
+     */
+    public function previous(): BelongsTo
+    {
+        return $this->belongsTo(Section::class, 'previous_section_id');
     }
 
     /**

@@ -18,6 +18,7 @@ use App\Models\Term;
 use App\Models\TermRegistration;
 use App\Models\User;
 use App\Scheduling\CurriculumFill;
+use App\Scheduling\SectionCopy;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -34,7 +35,7 @@ class SectionController extends Controller
 {
     use RefusesDeletingInUse;
 
-    public function index(Request $request): Response
+    public function index(Request $request, SectionCopy $copier, CurriculumFill $curriculum): Response
     {
         /** @var User $user */
         $user = $request->user();
@@ -53,12 +54,24 @@ class SectionController extends Controller
             ->orderBy('name')
             ->get();
 
+        $sections->each(fn (Section $section) => $section->setRelation('term', $term));
+        $canEdit = $term !== null && ! $term->isClosed();
+        $source = $canEdit ? $copier->source($term, (int) $user->college_id) : null;
+
         return Inertia::render('dean/sections/Index', [
             'terms' => $terms->map(fn (Term $term): array => ['id' => $term->id, 'label' => $term->label, 'phase' => $term->phase()->value]),
             'term' => $term === null ? null : ['id' => $term->id, 'label' => $term->label, 'phase' => $term->phase()->value],
             'programs' => $programs,
             'sections' => $sections,
-            'canEdit' => $term !== null && ! $term->isClosed(),
+            'canEdit' => $canEdit,
+            // What "Copy sections" offers: the latest earlier term's sections.
+            'copy' => $term === null || $source === null ? null : [
+                'from' => ['id' => $source->id, 'label' => $source->label],
+                'shiftsUp' => SectionCopy::shiftsUp($source, $term),
+                'sections' => $copier->proposals($source, $term, (int) $user->college_id),
+            ],
+            // Curriculum subjects the term's sections lack, for "Fill from the curriculum".
+            'curriculumMissing' => $canEdit ? $sections->sum(fn (Section $section): int => $curriculum->missing($section)->count()) : 0,
         ]);
     }
 

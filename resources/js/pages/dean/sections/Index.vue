@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { CalendarClock, Pencil, Plus, UsersRound } from '@lucide/vue';
+import {
+    CalendarClock,
+    Copy,
+    ListPlus,
+    Pencil,
+    Plus,
+    UsersRound,
+} from '@lucide/vue';
+import { computed, ref } from 'vue';
 import SectionController from '@/actions/App/Http/Controllers/Dean/SectionController';
+import SectionCopyController from '@/actions/App/Http/Controllers/Dean/SectionCopyController';
 import TimetableController from '@/actions/App/Http/Controllers/Dean/TimetableController';
 import ConfirmDeleteDialog from '@/components/ConfirmDeleteDialog.vue';
+import CopySectionsDialog from '@/components/dean/CopySectionsDialog.vue';
 import SectionFormDialog from '@/components/dean/SectionFormDialog.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
@@ -29,13 +39,61 @@ type SectionRow = {
 
 type TermOption = { id: number; label: string; phase: TermPhase };
 
-defineProps<{
+type CopyOffer = {
+    from: { id: number; label: string };
+    shiftsUp: boolean;
+    sections: {
+        id: number;
+        program_id: number;
+        program: string;
+        from: string;
+        year_level: number;
+        name: string;
+        capacity: number | null;
+        ticked: boolean;
+    }[];
+};
+
+const props = defineProps<{
     terms: TermOption[];
     term: TermOption | null;
     programs: Pick<Program, 'id' | 'code' | 'name'>[];
     sections: SectionRow[];
     canEdit: boolean;
+    /** The latest earlier term's sections, to copy; null when there are none. */
+    copy: CopyOffer | null;
+    /** Curriculum subjects the term's sections lack, in all. */
+    curriculumMissing: number;
 }>();
+
+const filling = ref(false);
+
+/** Whether any of the earlier term's blocks isn't in this term yet. */
+const copyable = computed(
+    () =>
+        props.copy?.sections.some(
+            (proposal) =>
+                !props.sections.some(
+                    (section) =>
+                        section.program_id === proposal.program_id &&
+                        section.name.toLowerCase() ===
+                            proposal.name.toLowerCase(),
+                ),
+        ) ?? false,
+);
+
+function fillFromCurriculum(): void {
+    if (!props.term) {
+        return;
+    }
+
+    filling.value = true;
+    router.post(
+        SectionCopyController.fill.url(props.term.id),
+        {},
+        { preserveScroll: true, onFinish: () => (filling.value = false) },
+    );
+}
 
 const phaseLabels: Record<TermPhase, string> = {
     upcoming: 'Upcoming',
@@ -82,6 +140,30 @@ function showTerm(id: number): void {
                         {{ option.label }} ({{ phaseLabels[option.phase] }})
                     </option>
                 </select>
+                <Button
+                    v-if="term && canEdit && curriculumMissing"
+                    variant="outline"
+                    :disabled="filling"
+                    @click="fillFromCurriculum"
+                    ><ListPlus class="h-4 w-4" /> Add
+                    {{ curriculumMissing }} curriculum subject{{
+                        curriculumMissing === 1 ? '' : 's'
+                    }}</Button
+                >
+                <CopySectionsDialog
+                    v-if="term && canEdit && copy && copyable"
+                    :key="`${term.id}-${sections.length}`"
+                    :term-id="term.id"
+                    :term-label="term.label"
+                    :from="copy.from"
+                    :shifts-up="copy.shiftsUp"
+                    :proposals="copy.sections"
+                    :existing="sections"
+                >
+                    <Button variant="outline"
+                        ><Copy class="h-4 w-4" /> Copy sections</Button
+                    >
+                </CopySectionsDialog>
                 <SectionFormDialog
                     v-if="term && canEdit"
                     :term-id="term.id"
