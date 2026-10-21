@@ -9,9 +9,9 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 
 /**
- * A class's attendance belongs to the teacher who teaches it, and the dean
- * of its college can correct it; a substitute covering it may too, on the
- * days they cover. A closed term's attendance can be viewed but not
+ * A class's attendance belongs to the teacher who teaches it (and a
+ * substitute covering it, on the days they cover); the dean of its college
+ * sees it, and corrects it only where no teacher can. A closed term's attendance can be viewed but not
  * changed. (Changing the class itself goes through SectionPolicy.)
  */
 class SchedulePolicy
@@ -29,8 +29,34 @@ class SchedulePolicy
         };
     }
 
+    /**
+     * Teachers mark their classes (and the classes they cover, those days).
+     * The dean only corrects where no teacher can: a class whose teacher
+     * (or that day's substitute) isn't active, or a day past the term's
+     * teacher edit limit. As with excuses, the class's teacher decides.
+     */
     public function takeAttendance(User $user, Schedule $schedule, ?CarbonImmutable $date = null): bool
     {
-        return $this->viewAttendance($user, $schedule, $date) && ! $schedule->term->isClosed();
+        if (! $this->viewAttendance($user, $schedule, $date) || $schedule->term->isClosed()) {
+            return false;
+        }
+
+        return $user->role !== UserRole::Dean || ($date !== null && self::onlyDeanCan($schedule, $date));
+    }
+
+    /**
+     * Whether no teacher can change the class's marks for that day.
+     */
+    public static function onlyDeanCan(Schedule $schedule, CarbonImmutable $date): bool
+    {
+        $schedule->loadMissing(['teacher.user', 'term.attendancePolicy']);
+
+        if ($schedule->term->attendancePolicy?->lockedForTeachers($date)) {
+            return true;
+        }
+
+        $substitute = ClassCover::with('substitute.user')->where('schedule_id', $schedule->id)->onDate($date)->first()?->substitute;
+
+        return ! $schedule->teacher->user->is_active && ! ($substitute?->user->is_active ?? false);
     }
 }

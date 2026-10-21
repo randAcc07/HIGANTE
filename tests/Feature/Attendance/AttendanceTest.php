@@ -10,6 +10,7 @@ use App\Models\AttendancePolicy;
 use App\Models\AttendanceRecord;
 use App\Models\Batch;
 use App\Models\CalendarEvent;
+use App\Models\ClassCover;
 use App\Models\College;
 use App\Models\Enrollment;
 use App\Models\Learner;
@@ -232,10 +233,27 @@ class AttendanceTest extends TestCase
         $this->actingAs(User::factory()->registrar()->create());
         $this->get(route('attendance.show', ['schedule' => $this->class, 'date' => self::MONDAY]))->assertForbidden();
 
+        // The college's dean sees the class but leaves its marks to the teacher.
         $dean = User::factory()->dean($this->college)->create();
         $this->actingAs($dean);
+        $this->get(route('attendance.show', ['schedule' => $this->class, 'date' => self::MONDAY]))
+            ->assertInertia(fn (Assert $page) => $page->where('canEdit', false)->where('deanNote', fn (?string $note) => str_contains((string) $note, 'ask them for a correction')));
+        $this->save([$this->enrolled[0]->id => 'absent'])->assertForbidden();
+    }
+
+    public function test_the_dean_corrects_a_class_without_an_active_teacher()
+    {
+        $dean = User::factory()->dean($this->college)->create();
+        $this->teacher->user->forceFill(['is_active' => false])->save();
+
+        $this->actingAs($dean)->get(route('attendance.show', ['schedule' => $this->class, 'date' => self::MONDAY]))
+            ->assertInertia(fn (Assert $page) => $page->where('canEdit', true)->where('deanNote', null));
         $this->save([$this->enrolled[0]->id => 'absent'])->assertSessionHasNoErrors();
         $this->assertSame($dean->id, AttendanceRecord::firstOrFail()->recorded_by);
+
+        // An active substitute covering that day is the class's teacher then.
+        ClassCover::factory()->create(['schedule_id' => $this->class->id, 'substitute_id' => Teacher::factory()->forCollege($this->college)->create()->id, 'starts_on' => self::MONDAY, 'ends_on' => self::MONDAY]);
+        $this->save([$this->enrolled[0]->id => 'late'])->assertForbidden();
     }
 
     public function test_a_closed_terms_attendance_is_read_only()

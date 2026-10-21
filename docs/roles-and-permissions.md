@@ -41,27 +41,27 @@ the college and can be offered to any section of its programs.
 
 ## Dean (own college only; does not teach)
 
-| Responsibility                                                                                                                  | Status |
-| ------------------------------------------------------------------------------------------------------------------------------- | ------ |
-| Create sections for a term (optional capacity) before registration opens                                                        | ✅     |
-| Copy an earlier term's sections (one year up for a new school year), keeping blocks together through registration               | ✅     |
-| Create subject offerings for sections; split an offering into uneven batches                                                    | ✅     |
-| Create schedules: day, time, any campus room, onsite or online, whole offering or one batch                                     | ✅     |
-| Assign teachers from their own college only                                                                                     | ✅     |
-| Place learners auto-sectioning could not fit; move learners between sections                                                    | ✅     |
-| Copy one subject's batches to the section's other split subjects                                                                | ✅     |
-| Keep each program's curriculum (subjects by year level and semester); new sections get their subjects from it                   | ✅     |
-| Enroll irregular learners subject by subject                                                                                    | ✅     |
-| Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week          | ✅     |
-| Oversee their college's excuses and each class's decision; decide only for a class without an active teacher                    | ✅     |
-| Confirm or dismiss drops flagged at the policy's drop count                                                                     | ✅     |
-| Reinstate a learner dropped for absences                                                                                        | ✅     |
-| Partial-day suspensions, suspensions for some programs / year levels, and suspension memos (number + PDF) for their own college | ✅     |
-| See an at-risk learners list                                                                                                    | ✅     |
-| College-only holidays and suspensions for their own college                                                                     | ✅     |
-| Correct a teacher's attendance marks                                                                                            | ✅     |
-| Reassign a subject's classes to another teacher for good                                                                        | ✅     |
-| Arrange cover for a teacher away: a substitute per class for a range of dates, never double-booked                              | ✅     |
+| Responsibility                                                                                                                         | Status |
+| -------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| Create sections for a term (optional capacity) before registration opens                                                               | ✅     |
+| Copy an earlier term's sections (one year up for a new school year), keeping blocks together through registration                      | ✅     |
+| Create subject offerings for sections; split an offering into uneven batches                                                           | ✅     |
+| Create schedules: day, time, any campus room, onsite or online, whole offering or one batch                                            | ✅     |
+| Assign teachers from their own college only                                                                                            | ✅     |
+| Place learners auto-sectioning could not fit; move learners between sections                                                           | ✅     |
+| Copy one subject's batches to the section's other split subjects                                                                       | ✅     |
+| Keep each program's curriculum (subjects by year level and semester); new sections get their subjects from it                          | ✅     |
+| Enroll irregular learners subject by subject                                                                                           | ✅     |
+| Assign learners to batches (section roster, or per subject on the learner's page), checked against each learner's week                 | ✅     |
+| Oversee their college's excuses and each class's decision; decide only for a class without an active teacher                           | ✅     |
+| Confirm or dismiss drops flagged at the policy's drop count                                                                            | ✅     |
+| Reinstate a learner dropped for absences                                                                                               | ✅     |
+| Partial-day suspensions, suspensions for some programs / year levels, and suspension memos (number + PDF) for their own college        | ✅     |
+| See an at-risk learners list                                                                                                           | ✅     |
+| College-only holidays and suspensions for their own college                                                                            | ✅     |
+| See every class's attendance; correct marks only where no teacher can (no active teacher or substitute, or past the term's edit limit) | ✅     |
+| Reassign a subject's classes to another teacher for good                                                                               | ✅     |
+| Arrange cover for a teacher away: a substitute per class for a range of dates, never double-booked                                     | ✅     |
 
 ## Teacher (own college only)
 

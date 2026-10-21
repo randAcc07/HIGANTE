@@ -14,6 +14,7 @@ use App\Models\AttendanceRecord;
 use App\Models\Enrollment;
 use App\Models\Schedule;
 use App\Models\User;
+use App\Policies\SchedulePolicy;
 use App\Scheduling\Covers;
 use App\Scheduling\ScheduleConflicts;
 use Carbon\CarbonImmutable;
@@ -101,6 +102,10 @@ class AttendanceController extends Controller
             'cover' => $cover === null ? null : ['substitute' => $cover->substitute->user->full_name, 'range' => $cover->range()],
             'covering' => $covering,
             'teacherLock' => $teacherLock,
+            // For the dean, why the list is read-only: the teacher decides.
+            'deanNote' => $user->role === UserRole::Dean && $refusal === null && ! $schedule->term->isClosed() && ! SchedulePolicy::onlyDeanCan($schedule, $day)
+                ? __(':teacher marks this class; ask them for a correction. You can correct marks only for a class without an active teacher, or after the term\'s teacher edit limit.', ['teacher' => $schedule->teacher->user->full_name])
+                : null,
             'closed' => $schedule->term->isClosed(),
             'backLabel' => $user->role === UserRole::Dean ? __('Attendance') : __('My classes'),
             'back' => $user->role === UserRole::Dean

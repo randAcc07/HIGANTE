@@ -73,7 +73,7 @@ const marked = computed(() =>
                 title="Attendance"
                 :description="
                     term
-                        ? `${term.label} · ${phaseLabels[term.phase]} · open a class to correct its marks`
+                        ? `${term.label} · ${phaseLabels[term.phase]} · teachers mark their classes; open one to see its marks`
                         : 'No terms yet'
                 "
             />

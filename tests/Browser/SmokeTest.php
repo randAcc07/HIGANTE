@@ -48,10 +48,10 @@ dataset('pages', [
     'dean unsectioned learner' => ['dean', fn (Campus $c) => path('dean.learners.show', $c->registrations[3]), 'No subjects yet.'],
     'dean calendar' => ['dean', fn (Campus $c) => path('calendar.index'), '{term}'],
 
-    'dean attendance' => ['dean', fn (Campus $c) => path('dean.attendance.index', ['term' => $c->term->id, 'date' => $c->lastLecture()]), 'open a class to correct its marks'],
+    'dean attendance' => ['dean', fn (Campus $c) => path('dean.attendance.index', ['term' => $c->term->id, 'date' => $c->lastLecture()]), 'teachers mark their classes; open one to see its marks'],
     'dean at risk' => ['dean', fn (Campus $c) => path('dean.standing.index', ['term' => $c->term->id]), 'Nobody here: no warnings or drops match.'],
     'dean excuses' => ['dean', fn (Campus $c) => path('dean.excuses.index'), 'No pending excuses.'],
-    'dean class list' => ['dean', fn (Campus $c) => path('attendance.show', ['schedule' => $c->lectureClass, 'date' => $c->lastLecture()]), 'Everyone counts as present unless marked otherwise.'],
+    'dean class list' => ['dean', fn (Campus $c) => path('attendance.show', ['schedule' => $c->lectureClass, 'date' => $c->lastLecture()]), 'ask them for a correction'],
 
     // Teacher and learner
     'teacher classes' => ['teacher', fn (Campus $c) => path('teacher.classes.index', ['date' => $c->lastLecture()]), 'Open a class to take or correct its attendance'],
