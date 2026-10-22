@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -40,13 +41,17 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>Change {{ account.full_name }}'s email</DialogTitle>
-            <DialogDescription>
-                For someone who lost access to {{ account.email }}. The change
-                applies at once, is logged with your reason, and the old address
-                is told about it. People who still have their inbox should
-                change it themselves under Settings.
-            </DialogDescription>
+            <DialogHeader>
+                <DialogTitle
+                    >Change {{ account.full_name }}'s email</DialogTitle
+                >
+                <DialogDescription>
+                    For someone who lost access to {{ account.email }}. The
+                    change applies at once, is logged with your reason, and the
+                    old address is told about it. People who still have their
+                    inbox should change it themselves under Settings.
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid gap-2">
                     <Label for="override-email">New email</Label>

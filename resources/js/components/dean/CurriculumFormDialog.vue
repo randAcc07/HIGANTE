@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -94,17 +95,19 @@ function submit(): void {
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto">
-            <DialogTitle>{{
-                line ? `Move ${line.subject.code}` : 'Add subjects'
-            }}</DialogTitle>
-            <DialogDescription>
-                {{
-                    line
-                        ? 'New sections of that year and semester get it.'
-                        : "Your college's subjects not yet in this curriculum."
-                }}
-            </DialogDescription>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{{
+                    line ? `Move ${line.subject.code}` : 'Add subjects'
+                }}</DialogTitle>
+                <DialogDescription>
+                    {{
+                        line
+                            ? 'New sections of that year and semester get it.'
+                            : "Your college's subjects not yet in this curriculum."
+                    }}
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="grid gap-2">

@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -102,14 +103,18 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{ event ? 'Edit event' : 'Add event' }}</DialogTitle>
-            <DialogDescription>
-                {{
-                    (event?.college ?? scope)
-                        ? `For ${event?.college ?? scope} only.`
-                        : 'For the whole campus.'
-                }}
-            </DialogDescription>
+            <DialogHeader>
+                <DialogTitle>{{
+                    event ? 'Edit event' : 'Add event'
+                }}</DialogTitle>
+                <DialogDescription>
+                    {{
+                        (event?.college ?? scope)
+                            ? `For ${event?.college ?? scope} only.`
+                            : 'For the whole campus.'
+                    }}
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid gap-2">
                     <Label for="event-title">Title</Label>

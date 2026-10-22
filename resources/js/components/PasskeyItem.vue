@@ -8,6 +8,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -72,11 +73,14 @@ const handleDelete = () => {
             </DialogTrigger>
 
             <DialogContent>
-                <DialogTitle>Remove passkey</DialogTitle>
-                <DialogDescription>
-                    Are you sure you want to remove the "{{ passkey.name }}"
-                    passkey? You will no longer be able to use it to sign in.
-                </DialogDescription>
+                <DialogHeader>
+                    <DialogTitle>Remove passkey</DialogTitle>
+                    <DialogDescription>
+                        Are you sure you want to remove the "{{ passkey.name }}"
+                        passkey? You will no longer be able to use it to sign
+                        in.
+                    </DialogDescription>
+                </DialogHeader>
                 <DialogFooter class="gap-2">
                     <DialogClose as-child>
                         <Button variant="secondary">Cancel</Button>

@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -91,17 +92,19 @@ function submit(): void {
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto">
-            <DialogTitle>{{
-                account ? `Edit ${account.full_name}` : 'Add staff account'
-            }}</DialogTitle>
-            <DialogDescription>
-                {{
-                    account
-                        ? 'Role, college and email stay as they are. Use the email override for a lost inbox.'
-                        : 'They get a link to set their own password.'
-                }}
-            </DialogDescription>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{{
+                    account ? `Edit ${account.full_name}` : 'Add staff account'
+                }}</DialogTitle>
+                <DialogDescription>
+                    {{
+                        account
+                            ? 'Role, college and email stay as they are. Use the email override for a lost inbox.'
+                            : 'They get a link to set their own password.'
+                    }}
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div v-if="!account" class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">

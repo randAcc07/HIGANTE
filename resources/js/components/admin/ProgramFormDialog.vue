@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -52,12 +53,14 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{
-                program ? `Edit ${program.code}` : 'Add program'
-            }}</DialogTitle>
-            <DialogDescription>
-                A degree program, what the school calls a course.
-            </DialogDescription>
+            <DialogHeader>
+                <DialogTitle>{{
+                    program ? `Edit ${program.code}` : 'Add program'
+                }}</DialogTitle>
+                <DialogDescription>
+                    A degree program, what the school calls a course.
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid gap-2">
                     <Label for="program-code">Code</Label>

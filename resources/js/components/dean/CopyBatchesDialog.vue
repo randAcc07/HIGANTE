@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -60,15 +61,20 @@ function submit(): void {
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto">
-            <DialogTitle>Copy {{ source.subject.code }}'s batches</DialogTitle>
-            <DialogDescription>
-                The chosen subjects get the same split ({{ names.join(', ') }}):
-                missing batches are added, and everyone taking both is put in
-                the batch of the same name. Learners without a batch in
-                {{ source.subject.code }} are left as they are. Classes aren't
-                copied; schedule new batches on the Timetables page.
-            </DialogDescription>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle
+                    >Copy {{ source.subject.code }}'s batches</DialogTitle
+                >
+                <DialogDescription>
+                    The chosen subjects get the same split ({{
+                        names.join(', ')
+                    }}): missing batches are added, and everyone taking both is
+                    put in the batch of the same name. Learners without a batch
+                    in {{ source.subject.code }} are left as they are. Classes
+                    aren't copied; schedule new batches on the Timetables page.
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="space-y-2">
                     <Label

@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -139,13 +140,15 @@ function submit(): void {
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-            <DialogTitle>Arrange cover</DialogTitle>
-            <DialogDescription>
-                A substitute marks attendance for the classes they cover on
-                those days. The classes keep their teacher, who still decides
-                excuses.
-            </DialogDescription>
+        <DialogContent class="sm:max-w-3xl">
+            <DialogHeader>
+                <DialogTitle>Arrange cover</DialogTitle>
+                <DialogDescription>
+                    A substitute marks attendance for the classes they cover on
+                    those days. The classes keep their teacher, who still
+                    decides excuses.
+                </DialogDescription>
+            </DialogHeader>
 
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid gap-3 sm:grid-cols-3">

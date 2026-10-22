@@ -8,6 +8,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -45,13 +46,15 @@ async function copy(): Promise<void> {
 <template>
     <Dialog v-model:open="open">
         <DialogContent v-if="link">
-            <DialogTitle>Setup link for {{ link.name }}</DialogTitle>
-            <DialogDescription>
-                It was emailed to {{ link.email }}. You can also copy it and
-                hand it over another way. It works once and expires in
-                {{ link.days }} days. It won't be shown again, but you can
-                always make a new one.
-            </DialogDescription>
+            <DialogHeader>
+                <DialogTitle>Setup link for {{ link.name }}</DialogTitle>
+                <DialogDescription>
+                    It was emailed to {{ link.email }}. You can also copy it and
+                    hand it over another way. It works once and expires in
+                    {{ link.days }} days. It won't be shown again, but you can
+                    always make a new one.
+                </DialogDescription>
+            </DialogHeader>
             <div class="flex gap-2">
                 <Input
                     :model-value="link.url"

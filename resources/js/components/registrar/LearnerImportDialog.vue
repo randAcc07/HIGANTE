@@ -9,6 +9,7 @@ import {
     Dialog,
     DialogContent,
     DialogDescription,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -109,13 +110,15 @@ const termLabel = computed(
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
-            <DialogTitle>Import learners from a sheet</DialogTitle>
-            <DialogDescription>
-                Fill in the template (one learner per row), then upload it.
-                Every row is checked first and nothing is saved until the whole
-                sheet is clean.
-            </DialogDescription>
+        <DialogContent class="sm:max-w-2xl">
+            <DialogHeader>
+                <DialogTitle>Import learners from a sheet</DialogTitle>
+                <DialogDescription>
+                    Fill in the template (one learner per row), then upload it.
+                    Every row is checked first and nothing is saved until the
+                    whole sheet is clean.
+                </DialogDescription>
+            </DialogHeader>
 
             <template v-if="done">
                 <div

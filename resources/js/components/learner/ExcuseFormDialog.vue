@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -80,23 +81,28 @@ function submit(): void {
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto">
-            <DialogTitle>{{
-                learners ? 'File an excuse for a learner' : 'Submit an excuse'
-            }}</DialogTitle>
-            <DialogDescription>
-                <template v-if="learners"
-                    >For a learner in one of your classes, e.g. one who handed
-                    you a certificate. It counts as approved in your classes;
-                    their other teachers decide for theirs.</template
-                >
-                <template v-else
-                    >For absences on one day or a range of up to
-                    {{ props.maxDays }} days. Each of your teachers decides for
-                    their class; once approved, your absences in that class on
-                    those days are excused (lates stay).</template
-                >
-            </DialogDescription>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{{
+                    learners
+                        ? 'File an excuse for a learner'
+                        : 'Submit an excuse'
+                }}</DialogTitle>
+                <DialogDescription>
+                    <template v-if="learners"
+                        >For a learner in one of your classes, e.g. one who
+                        handed you a certificate. It counts as approved in your
+                        classes; their other teachers decide for
+                        theirs.</template
+                    >
+                    <template v-else
+                        >For absences on one day or a range of up to
+                        {{ props.maxDays }} days. Each of your teachers decides
+                        for their class; once approved, your absences in that
+                        class on those days are excused (lates stay).</template
+                    >
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div v-if="learners" class="grid gap-2">
                     <Label for="excuse-learner">Learner</Label>

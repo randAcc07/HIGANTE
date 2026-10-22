@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -70,16 +71,18 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{
-                section ? `Edit ${section.name}` : 'Add section'
-            }}</DialogTitle>
-            <DialogDescription>
-                {{
-                    section
-                        ? "Program and year level can't change once learners may be registered to it."
-                        : 'A block of learners of one program and year level, for this term.'
-                }}
-            </DialogDescription>
+            <DialogHeader>
+                <DialogTitle>{{
+                    section ? `Edit ${section.name}` : 'Add section'
+                }}</DialogTitle>
+                <DialogDescription>
+                    {{
+                        section
+                            ? "Program and year level can't change once learners may be registered to it."
+                            : 'A block of learners of one program and year level, for this term.'
+                    }}
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div v-if="!section" class="grid grid-cols-3 gap-4">
                     <div class="col-span-2 grid gap-2">

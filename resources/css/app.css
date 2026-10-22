@@ -114,6 +114,7 @@
 }
 
 :root {
+    color-scheme: light;
     --background: hsl(0 0% 100%);
     --foreground: hsl(0 0% 3.9%);
     --card: hsl(0 0% 100%);
@@ -186,6 +187,7 @@
 }
 
 .dark {
+    color-scheme: dark;
     --background: hsl(0 0% 3.9%);
     --foreground: hsl(0 0% 98%);
     --card: hsl(0 0% 3.9%);
@@ -273,6 +275,17 @@
     }
     body {
         @apply bg-background text-foreground;
+    }
+}
+
+/*
+  A thin scrollbar in the theme's colours, for scrolling panels such as
+  dialog bodies (color-scheme above already darkens native controls).
+*/
+@layer components {
+    .scrollbar-themed {
+        scrollbar-width: thin;
+        scrollbar-color: var(--input) transparent;
     }
 }
 

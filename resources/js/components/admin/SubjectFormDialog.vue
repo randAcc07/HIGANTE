@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -72,12 +73,14 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{
-                subject ? `Edit ${subject.code}` : 'Add subject'
-            }}</DialogTitle>
-            <DialogDescription v-if="subject">
-                The college can't change once a subject exists.
-            </DialogDescription>
+            <DialogHeader>
+                <DialogTitle>{{
+                    subject ? `Edit ${subject.code}` : 'Add subject'
+                }}</DialogTitle>
+                <DialogDescription v-if="subject">
+                    The college can't change once a subject exists.
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div v-if="!subject" class="grid gap-2">
                     <Label for="subject-college">College</Label>

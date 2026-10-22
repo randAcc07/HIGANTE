@@ -112,7 +112,7 @@ watch(
 <template>
     <Dialog :open="isOpen" @update:open="isOpen = $event">
         <DialogContent class="sm:max-w-md">
-            <DialogHeader class="flex items-center justify-center">
+            <DialogHeader class="flex items-center justify-center text-center">
                 <div
                     class="mb-3 w-auto rounded-full border border-border bg-card p-0.5 shadow-sm"
                 >

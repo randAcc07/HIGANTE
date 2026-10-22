@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -73,18 +74,20 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{
-                offering
-                    ? `Teacher for ${offering.subject.code}`
-                    : 'Add subject'
-            }}</DialogTitle>
-            <DialogDescription>
-                {{
+            <DialogHeader>
+                <DialogTitle>{{
                     offering
-                        ? 'The default teacher is filled in for new classes.'
-                        : "Only your college's subjects not yet in this section."
-                }}
-            </DialogDescription>
+                        ? `Teacher for ${offering.subject.code}`
+                        : 'Add subject'
+                }}</DialogTitle>
+                <DialogDescription>
+                    {{
+                        offering
+                            ? 'The default teacher is filled in for new classes.'
+                            : "Only your college's subjects not yet in this section."
+                    }}
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div v-if="!offering" class="grid gap-2">
                     <Label for="offering-subject">Subject</Label>

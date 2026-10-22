@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
@@ -232,23 +233,25 @@ function remove(): void {
 
 <template>
     <Dialog v-model:open="open">
-        <DialogContent class="max-h-[90vh] overflow-y-auto">
-            <DialogTitle>{{
-                existing
-                    ? `${existing.subject}${existing.batch ? ` (${existing.batch})` : ''}`
-                    : 'Add a class'
-            }}</DialogTitle>
-            <DialogDescription v-if="existing">
-                {{ WEEKDAYS[existing.weekday] }},
-                {{ formatTime(existing.start) }}–{{
-                    formatTime(existing.end)
-                }}
-                · {{ existing.room ?? 'Online' }} · {{ existing.teacher }}
-            </DialogDescription>
-            <DialogDescription v-else
-                >A weekly class of one of the section's
-                subjects.</DialogDescription
-            >
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{{
+                    existing
+                        ? `${existing.subject}${existing.batch ? ` (${existing.batch})` : ''}`
+                        : 'Add a class'
+                }}</DialogTitle>
+                <DialogDescription v-if="existing">
+                    {{ WEEKDAYS[existing.weekday] }},
+                    {{ formatTime(existing.start) }}–{{
+                        formatTime(existing.end)
+                    }}
+                    · {{ existing.room ?? 'Online' }} · {{ existing.teacher }}
+                </DialogDescription>
+                <DialogDescription v-else
+                    >A weekly class of one of the section's
+                    subjects.</DialogDescription
+                >
+            </DialogHeader>
 
             <ul
                 v-if="existing?.warnings?.length"

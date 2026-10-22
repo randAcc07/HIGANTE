@@ -10,6 +10,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -129,17 +130,19 @@ function submit(): void {
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-            <DialogTitle>Copy sections from {{ from.label }}</DialogTitle>
-            <DialogDescription>
-                {{
-                    shiftsUp
-                        ? `A new school year: each block moves up a year level, and its learners are placed back together when the registrar registers them for ${termLabel}.`
-                        : `The same blocks for ${termLabel}; its learners are placed back together when the registrar registers them.`
-                }}
-                Each copy gets its subjects from the curriculum. Teachers,
-                batches and classes are not copied.
-            </DialogDescription>
+        <DialogContent class="sm:max-w-3xl">
+            <DialogHeader>
+                <DialogTitle>Copy sections from {{ from.label }}</DialogTitle>
+                <DialogDescription>
+                    {{
+                        shiftsUp
+                            ? `A new school year: each block moves up a year level, and its learners are placed back together when the registrar registers them for ${termLabel}.`
+                            : `The same blocks for ${termLabel}; its learners are placed back together when the registrar registers them.`
+                    }}
+                    Each copy gets its subjects from the curriculum. Teachers,
+                    batches and classes are not copied.
+                </DialogDescription>
+            </DialogHeader>
 
             <div class="overflow-x-auto rounded-lg border">
                 <table class="w-full text-sm">

@@ -8,6 +8,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -48,8 +49,10 @@ function confirm(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{ title }}</DialogTitle>
-            <DialogDescription>{{ description }}</DialogDescription>
+            <DialogHeader>
+                <DialogTitle>{{ title }}</DialogTitle>
+                <DialogDescription>{{ description }}</DialogDescription>
+            </DialogHeader>
             <DialogFooter class="gap-2">
                 <DialogClose as-child>
                     <Button variant="secondary">Cancel</Button>

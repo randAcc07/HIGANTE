@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -47,13 +48,17 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{
-                batch ? `Rename ${batch.name}` : `Add a batch to ${subjectCode}`
-            }}</DialogTitle>
-            <DialogDescription>
-                A split of the subject's learners, e.g. for a lab. Learners are
-                put into batches when they are enrolled.
-            </DialogDescription>
+            <DialogHeader>
+                <DialogTitle>{{
+                    batch
+                        ? `Rename ${batch.name}`
+                        : `Add a batch to ${subjectCode}`
+                }}</DialogTitle>
+                <DialogDescription>
+                    A split of the subject's learners, e.g. for a lab. Learners
+                    are put into batches when they are enrolled.
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid gap-2">
                     <Label for="batch-name">Name</Label>

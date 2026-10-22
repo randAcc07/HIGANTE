@@ -9,6 +9,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -50,8 +51,10 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{ title }}</DialogTitle>
-            <DialogDescription>{{ description }}</DialogDescription>
+            <DialogHeader>
+                <DialogTitle>{{ title }}</DialogTitle>
+                <DialogDescription>{{ description }}</DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid gap-2">
                     <Label for="decision-remarks">{{

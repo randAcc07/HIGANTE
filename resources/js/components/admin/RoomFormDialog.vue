@@ -9,6 +9,7 @@ import {
     Dialog,
     DialogContent,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -71,9 +72,11 @@ function submit(): void {
             <slot />
         </DialogTrigger>
         <DialogContent>
-            <DialogTitle>{{
-                room ? `Edit ${room.label}` : 'Add room'
-            }}</DialogTitle>
+            <DialogHeader>
+                <DialogTitle>{{
+                    room ? `Edit ${room.label}` : 'Add room'
+                }}</DialogTitle>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="grid gap-2">

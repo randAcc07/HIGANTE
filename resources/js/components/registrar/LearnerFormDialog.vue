@@ -11,6 +11,7 @@ import {
     DialogContent,
     DialogDescription,
     DialogFooter,
+    DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
@@ -92,17 +93,21 @@ function submit(): void {
         <DialogTrigger as-child>
             <slot />
         </DialogTrigger>
-        <DialogContent class="max-h-[90vh] overflow-y-auto">
-            <DialogTitle>{{
-                learner ? `Edit ${learner.user.full_name}` : 'Admit a learner'
-            }}</DialogTitle>
-            <DialogDescription>
-                {{
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{{
                     learner
-                        ? 'The email changes through Settings, or the admin for a lost inbox.'
-                        : 'They get a link to set their own password. Freshmen and transferees can be registered for a term right away.'
-                }}
-            </DialogDescription>
+                        ? `Edit ${learner.user.full_name}`
+                        : 'Admit a learner'
+                }}</DialogTitle>
+                <DialogDescription>
+                    {{
+                        learner
+                            ? 'The email changes through Settings, or the admin for a lost inbox.'
+                            : 'They get a link to set their own password. Freshmen and transferees can be registered for a term right away.'
+                    }}
+                </DialogDescription>
+            </DialogHeader>
             <form class="space-y-4" @submit.prevent="submit">
                 <NameFields
                     v-model:first-name="form.first_name"
