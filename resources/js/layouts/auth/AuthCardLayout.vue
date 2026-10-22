@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import {
     Card,
@@ -14,6 +14,9 @@ defineProps<{
     title?: string;
     description?: string;
 }>();
+
+// The logo links home; the seal itself is decorative, so the link carries the name.
+const homeLabel = `${usePage().props.name} home`;
 </script>
 
 <template>
@@ -23,11 +26,10 @@ defineProps<{
         <div class="flex w-full max-w-md flex-col gap-6">
             <Link
                 :href="home()"
-                class="flex items-center gap-2 self-center font-medium"
+                :aria-label="homeLabel"
+                class="flex items-center self-center font-medium"
             >
-                <div class="flex h-9 w-9 items-center justify-center">
-                    <AppLogoIcon class="size-9 fill-current text-foreground" />
-                </div>
+                <AppLogoIcon class="size-20" />
             </Link>
 
             <div class="flex flex-col gap-6">

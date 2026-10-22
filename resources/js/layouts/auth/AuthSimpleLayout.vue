@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { home } from '@/routes';
 
@@ -7,6 +7,9 @@ defineProps<{
     title?: string;
     description?: string;
 }>();
+
+// The logo links home; the seal itself is decorative, so the link carries the name.
+const homeLabel = `${usePage().props.name} home`;
 </script>
 
 <template>
@@ -18,16 +21,10 @@ defineProps<{
                 <div class="flex flex-col items-center gap-4">
                     <Link
                         :href="home()"
-                        class="flex flex-col items-center gap-2 font-medium"
+                        :aria-label="homeLabel"
+                        class="mb-1 flex flex-col items-center font-medium"
                     >
-                        <div
-                            class="mb-1 flex h-9 w-9 items-center justify-center rounded-md"
-                        >
-                            <AppLogoIcon
-                                class="size-9 fill-current text-foreground"
-                            />
-                        </div>
-                        <span class="sr-only">{{ title }}</span>
+                        <AppLogoIcon class="size-20" />
                     </Link>
                     <div class="space-y-2 text-center">
                         <h1 class="text-xl font-medium">{{ title }}</h1>
